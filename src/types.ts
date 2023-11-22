@@ -2,7 +2,6 @@ import {
   MoviesGetCreditsCast,
   MoviesGetDetailsGenre,
   TVGetCreditsCast,
-  TVGetDetailsBaseResponse,
   TVGetDetailsGenre,
 } from "tmdb-js-node";
 
@@ -19,6 +18,8 @@ export interface TitleImage {
 }
 
 export type TitleSearch = {
+  // For future extendibility
+  provider: "sc";
   id: number;
   slug: string;
   name: string;
@@ -80,6 +81,7 @@ export interface Episode {
 }
 
 export type TitleDetails = Omit<TitleDataPage["title"], "seasons"> & {
+  provider: "sc";
   seasons: {
     number: number;
     episodes: Promise<Episode[]>;

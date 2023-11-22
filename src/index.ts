@@ -1,22 +1,66 @@
 import {
-  ApiResponse,
-  TitleDetails,
-  TitleSearch,
-  TitleDataPage,
-  Episode,
-} from "./types";
-import { get, take_match_groups } from "./utils";
-import {
   MoviesGetDetailsResponse,
   TMDBNodeApi,
   TVGetDetailsResponse,
 } from "tmdb-js-node";
+import {
+  ApiResponse,
+  Episode,
+  TitleDataPage,
+  TitleDetails,
+  TitleSearch,
+} from "./types";
+import { get, take_match_groups } from "./utils";
 
-class UMWTitle {
+class SC_Provider {
+  private _url!: string;
+  private _image_endpoint!: string;
+
+  constructor() {
+    this.url = "https://streamingcommunity.care";
+  }
+
+  get url() {
+    return this._url;
+  }
+
+  get image_endpoint() {
+    return this._image_endpoint;
+  }
+
+  set url(updated_url) {
+    this._url = updated_url;
+    this._image_endpoint = `${updated_url.replace(
+      "https://",
+      "https://cdn."
+    )}/images`;
+  }
+
+  image(filename: string) {
+    return `${this.image_endpoint}/${filename}`;
+  }
+}
+
+class UMW_Image {
   private _umw;
 
   constructor({ umw }: { umw: UMW }) {
     this._umw = umw;
+  }
+
+  url({ filename }: { filename: string }) {
+    return this._umw.sc.image(filename);
+  }
+}
+
+class UMW_Title {
+  private _umw;
+  // For future interopabilities
+  image;
+
+  constructor({ umw }: { umw: UMW }) {
+    this._umw = umw;
+    this.image = new UMW_Image({ umw });
   }
 
   async search({
@@ -27,9 +71,11 @@ class UMWTitle {
     max_results?: number;
   }): Promise<TitleSearch[]> {
     const res = JSON.parse(
-      await get(`${this._umw._SC_URL}/api/search?q=${name}`)
+      await get(`${this._umw.sc.url}/api/search?q=${name}`)
     ) as ApiResponse<TitleSearch>;
-    return res.data.slice(0, max_results);
+    return res.data
+      .slice(0, max_results)
+      .map((o) => ({ ...o, provider: "sc" }));
   }
 
   async details({
@@ -42,7 +88,7 @@ class UMWTitle {
     const data = JSON.parse(
       (
         await take_match_groups(
-          `${this._umw._SC_URL}/titles/${id}-${slug}`,
+          `${this._umw.sc.url}/titles/${id}-${slug}`,
           new RegExp('<div id="app" data-page="(.+)"><!--', "s"),
           [1]
         )
@@ -72,7 +118,7 @@ class UMWTitle {
 
     for (const season of seasons) {
       const episodes = take_match_groups(
-        `${this._umw._SC_URL}/titles/${id}-${slug}/stagione-${season.number}`,
+        `${this._umw.sc.url}/titles/${id}-${slug}/stagione-${season.number}`,
         new RegExp('<div id="app" data-page="(.+)"><!--', "s"),
         [1]
       ).then(
@@ -101,6 +147,7 @@ class UMWTitle {
     }
 
     return {
+      provider: "sc",
       plot,
       tmdb_id,
       name,
@@ -118,26 +165,16 @@ class UMWTitle {
       related,
     };
   }
-
-  // add image field: it automatically combines filename and endpoint. it will be very useful wrappers interopability
 }
 
 export class UMW {
-  /* private  */ _SC_URL;
-  /* private  */ _SC_IMAGE_ENDPOINT;
+  sc;
   tmdb;
-
   title;
 
   constructor({ tmdb_api_key }: { tmdb_api_key: string }) {
     this.tmdb = new TMDBNodeApi(tmdb_api_key);
-
-    this._SC_URL = "https://streamingcommunity.care";
-    this._SC_IMAGE_ENDPOINT = `${this._SC_URL.replace(
-      "streamingcommunity",
-      "cdn.streamingcommunity"
-    )}/images`;
-
-    this.title = new UMWTitle({ umw: this });
+    this.sc = new SC_Provider();
+    this.title = new UMW_Title({ umw: this });
   }
 }
