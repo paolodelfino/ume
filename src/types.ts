@@ -47,7 +47,7 @@ export interface TitleTrailer {
 export interface TitleDataPage {
   title: {
     plot: string;
-    tmdb_id: number;
+    tmdb_id: number | null;
     name: string;
     runtime: number | null;
     quality: string;
@@ -86,7 +86,8 @@ export type TitleDetails = Omit<TitleDataPage["title"], "seasons"> & {
     number: number;
     episodes: Promise<Episode[]>;
   }[];
-  cast: Promise<(MoviesGetCreditsCast | TVGetCreditsCast)[]>;
-  genres: Promise<(MoviesGetDetailsGenre | TVGetDetailsGenre)[]>;
+  cast: Promise<(MoviesGetCreditsCast | TVGetCreditsCast)[]> | null;
+  genres: Promise<(MoviesGetDetailsGenre | TVGetDetailsGenre)[]> | null;
   related: TitleSearch[] | null;
+  id: number;
 };

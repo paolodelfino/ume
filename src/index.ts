@@ -55,7 +55,7 @@ class UMW_Image {
 
 class UMW_Title {
   private _umw;
-  // For future interopabilities
+  // For future interopability
   image;
 
   constructor({ umw }: { umw: UMW }) {
@@ -63,6 +63,10 @@ class UMW_Title {
     this.image = new UMW_Image({ umw });
   }
 
+  /**
+   *
+   * @param max_results Defaults to 3
+   */
   async search({
     name,
     max_results = 3,
@@ -132,22 +136,28 @@ class UMW_Title {
     }
 
     let fromTmdb:
-      | Promise<MoviesGetDetailsResponse<"credits"[]>>
-      | Promise<TVGetDetailsResponse<"credits"[]>>;
-    if (type == "movie") {
-      fromTmdb = this._umw.tmdb.v3.movies.getDetails(tmdb_id, {
-        append_to_response: ["credits"],
-        language: "it-IT",
-      });
-    } else {
-      fromTmdb = this._umw.tmdb.v3.tv.getDetails(tmdb_id, {
-        append_to_response: ["credits"],
-        language: "it-IT",
-      });
+      | (
+          | Promise<MoviesGetDetailsResponse<"credits"[]>>
+          | Promise<TVGetDetailsResponse<"credits"[]>>
+        )
+      | null = null;
+    if (tmdb_id) {
+      if (type == "movie") {
+        fromTmdb = this._umw.tmdb.v3.movies.getDetails(tmdb_id, {
+          append_to_response: ["credits"],
+          language: "it-IT",
+        });
+      } else {
+        fromTmdb = this._umw.tmdb.v3.tv.getDetails(tmdb_id, {
+          append_to_response: ["credits"],
+          language: "it-IT",
+        });
+      }
     }
 
     return {
       provider: "sc",
+      id,
       plot,
       tmdb_id,
       name,
@@ -160,10 +170,38 @@ class UMW_Title {
       seasons: detailed_seasons,
       trailers,
       images,
-      cast: fromTmdb.then((res) => res.credits.cast),
-      genres: fromTmdb.then((res) => res.genres),
+      cast: fromTmdb?.then((res) => res.credits.cast) ?? null,
+      genres: fromTmdb?.then((res) => res.genres) ?? null,
       related,
     };
+  }
+
+  async playlist({
+    title_id,
+    episode_id,
+  }: {
+    title_id: number;
+    episode_id?: number;
+  }) {
+    const embed_url = (
+      await take_match_groups(
+        `${this._umw.sc.url}/iframe/${title_id}?episode_id=${episode_id ?? ""}`,
+        new RegExp('src="(.+)".+frameborder', "s"),
+        [1]
+      )
+    )[0];
+
+    const master_dirty = (
+      await take_match_groups(
+        embed_url,
+        new RegExp("window[.]masterPlaylist = (.+)window.canPlayFHD", "s"),
+        [1]
+      )
+    )[0];
+
+    const master = (0, eval)(`const b = ${master_dirty}; b`);
+
+    return `${master.url}?token=${master.params.token}&token720p=${master.params.token720p}&token360p=${master.params.token360p}&token480p=${master.params.token480p}&token1080p=${master.params.token1080p}&expires=${master.params.expires}`;
   }
 }
 
