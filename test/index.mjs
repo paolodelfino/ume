@@ -1,7 +1,9 @@
-import { get_movie_details, search_movie } from "../dist/index.mjs";
+import { UMW } from "../dist/index.mjs";
+import "dotenv/config";
 
-const movies = await search_movie({ name: "rick" });
+const umw = new UMW({ tmdb_api_key: process.env.TMDB_API_KEY });
+const movies = await umw.title.search({ name: "enola" });
 console.assert(movies.length > 0);
 const rick = movies[0];
-const details = await get_movie_details({ id: rick.id, slug: rick.slug });
+const details = await umw.title.details({ id: rick.id, slug: rick.slug });
 console.log(details);

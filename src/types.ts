@@ -4,7 +4,7 @@ export interface ApiResponse<T> {
   data: T[];
 }
 
-export interface MediaImage {
+export interface TitleImage {
   imageable_id: number;
   imageable_type: "title" | "episode";
   filename: string;
@@ -12,13 +12,13 @@ export interface MediaImage {
   original_url_field: string | null;
 }
 
-export type MediaSearch = {
+export type TitleSearch = {
   id: number;
   slug: string;
   name: string;
   score: string;
   sub_ita: number;
-  images: MediaImage[];
+  images: TitleImage[];
   seasons_count: number;
 } & (
   | {
@@ -31,7 +31,7 @@ export type MediaSearch = {
     }
 );
 
-export interface MediaTrailer {
+export interface TitleTrailer {
   id: number;
   name: string;
   youtube_id: string;
@@ -54,13 +54,13 @@ export interface TitleDataPage {
       title_id: number;
       episodes_count: number;
     }[];
-    trailers: MediaTrailer[];
-    images: MediaImage[];
+    trailers: TitleTrailer[];
+    images: TitleImage[];
   };
   sliders: {
     name: string;
     label: string;
-    titles: MediaSearch[];
+    titles: TitleSearch[];
   }[];
 }
 
@@ -70,19 +70,19 @@ export interface Episode {
   name: string;
   plot: string;
   duration: number;
-  images: MediaImage[];
+  images: TitleImage[];
 }
 
 export interface SeasonDataPage {
   episodes: Episode[];
 }
 
-export type MediaDetails = Omit<TitleDataPage["title"], "seasons"> & {
+export type TitleDetails = Omit<TitleDataPage["title"], "seasons"> & {
   seasons: {
     number: number;
     episodes: Episode[];
   }[];
   cast: MoviesGetCreditsCast[];
   genres: MoviesGetDetailsGenre[];
-  related: MediaSearch[] | null;
+  related: TitleSearch[] | null;
 };
