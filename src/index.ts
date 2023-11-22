@@ -2,11 +2,15 @@ import {
   ApiResponse,
   TitleDetails,
   TitleSearch,
-  SeasonDataPage,
   TitleDataPage,
+  Episode,
 } from "./types";
 import { get, take_match_groups } from "./utils";
-import { TMDBNodeApi } from "tmdb-js-node";
+import {
+  MoviesGetDetailsResponse,
+  TMDBNodeApi,
+  TVGetDetailsResponse,
+} from "tmdb-js-node";
 
 class UMWTitle {
   private _umw;
@@ -64,29 +68,37 @@ class UMWTitle {
     const related =
       sliders.find((slider) => slider.name == "related")?.titles ?? null;
 
-    const detailedSeasons: TitleDetails["seasons"] = [];
+    const detailed_seasons: TitleDetails["seasons"] = [];
 
     for (const season of seasons) {
-      const seasonData = JSON.parse(
-        (
-          await take_match_groups(
-            `${this._umw._SC_URL}/titles/${id}-${slug}/stagione-${season.number}`,
-            new RegExp('<div id="app" data-page="(.+)"><!--', "s"),
-            [1]
-          )
-        )[0]
-      ).props.loadedSeason as SeasonDataPage;
+      const episodes = take_match_groups(
+        `${this._umw._SC_URL}/titles/${id}-${slug}/stagione-${season.number}`,
+        new RegExp('<div id="app" data-page="(.+)"><!--', "s"),
+        [1]
+      ).then(
+        (res) => JSON.parse(res[0]).props.loadedSeason.episodes as Episode[]
+      );
 
-      detailedSeasons.push({
+      detailed_seasons.push({
         number: season.number,
-        episodes: seasonData.episodes,
+        episodes,
       });
     }
 
-    const fromTmdb = await this._umw.tmdb.v3.movies.getDetails(tmdb_id, {
-      append_to_response: ["credits"],
-      language: "it-IT",
-    });
+    let fromTmdb:
+      | Promise<MoviesGetDetailsResponse<"credits"[]>>
+      | Promise<TVGetDetailsResponse<"credits"[]>>;
+    if (type == "movie") {
+      fromTmdb = this._umw.tmdb.v3.movies.getDetails(tmdb_id, {
+        append_to_response: ["credits"],
+        language: "it-IT",
+      });
+    } else {
+      fromTmdb = this._umw.tmdb.v3.tv.getDetails(tmdb_id, {
+        append_to_response: ["credits"],
+        language: "it-IT",
+      });
+    }
 
     return {
       plot,
@@ -98,11 +110,11 @@ class UMWTitle {
       release_date,
       status,
       seasons_count: seasons_count,
-      seasons: detailedSeasons,
+      seasons: detailed_seasons,
       trailers,
       images,
-      cast: fromTmdb.credits.cast,
-      genres: fromTmdb.genres,
+      cast: fromTmdb.then((res) => res.credits.cast),
+      genres: fromTmdb.then((res) => res.genres),
       related,
     };
   }
@@ -111,8 +123,8 @@ class UMWTitle {
 }
 
 export class UMW {
-  /* private  */_SC_URL;
-  /* private  */_SC_IMAGE_ENDPOINT;
+  /* private  */ _SC_URL;
+  /* private  */ _SC_IMAGE_ENDPOINT;
   tmdb;
 
   title;

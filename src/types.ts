@@ -1,4 +1,10 @@
-import { MoviesGetCreditsCast, MoviesGetDetailsGenre } from "tmdb-js-node";
+import {
+  MoviesGetCreditsCast,
+  MoviesGetDetailsGenre,
+  TVGetCreditsCast,
+  TVGetDetailsBaseResponse,
+  TVGetDetailsGenre,
+} from "tmdb-js-node";
 
 export interface ApiResponse<T> {
   data: T[];
@@ -73,16 +79,12 @@ export interface Episode {
   images: TitleImage[];
 }
 
-export interface SeasonDataPage {
-  episodes: Episode[];
-}
-
 export type TitleDetails = Omit<TitleDataPage["title"], "seasons"> & {
   seasons: {
     number: number;
-    episodes: Episode[];
+    episodes: Promise<Episode[]>;
   }[];
-  cast: MoviesGetCreditsCast[];
-  genres: MoviesGetDetailsGenre[];
+  cast: Promise<(MoviesGetCreditsCast | TVGetCreditsCast)[]>;
+  genres: Promise<(MoviesGetDetailsGenre | TVGetDetailsGenre)[]>;
   related: TitleSearch[] | null;
 };
