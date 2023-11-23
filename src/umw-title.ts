@@ -8,16 +8,18 @@ import {
   TitleSearch,
 } from "./types";
 import { UMW_Image } from "./umw-image";
+import { UMW_Trailer } from "./umw-trailer";
 import { get, take_match_groups } from "./utils";
 
 export class UMW_Title {
   private _umw;
-  // For future interopability
   image;
+  trailer;
 
   constructor({ umw }: { umw: UMW }) {
     this._umw = umw;
     this.image = new UMW_Image({ umw });
+    this.trailer = new UMW_Trailer({ umw });
   }
 
   /**

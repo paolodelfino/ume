@@ -1,4 +1,5 @@
 import { UMW } from ".";
+import { ProviderKind } from "./types";
 
 export class UMW_Image {
   private _umw;
@@ -7,7 +8,7 @@ export class UMW_Image {
     this._umw = umw;
   }
 
-  url({ filename }: { filename: string }) {
+  url({ provider, filename }: { provider: ProviderKind; filename: string }) {
     return this._umw.sc.image(filename);
   }
 }

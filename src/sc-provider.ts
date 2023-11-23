@@ -1,17 +1,17 @@
-export class SC_Provider {
+import { IProvider } from "./types";
+
+export class SC_Provider implements IProvider {
   private _url!: string;
   private _image_endpoint!: string;
+  private _trailer_endpoint!: string;
 
   constructor() {
     this.url = "https://streamingcommunity.care";
+    this._trailer_endpoint = "https://www.youtube-nocookie.com/embed";
   }
 
   get url() {
     return this._url;
-  }
-
-  get image_endpoint() {
-    return this._image_endpoint;
   }
 
   set url(updated_url) {
@@ -23,6 +23,10 @@ export class SC_Provider {
   }
 
   image(filename: string) {
-    return `${this.image_endpoint}/${filename}`;
+    return `${this._image_endpoint}/${filename}`;
+  }
+
+  trailer(key: string) {
+    return `${this._trailer_endpoint}/${key}`;
   }
 }

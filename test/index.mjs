@@ -1,15 +1,17 @@
 import "dotenv/config";
-import { TitleDetails, TitleSearch, UMW } from "../dist/index.mjs";
+import { UMW } from "../dist/index.mjs";
 const umw = new UMW({ tmdb_api_key: process.env.TMDB_API_KEY });
 
 const time = async (label, func) => {
+  console.log(label + " -------------");
   console.time(label);
   await func();
   console.timeEnd(label);
+  console.log("-------------");
 };
 
 /**
- * @type TitleSearch
+ * @type import("../dist/index.mjs").TitleSearch
  */
 let movie;
 await time("search", async () => {
@@ -19,13 +21,29 @@ await time("search", async () => {
 });
 
 /**
- * @type TitleDetails
+ * @type import("../dist/index.mjs").TitleDetails
  */
 let details;
 await time("details", async () => {
   details = await umw.title.details({ id: movie.id, slug: movie.slug });
-  // console.log(details);
-  console.log(details.id);
+});
+
+await time("misc", async () => {
+  const image = umw.title.image.url({
+    provider: details.provider,
+    filename: details.images[0].filename,
+  });
+  const trailer = umw.title.trailer.url({
+    provider: details.provider,
+    key: details.trailers[0].youtube_id,
+  });
+  const iframe = umw.title.trailer.iframe({
+    url: trailer,
+    className: "w-full h-full",
+  });
+  console.log(image);
+  console.log(trailer);
+  console.log(iframe);
 });
 
 await time("playlist", async () => {
