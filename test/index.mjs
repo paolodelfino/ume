@@ -1,6 +1,6 @@
 import "dotenv/config";
-import { UMW } from "../dist/index.mjs";
-const umw = new UMW({ tmdb_api_key: process.env.TMDB_API_KEY });
+import { UME } from "../dist/index.mjs";
+const ume = new UME({ tmdb_api_key: process.env.TMDB_API_KEY });
 
 const time = async (label, func) => {
   console.log(label + " -------------");
@@ -15,7 +15,7 @@ const time = async (label, func) => {
  */
 let movie;
 await time("search", async () => {
-  const movies = await umw.title.search({ name: "fallimento" });
+  const movies = await ume.title.search({ name: "fallimento" });
   console.assert(movies.length > 0);
   movie = movies[0];
 });
@@ -25,19 +25,19 @@ await time("search", async () => {
  */
 let details;
 await time("details", async () => {
-  details = await umw.title.details({ id: movie.id, slug: movie.slug });
+  details = await ume.title.details({ id: movie.id, slug: movie.slug });
 });
 
 await time("misc", async () => {
-  const image = umw.title.image.url({
+  const image = ume.title.image.url({
     provider: details.provider,
     filename: details.images[0].filename,
   });
-  const trailer = umw.title.trailer.url({
+  const trailer = ume.title.trailer.url({
     provider: details.provider,
     key: details.trailers[0].youtube_id,
   });
-  const iframe = umw.title.trailer.iframe({
+  const iframe = ume.title.trailer.iframe({
     url: trailer,
     className: "w-full h-full",
   });
@@ -47,7 +47,7 @@ await time("misc", async () => {
 });
 
 await time("playlist", async () => {
-  const playlist = await umw.title.playlist({
+  const playlist = await ume.title.playlist({
     title_id: details.id,
     //   episode_id: (await details.seasons[4].episodes)[5].id,
   });

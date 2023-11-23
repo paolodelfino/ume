@@ -1,15 +1,15 @@
-import { UMW } from ".";
+import { UME } from ".";
 import { ProviderKind } from "./types";
 
-export class UMW_Trailer {
-  private _umw;
+export class UME_Trailer {
+  private _ume;
 
-  constructor({ umw }: { umw: UMW }) {
-    this._umw = umw;
+  constructor({ ume }: { ume: UME }) {
+    this._ume = ume;
   }
 
   url({ provider, key }: { provider: ProviderKind; key: string }) {
-    return this._umw.sc.trailer(key);
+    return this._ume.sc.trailer(key);
   }
 
   iframe({ url, className }: { url: string; className: string }) {

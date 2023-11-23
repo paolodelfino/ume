@@ -1,5 +1,5 @@
 import { MoviesGetDetailsResponse, TVGetDetailsResponse } from "tmdb-js-node";
-import { UMW } from ".";
+import { UME } from ".";
 import {
   ApiResponse,
   Episode,
@@ -7,19 +7,19 @@ import {
   TitleDetails,
   TitleSearch,
 } from "./types";
-import { UMW_Image } from "./umw-image";
-import { UMW_Trailer } from "./umw-trailer";
+import { UME_Image } from "./ume-image";
+import { UME_Trailer } from "./ume-trailer";
 import { get, take_match_groups } from "./utils";
 
-export class UMW_Title {
-  private _umw;
+export class UME_Title {
+  private _ume;
   image;
   trailer;
 
-  constructor({ umw }: { umw: UMW }) {
-    this._umw = umw;
-    this.image = new UMW_Image({ umw });
-    this.trailer = new UMW_Trailer({ umw });
+  constructor({ ume }: { ume: UME }) {
+    this._ume = ume;
+    this.image = new UME_Image({ ume: ume });
+    this.trailer = new UME_Trailer({ ume: ume });
   }
 
   /**
@@ -34,7 +34,7 @@ export class UMW_Title {
     max_results?: number;
   }): Promise<TitleSearch[]> {
     const res = JSON.parse(
-      await get(`${this._umw.sc.url}/api/search?q=${name}`)
+      await get(`${this._ume.sc.url}/api/search?q=${name}`)
     ) as ApiResponse<TitleSearch>;
     return res.data
       .slice(0, max_results)
@@ -51,7 +51,7 @@ export class UMW_Title {
     const data = JSON.parse(
       (
         await take_match_groups(
-          `${this._umw.sc.url}/titles/${id}-${slug}`,
+          `${this._ume.sc.url}/titles/${id}-${slug}`,
           new RegExp('<div id="app" data-page="(.+)"><!--', "s"),
           [1]
         )
@@ -81,7 +81,7 @@ export class UMW_Title {
 
     for (const season of seasons) {
       const episodes = take_match_groups(
-        `${this._umw.sc.url}/titles/${id}-${slug}/stagione-${season.number}`,
+        `${this._ume.sc.url}/titles/${id}-${slug}/stagione-${season.number}`,
         new RegExp('<div id="app" data-page="(.+)"><!--', "s"),
         [1]
       ).then(
@@ -102,12 +102,12 @@ export class UMW_Title {
       | null = null;
     if (tmdb_id) {
       if (type == "movie") {
-        fromTmdb = this._umw.tmdb.v3.movies.getDetails(tmdb_id, {
+        fromTmdb = this._ume.tmdb.v3.movies.getDetails(tmdb_id, {
           append_to_response: ["credits"],
           language: "it-IT",
         });
       } else {
-        fromTmdb = this._umw.tmdb.v3.tv.getDetails(tmdb_id, {
+        fromTmdb = this._ume.tmdb.v3.tv.getDetails(tmdb_id, {
           append_to_response: ["credits"],
           language: "it-IT",
         });
@@ -144,7 +144,7 @@ export class UMW_Title {
   }) {
     const embed_url = (
       await take_match_groups(
-        `${this._umw.sc.url}/iframe/${title_id}?episode_id=${episode_id ?? ""}`,
+        `${this._ume.sc.url}/iframe/${title_id}?episode_id=${episode_id ?? ""}`,
         new RegExp('src="(.+)".+frameborder', "s"),
         [1]
       )

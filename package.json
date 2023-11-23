@@ -1,5 +1,5 @@
 {
-  "name": "umw",
+  "name": "ume",
   "version": "0.1.0",
   "description": "",
   "main": "dist/index.js",
@@ -22,10 +22,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com:paolodelfino/umw.git"
+    "url": "git@github.com:paolodelfino/ume.git"
   },
   "bugs": {
-    "url": "https://github.com/paolodelfino/umw/issues"
+    "url": "https://github.com/paolodelfino/ume/issues"
   },
   "files": [
     "dist"
