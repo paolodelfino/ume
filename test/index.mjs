@@ -15,7 +15,7 @@ const time = async (label, func) => {
  */
 let movie;
 await time("search", async () => {
-  const movies = await ume.title.search({ name: "fallimento" });
+  const movies = await ume.title.search({ name: "rick" });
   console.assert(movies.length > 0);
   movie = movies[0];
 });
@@ -49,7 +49,7 @@ await time("misc", async () => {
 await time("playlist", async () => {
   const playlist = await ume.title.playlist({
     title_id: details.id,
-    //   episode_id: (await details.seasons[4].episodes)[5].id,
+    episode_id: (await details.seasons[4].episodes)[5].id,
   });
   console.log(playlist);
 });

@@ -150,7 +150,7 @@ export class UME_Title {
       )
     )[0];
 
-    const master_dirty = (
+    const master_jsized = (
       await take_match_groups(
         embed_url,
         new RegExp("window[.]masterPlaylist = (.+)window.canPlayFHD", "s"),
@@ -158,7 +158,7 @@ export class UME_Title {
       )
     )[0];
 
-    const master = (0, eval)(`const b = ${master_dirty}; b`);
+    const master = (0, eval)(`const b = ${master_jsized}; b`);
 
     return `${master.url}?token=${master.params.token}&token720p=${master.params.token720p}&token360p=${master.params.token360p}&token480p=${master.params.token480p}&token1080p=${master.params.token1080p}&expires=${master.params.expires}`;
   }
