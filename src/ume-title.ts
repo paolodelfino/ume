@@ -1,5 +1,5 @@
 import { MoviesGetDetailsResponse, TVGetDetailsResponse } from "tmdb-js-node";
-import { UME } from ".";
+import { Ume } from ".";
 import {
   ApiResponse,
   Episode,
@@ -7,19 +7,19 @@ import {
   TitleDetails,
   TitleSearch,
 } from "./types";
-import { UME_Image } from "./ume-image";
-import { UME_Trailer } from "./ume-trailer";
+import { Ume_Image } from "./ume-image";
+import { Ume_Trailer } from "./ume-trailer";
 import { get, take_match_groups } from "./utils";
 
-export class UME_Title {
+export class Ume_Title {
   private _ume;
   image;
   trailer;
 
-  constructor({ ume }: { ume: UME }) {
+  constructor({ ume }: { ume: Ume }) {
     this._ume = ume;
-    this.image = new UME_Image({ ume: ume });
-    this.trailer = new UME_Trailer({ ume: ume });
+    this.image = new Ume_Image({ ume: ume });
+    this.trailer = new Ume_Trailer({ ume: ume });
   }
 
   /**

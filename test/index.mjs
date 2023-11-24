@@ -1,6 +1,6 @@
 import "dotenv/config";
-import { UME } from "../dist/index.mjs";
-const ume = new UME({ tmdb_api_key: process.env.TMDB_API_KEY });
+import { Ume } from "../dist/index.mjs";
+const ume = new Ume({ tmdb_api_key: process.env.TMDB_API_KEY });
 
 const time = async (label, func) => {
   console.log(label + " -------------");

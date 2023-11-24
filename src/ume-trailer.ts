@@ -1,10 +1,10 @@
-import { UME } from ".";
+import { Ume } from ".";
 import { ProviderKind } from "./types";
 
-export class UME_Trailer {
+export class Ume_Trailer {
   private _ume;
 
-  constructor({ ume }: { ume: UME }) {
+  constructor({ ume }: { ume: Ume }) {
     this._ume = ume;
   }
 
