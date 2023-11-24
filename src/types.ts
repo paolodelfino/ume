@@ -20,7 +20,6 @@ export interface TitleImage {
 
 export type TitleSearch = {
   // For future extendibility
-  provider: ProviderKind;
   id: number;
   slug: string;
   name: string;
@@ -83,18 +82,9 @@ export interface Episode {
 
 export type TitleDetails = Omit<TitleDataPage["title"], "seasons"> & {
   slug: string;
-  provider: ProviderKind;
   seasons: Ume_Seasons;
   cast: Promise<(MoviesGetCreditsCast | TVGetCreditsCast)[]> | null;
   genres: Promise<(MoviesGetDetailsGenre | TVGetDetailsGenre)[]> | null;
   related: TitleSearch[] | null;
   id: number;
 };
-
-export type ProviderKind = "sc";
-
-export interface IProvider {
-  url: string;
-  image(filename: string): string;
-  trailer(key: string): string;
-}

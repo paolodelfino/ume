@@ -31,9 +31,7 @@ export class Ume_Title {
     const res = JSON.parse(
       await get(`${this._ume.sc.url}/api/search?q=${name}`)
     ) as ApiResponse<TitleSearch>;
-    return res.data
-      .slice(0, max_results)
-      .map((o) => ({ ...o, provider: "sc" }));
+    return res.data.slice(0, max_results);
   }
 
   async details({
@@ -102,7 +100,6 @@ export class Ume_Title {
 
     return {
       slug,
-      provider: "sc",
       id,
       plot,
       tmdb_id,
