@@ -1,14 +1,9 @@
-import { Ume } from ".";
-import { ProviderKind } from "./types";
-
 export class Ume_Image {
-  private _ume;
+  endpoint!: string;
 
-  constructor({ ume }: { ume: Ume }) {
-    this._ume = ume;
-  }
+  constructor() {}
 
-  url({ provider, filename }: { provider: ProviderKind; filename: string }) {
-    return this._ume.sc.image(filename);
+  url({ filename }: { filename: string }) {
+    return `${this.endpoint}/${filename}`;
   }
 }

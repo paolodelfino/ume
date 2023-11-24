@@ -1,15 +1,12 @@
-import { Ume } from ".";
-import { ProviderKind } from "./types";
-
 export class Ume_Trailer {
-  private _ume;
+  endpoint: string;
 
-  constructor({ ume }: { ume: Ume }) {
-    this._ume = ume;
+  constructor() {
+    this.endpoint = "https://www.youtube-nocookie.com/embed";
   }
 
-  url({ provider, key }: { provider: ProviderKind; key: string }) {
-    return this._ume.sc.trailer(key);
+  url({ key }: { key: string }) {
+    return `${this.endpoint}/${key}`;
   }
 
   iframe({ url, className }: { url: string; className: string }) {

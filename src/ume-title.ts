@@ -18,8 +18,8 @@ export class Ume_Title {
 
   constructor({ ume }: { ume: Ume }) {
     this._ume = ume;
-    this.image = new Ume_Image({ ume: ume });
-    this.trailer = new Ume_Trailer({ ume: ume });
+    this.image = new Ume_Image();
+    this.trailer = new Ume_Trailer();
   }
 
   /**
