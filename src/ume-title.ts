@@ -1,6 +1,6 @@
 import { MoviesGetDetailsResponse, TVGetDetailsResponse } from "tmdb-js-node";
 import { Ume } from ".";
-import { ApiResponse, TitleDataPage, TitleDetails, TitleSearch } from "./types";
+import { TitleDataPage, TitleDetails, TitleSearch } from "./types";
 import { Ume_Image } from "./ume-image";
 import { Ume_Seasons } from "./ume-seasons";
 import { Ume_Trailer } from "./ume-trailer";
@@ -30,7 +30,9 @@ export class Ume_Title {
   }): Promise<TitleSearch[]> {
     const res = JSON.parse(
       await get(`${this._ume.sc.url}/api/search?q=${name}`)
-    ) as ApiResponse<TitleSearch>;
+    ) as {
+      data: TitleSearch[];
+    };
     return res.data.slice(0, max_results);
   }
 

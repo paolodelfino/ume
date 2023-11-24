@@ -6,10 +6,6 @@ import {
 } from "tmdb-js-node";
 import { Ume_Seasons } from "./ume-seasons";
 
-export interface ApiResponse<T> {
-  data: T[];
-}
-
 export interface TitleImage {
   imageable_id: number;
   imageable_type: "title" | "episode";
@@ -19,7 +15,6 @@ export interface TitleImage {
 }
 
 export type TitleSearch = {
-  // For future extendibility
   id: number;
   slug: string;
   name: string;
@@ -38,12 +33,6 @@ export type TitleSearch = {
     }
 );
 
-export interface TitleTrailer {
-  id: number;
-  name: string;
-  youtube_id: string;
-}
-
 export interface TitleDataPage {
   title: {
     plot: string;
@@ -61,7 +50,11 @@ export interface TitleDataPage {
       title_id: number;
       episodes_count: number;
     }[];
-    trailers: TitleTrailer[];
+    trailers: {
+      id: number;
+      name: string;
+      youtube_id: string;
+    }[];
     images: TitleImage[];
   };
   sliders: {
