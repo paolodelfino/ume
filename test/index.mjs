@@ -11,7 +11,7 @@ const time = async (label, func) => {
 };
 
 /**
- * @type import("../dist/index.mjs").TitleSearch
+ * @type import("../dist/index.mjs").Title_Search
  */
 let movie;
 await time("search", async () => {
@@ -21,7 +21,7 @@ await time("search", async () => {
 });
 
 /**
- * @type import("../dist/index.mjs").TitleDetails
+ * @type import("../dist/index.mjs").Title_Details
  */
 let details;
 await time("details", async () => {
