@@ -61,3 +61,20 @@ await time("playlist", async () => {
   });
   console.log(playlist);
 });
+
+await time("next episode", async () => {
+  const next = await ume.title.utils.nextEpisode({
+    title_id: details.id,
+    episode_id: (await details.seasons.get(4))[3].id,
+  });
+  console.assert(next.number == 5);
+});
+
+await time("next episode (not available)", async () => {
+  const episodes = await details.seasons.get(details.seasons_count - 1);
+  const next = await ume.title.utils.nextEpisode({
+    title_id: details.id,
+    episode_id: episodes[episodes.length - 1].id,
+  });
+  console.assert(next === null);
+});
