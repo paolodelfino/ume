@@ -1,9 +1,7 @@
-import { Ume } from ".";
 import { Episode } from "./types";
 import { take_match_groups } from "./utils";
 
 export class Ume_Seasons {
-  private _ume;
   private _fetchers: (
     | {
         number: number;
@@ -14,14 +12,10 @@ export class Ume_Seasons {
   private _cached: Episode[][] = [];
 
   constructor({
-    ume,
     seasons,
   }: {
-    ume: Ume;
     seasons: { number: number; episodesUrl: string }[];
   }) {
-    this._ume = ume;
-
     for (const season of seasons) {
       this._fetchers[season.number] = {
         number: season.number,

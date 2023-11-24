@@ -1,6 +1,6 @@
 import { TMDBNodeApi } from "tmdb-js-node";
 import { SC } from "./sc";
-import { TitleDetails, TitleSearch } from "./types";
+import { Title_Details, Title_Search } from "./types";
 import { Ume_Title } from "./ume-title";
 
 export class Ume {
@@ -15,4 +15,4 @@ export class Ume {
   }
 }
 
-export type { TitleDetails, TitleSearch };
+export type { Title_Details, Title_Search };

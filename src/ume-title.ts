@@ -1,6 +1,6 @@
 import { MoviesGetDetailsResponse, TVGetDetailsResponse } from "tmdb-js-node";
 import { Ume } from ".";
-import { TitleDataPage, TitleDetails, TitleSearch } from "./types";
+import { Title_Data_Page, Title_Details, Title_Search } from "./types";
 import { Ume_Image } from "./ume-image";
 import { Ume_Seasons } from "./ume-seasons";
 import { Ume_Trailer } from "./ume-trailer";
@@ -27,11 +27,11 @@ export class Ume_Title {
   }: {
     name: string;
     max_results?: number;
-  }): Promise<TitleSearch[]> {
+  }): Promise<Title_Search[]> {
     const res = JSON.parse(
       await get(`${this._ume.sc.url}/api/search?q=${name}`)
     ) as {
-      data: TitleSearch[];
+      data: Title_Search[];
     };
     return res.data.slice(0, max_results);
   }
@@ -42,7 +42,7 @@ export class Ume_Title {
   }: {
     id: number;
     slug: string;
-  }): Promise<TitleDetails> {
+  }): Promise<Title_Details> {
     const data = JSON.parse(
       (
         await take_match_groups(
@@ -51,7 +51,7 @@ export class Ume_Title {
           [1]
         )
       )[0]
-    ).props as TitleDataPage;
+    ).props as Title_Data_Page;
 
     const {
       plot,
@@ -73,7 +73,6 @@ export class Ume_Title {
       sliders.find((slider) => slider.name == "related")?.titles ?? null;
 
     const seasons_handler = new Ume_Seasons({
-      ume: this._ume,
       seasons: seasons.map((season) => ({
         number: season.number,
         episodesUrl: `${this._ume.sc.url}/titles/${season.title_id}-${slug}/stagione-${season.number}`,

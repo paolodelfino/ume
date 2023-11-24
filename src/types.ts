@@ -6,7 +6,7 @@ import {
 } from "tmdb-js-node";
 import { Ume_Seasons } from "./ume-seasons";
 
-export interface TitleImage {
+export interface Title_Image {
   imageable_id: number;
   imageable_type: "title" | "episode";
   filename: string;
@@ -14,13 +14,13 @@ export interface TitleImage {
   original_url_field: string | null;
 }
 
-export type TitleSearch = {
+export type Title_Search = {
   id: number;
   slug: string;
   name: string;
   score: string;
   sub_ita: number;
-  images: TitleImage[];
+  images: Title_Image[];
   seasons_count: number;
 } & (
   | {
@@ -33,7 +33,7 @@ export type TitleSearch = {
     }
 );
 
-export interface TitleDataPage {
+export interface Title_Data_Page {
   title: {
     plot: string;
     tmdb_id: number | null;
@@ -55,12 +55,12 @@ export interface TitleDataPage {
       name: string;
       youtube_id: string;
     }[];
-    images: TitleImage[];
+    images: Title_Image[];
   };
   sliders: {
     name: string;
     label: string;
-    titles: TitleSearch[];
+    titles: Title_Search[];
   }[];
 }
 
@@ -70,14 +70,14 @@ export interface Episode {
   name: string;
   plot: string;
   duration: number;
-  images: TitleImage[];
+  images: Title_Image[];
 }
 
-export type TitleDetails = Omit<TitleDataPage["title"], "seasons"> & {
+export type Title_Details = Omit<Title_Data_Page["title"], "seasons"> & {
   slug: string;
   seasons: Ume_Seasons;
   cast: Promise<(MoviesGetCreditsCast | TVGetCreditsCast)[]> | null;
   genres: Promise<(MoviesGetDetailsGenre | TVGetDetailsGenre)[]> | null;
-  related: TitleSearch[] | null;
+  related: Title_Search[] | null;
   id: number;
 };
