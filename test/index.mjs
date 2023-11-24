@@ -28,13 +28,21 @@ await time("details", async () => {
   details = await ume.title.details({ id: movie.id, slug: movie.slug });
 });
 
+await time("seasons (fetch)", async () => {
+  const episodes = await details.seasons.get(4);
+  console.assert(episodes.length > 0);
+});
+
+await time("seasons (cache)", async () => {
+  const episodes = await details.seasons.get(4);
+  console.assert(episodes.length > 0);
+});
+
 await time("misc", async () => {
   const image = ume.title.image.url({
-    provider: details.provider,
     filename: details.images[0].filename,
   });
   const trailer = ume.title.trailer.url({
-    provider: details.provider,
     key: details.trailers[0].youtube_id,
   });
   const iframe = ume.title.trailer.iframe({
@@ -49,7 +57,7 @@ await time("misc", async () => {
 await time("playlist", async () => {
   const playlist = await ume.title.playlist({
     title_id: details.id,
-    episode_id: (await details.seasons[4].episodes)[5].id,
+    episode_id: (await details.seasons.get(2))[5].id,
   });
   console.log(playlist);
 });

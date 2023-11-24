@@ -1,9 +1,13 @@
-export class Ume_Image {
-  endpoint!: string;
+import { Ume } from ".";
 
-  constructor() {}
+export class Ume_Image {
+  private _ume;
+
+  constructor({ ume }: { ume: Ume }) {
+    this._ume = ume;
+  }
 
   url({ filename }: { filename: string }) {
-    return `${this.endpoint}/${filename}`;
+    return `${this._ume.sc.image_endpoint}/${filename}`;
   }
 }

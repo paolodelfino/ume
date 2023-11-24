@@ -3,6 +3,7 @@ import { Ume } from ".";
 export class SC {
   private _ume;
   private _url!: string;
+  image_endpoint!: string;
 
   constructor({ ume }: { ume: Ume }) {
     this._ume = ume;
@@ -15,7 +16,7 @@ export class SC {
 
   set url(updated_url) {
     this._url = updated_url;
-    this._ume.title.image.endpoint = `${updated_url.replace(
+    this.image_endpoint = `${updated_url.replace(
       "https://",
       "https://cdn."
     )}/images`;

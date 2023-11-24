@@ -1,13 +1,8 @@
 import { MoviesGetDetailsResponse, TVGetDetailsResponse } from "tmdb-js-node";
 import { Ume } from ".";
-import {
-  ApiResponse,
-  Episode,
-  TitleDataPage,
-  TitleDetails,
-  TitleSearch,
-} from "./types";
+import { ApiResponse, TitleDataPage, TitleDetails, TitleSearch } from "./types";
 import { Ume_Image } from "./ume-image";
+import { Ume_Seasons } from "./ume-seasons";
 import { Ume_Trailer } from "./ume-trailer";
 import { get, take_match_groups } from "./utils";
 
@@ -18,7 +13,7 @@ export class Ume_Title {
 
   constructor({ ume }: { ume: Ume }) {
     this._ume = ume;
-    this.image = new Ume_Image();
+    this.image = new Ume_Image({ ume });
     this.trailer = new Ume_Trailer();
   }
 
@@ -77,22 +72,13 @@ export class Ume_Title {
     const related =
       sliders.find((slider) => slider.name == "related")?.titles ?? null;
 
-    const detailed_seasons: TitleDetails["seasons"] = [];
-
-    for (const season of seasons) {
-      const episodes = take_match_groups(
-        `${this._ume.sc.url}/titles/${id}-${slug}/stagione-${season.number}`,
-        new RegExp('<div id="app" data-page="(.+)"><!--', "s"),
-        [1]
-      ).then(
-        (res) => JSON.parse(res[0]).props.loadedSeason.episodes as Episode[]
-      );
-
-      detailed_seasons.push({
+    const seasons_handler = new Ume_Seasons({
+      ume: this._ume,
+      seasons: seasons.map((season) => ({
         number: season.number,
-        episodes,
-      });
-    }
+        episodesUrl: `${this._ume.sc.url}/titles/${season.title_id}-${slug}/stagione-${season.number}`,
+      })),
+    });
 
     let fromTmdb:
       | (
@@ -115,6 +101,7 @@ export class Ume_Title {
     }
 
     return {
+      slug,
       provider: "sc",
       id,
       plot,
@@ -126,7 +113,7 @@ export class Ume_Title {
       release_date,
       status,
       seasons_count: seasons_count,
-      seasons: detailed_seasons,
+      seasons: seasons_handler,
       trailers,
       images,
       cast: fromTmdb?.then((res) => res.credits.cast) ?? null,

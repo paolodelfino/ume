@@ -4,6 +4,7 @@ import {
   TVGetCreditsCast,
   TVGetDetailsGenre,
 } from "tmdb-js-node";
+import { Ume_Seasons } from "./ume-seasons";
 
 export interface ApiResponse<T> {
   data: T[];
@@ -81,11 +82,9 @@ export interface Episode {
 }
 
 export type TitleDetails = Omit<TitleDataPage["title"], "seasons"> & {
+  slug: string;
   provider: ProviderKind;
-  seasons: {
-    number: number;
-    episodes: Promise<Episode[]>;
-  }[];
+  seasons: Ume_Seasons;
   cast: Promise<(MoviesGetCreditsCast | TVGetCreditsCast)[]> | null;
   genres: Promise<(MoviesGetDetailsGenre | TVGetDetailsGenre)[]> | null;
   related: TitleSearch[] | null;
