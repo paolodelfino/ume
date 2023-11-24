@@ -24,15 +24,11 @@ export class Ume_Seasons {
       this._fetchers[season.number] = {
         number: season.number,
         episodes: async () => {
-          const episodes = await take_match_groups(
-            season.episodesUrl,
-            DATA_PAGE_REGEX,
-            [DATA_PAGE_GROUP_INDEX]
-          ).then(
+          return await take_match_groups(season.episodesUrl, DATA_PAGE_REGEX, [
+            DATA_PAGE_GROUP_INDEX,
+          ]).then(
             (res) => JSON.parse(res[0]).props.loadedSeason.episodes as Episode[]
           );
-
-          return episodes;
         },
       };
     }

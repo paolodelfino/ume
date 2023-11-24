@@ -70,6 +70,7 @@ export interface Episode {
   name: string;
   plot: string;
   duration: number;
+  season_id: number;
   images: Title_Image[];
 }
 
