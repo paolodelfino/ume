@@ -1,5 +1,9 @@
 import { Episode } from "./types";
-import { take_match_groups } from "./utils";
+import {
+  DATA_PAGE_GROUP_INDEX,
+  DATA_PAGE_REGEX,
+  take_match_groups,
+} from "./utils";
 
 export class Ume_Seasons {
   private _fetchers: (
@@ -22,8 +26,8 @@ export class Ume_Seasons {
         episodes: async () => {
           const episodes = await take_match_groups(
             season.episodesUrl,
-            new RegExp('<div id="app" data-page="(.+)"><!--', "s"),
-            [1]
+            DATA_PAGE_REGEX,
+            [DATA_PAGE_GROUP_INDEX]
           ).then(
             (res) => JSON.parse(res[0]).props.loadedSeason.episodes as Episode[]
           );
