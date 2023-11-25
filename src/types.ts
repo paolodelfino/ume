@@ -1,9 +1,4 @@
-import {
-  MoviesGetCreditsCast,
-  MoviesGetDetailsGenre,
-  TVGetCreditsCast,
-  TVGetDetailsGenre,
-} from "tmdb-js-node";
+import { MoviesGetCreditsCast, TVGetCreditsCast } from "tmdb-js-node";
 import { Ume_Seasons } from "./ume-seasons";
 
 export interface Title_Image {
@@ -88,6 +83,9 @@ export interface Title_Data_Page {
       youtube_id: string;
     }[];
     images: Title_Image[];
+    genres: {
+      name: NonNullable<Slider_Fetch["genre"]>;
+    }[];
   };
   sliders: Title_Slider[];
 }
@@ -105,7 +103,6 @@ export type Title_Details = Omit<Title_Data_Page["title"], "seasons"> & {
   slug: string;
   seasons: Ume_Seasons;
   cast: Promise<(MoviesGetCreditsCast | TVGetCreditsCast)[]> | null;
-  genres: Promise<(MoviesGetDetailsGenre | TVGetDetailsGenre)[]> | null;
   related: Title_Search[] | null;
   id: number;
 };

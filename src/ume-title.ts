@@ -73,6 +73,7 @@ export class Ume_Title {
       images,
       runtime,
       score,
+      genres,
     } = data.title;
 
     const sliders = data.sliders;
@@ -123,7 +124,7 @@ export class Ume_Title {
       trailers,
       images,
       cast: fromTmdb?.then((res) => res.credits.cast) ?? null,
-      genres: fromTmdb?.then((res) => res.genres) ?? null,
+      genres,
       related,
     };
   }

@@ -15,7 +15,7 @@ const time = async (label, func) => {
  */
 let movie;
 await time("search", async () => {
-  const movies = await ume.title.search({ name: "rick" });
+  const movies = await ume.title.search({ name: "enola" });
   console.assert(movies.length > 0);
   movie = movies[0];
 });
@@ -26,16 +26,6 @@ await time("search", async () => {
 let details;
 await time("details", async () => {
   details = await ume.title.details({ id: movie.id, slug: movie.slug });
-});
-
-await time("seasons (fetch)", async () => {
-  const episodes = await details.seasons.get(4);
-  console.assert(episodes.length > 0);
-});
-
-await time("seasons (cache)", async () => {
-  const episodes = await details.seasons.get(4);
-  console.assert(episodes.length > 0);
 });
 
 await time("misc", async () => {
@@ -57,54 +47,67 @@ await time("misc", async () => {
 await time("playlist", async () => {
   const playlist = await ume.title.playlist({
     title_id: details.id,
-    episode_id: (await details.seasons.get(2))[5].id,
+    episode_id:
+      details.type == "tv" ? (await details.seasons.get(2))[5].id : undefined,
   });
   console.log(playlist);
 });
 
-await time("episode seek bounds", async () => {
-  const [prev, next] = await details.seasons.seek_bounds_episode({
-    season_number: 6,
-    episode_index: 4,
+if (details.type == "tv") {
+  await time("seasons (fetch)", async () => {
+    const episodes = await details.seasons.get(4);
+    console.assert(episodes.length > 0);
   });
-  console.assert(
-    !!prev && !!next && prev.data.number == 4 && next.data.number == 6
-  );
-});
 
-await time("episode seek bounds (next not available)", async () => {
-  const [prev, next] = await details.seasons.seek_bounds_episode({
-    season_number: 6,
-    episode_index: 9,
+  await time("seasons (cache)", async () => {
+    const episodes = await details.seasons.get(4);
+    console.assert(episodes.length > 0);
   });
-  console.assert(!!prev && !next && prev.data.number == 9);
-});
 
-await time("episode seek bounds (prev not available)", async () => {
-  const [prev, next] = await details.seasons.seek_bounds_episode({
-    season_number: 1,
-    episode_index: 0,
+  await time("episode seek bounds", async () => {
+    const [prev, next] = await details.seasons.seek_bounds_episode({
+      season_number: 6,
+      episode_index: 4,
+    });
+    console.assert(
+      !!prev && !!next && prev.data.number == 4 && next.data.number == 6
+    );
   });
-  console.assert(!prev && !!next && next.data.number == 2);
-});
 
-await time("double episode seek bounds", async () => {
-  const [prev, next] = await details.seasons.seek_bounds_episode({
-    season_number: 4,
-    episode_index: 3,
+  await time("episode seek bounds (next not available)", async () => {
+    const [prev, next] = await details.seasons.seek_bounds_episode({
+      season_number: 6,
+      episode_index: 9,
+    });
+    console.assert(!!prev && !next && prev.data.number == 9);
   });
-  console.assert(
-    !!prev && !!next && prev.data.number == 3 && next.data.number == 5
-  );
 
-  const [prev2, next2] = await details.seasons.seek_bounds_episode({
-    episode_index: next.episode_index,
-    season_number: next.season_number,
+  await time("episode seek bounds (prev not available)", async () => {
+    const [prev, next] = await details.seasons.seek_bounds_episode({
+      season_number: 1,
+      episode_index: 0,
+    });
+    console.assert(!prev && !!next && next.data.number == 2);
   });
-  console.assert(
-    !!prev2 && !!next2 && prev2.data.number == 4 && next2.data.number == 6
-  );
-});
+
+  await time("double episode seek bounds", async () => {
+    const [prev, next] = await details.seasons.seek_bounds_episode({
+      season_number: 4,
+      episode_index: 3,
+    });
+    console.assert(
+      !!prev && !!next && prev.data.number == 3 && next.data.number == 5
+    );
+
+    const [prev2, next2] = await details.seasons.seek_bounds_episode({
+      episode_index: next.episode_index,
+      season_number: next.season_number,
+    });
+    console.assert(
+      !!prev2 && !!next2 && prev2.data.number == 4 && next2.data.number == 6
+    );
+  });
+}
 
 await time("sliders", async () => {
   const queue = ume.title.sliders_queue([
