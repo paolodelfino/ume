@@ -18,24 +18,15 @@ export type Title_Search = {
   id: number;
   slug: string;
   name: string;
-  score: number | null;
-  sub_ita: number;
+  score: string | null;
   images: Title_Image[];
   seasons_count: number;
-} & (
-  | {
-      type: "tv";
-      last_air_date: null;
-    }
-  | {
-      type: "movie";
-      last_air_date: string;
-    }
-);
+  type: "tv" | "movie";
+};
 
 export interface Title_Data_Page {
   title: {
-    score: number | null;
+    score: string | null;
     plot: string;
     tmdb_id: number | null;
     name: string;
@@ -43,7 +34,7 @@ export interface Title_Data_Page {
     quality: string;
     type: "movie" | "tv";
     release_date: string;
-    status: "Canceled" | "Post Production " | "Returning Series" | "Released";
+    status: "Canceled" | "Post Production" | "Returning Series" | "Released";
     seasons_count: number;
     seasons: {
       id: number;
