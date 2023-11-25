@@ -24,6 +24,46 @@ export type Title_Search = {
   type: "tv" | "movie";
 };
 
+export interface Slider_Fetch {
+  name: "top10" | "trending" | "latest" | "upcoming" | "genre";
+  title_type: "movie" | "tv" | null;
+  genre:
+    | "Crime"
+    | "Commedia"
+    | "War & Politics"
+    | "Action & Adventure"
+    | "Mistero"
+    | "Sci-Fi & Fantasy"
+    | "Musica"
+    | "televisione film"
+    | "Korean drama"
+    | "Kids"
+    | "Azione"
+    | "Avventura"
+    | "Soap"
+    | "Fantascienza"
+    | "Reality"
+    | "Storia"
+    | "Animazione"
+    | "Dramma"
+    | "Guerra"
+    | "Fantasy"
+    | "Western"
+    | "Documentario"
+    | "Commedia"
+    | "Famiglia"
+    | "Thriller"
+    | "Romance"
+    | "Horror"
+    | null;
+}
+
+export interface Title_Slider {
+  name: string;
+  label: string;
+  titles: Title_Search[];
+}
+
 export interface Title_Data_Page {
   title: {
     score: string | null;
@@ -49,11 +89,7 @@ export interface Title_Data_Page {
     }[];
     images: Title_Image[];
   };
-  sliders: {
-    name: string;
-    label: string;
-    titles: Title_Search[];
-  }[];
+  sliders: Title_Slider[];
 }
 
 export interface Episode {
@@ -74,7 +110,7 @@ export type Title_Details = Omit<Title_Data_Page["title"], "seasons"> & {
   id: number;
 };
 
-export interface SeekEpisode {
+export interface Seek_Episode {
   season_number: number;
   episode_index: number;
   data: Episode;

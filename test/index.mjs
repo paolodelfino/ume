@@ -105,3 +105,21 @@ await time("double episode seek bounds", async () => {
     !!prev2 && !!next2 && prev2.data.number == 4 && next2.data.number == 6
   );
 });
+
+await time("sliders", async () => {
+  const queue = ume.title.sliders_queue([
+    { genre: "Action & Adventure", name: "genre" },
+    { genre: "Animazione", name: "genre" },
+    { genre: "Commedia", name: "genre" },
+    { genre: "Crime", name: "genre" },
+    { name: "latest" },
+    { name: "top10" },
+    { name: "trending" },
+    { name: "upcoming" },
+  ]);
+  console.assert(queue.data.length == 0);
+  console.assert((await queue.next()).has_next);
+  console.assert(queue.data.length == 6);
+  console.assert(!(await queue.next()).has_next);
+  console.assert(queue.data.length == 8);
+});

@@ -1,4 +1,4 @@
-import { Episode, SeekEpisode } from "./types";
+import { Episode, Seek_Episode } from "./types";
 import {
   DATA_PAGE_GROUP_INDEX,
   DATA_PAGE_REGEX,
@@ -50,9 +50,9 @@ export class Ume_Seasons {
   }: {
     episode_index: number;
     season_number: number;
-  }): Promise<[prev: SeekEpisode | null, next: SeekEpisode | null]> {
-    let prev: SeekEpisode | null = null;
-    let next: SeekEpisode | null = null;
+  }): Promise<[prev: Seek_Episode | null, next: Seek_Episode | null]> {
+    let prev: Seek_Episode | null = null;
+    let next: Seek_Episode | null = null;
 
     const curr_season = (await this.get(season_number))!;
 

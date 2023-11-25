@@ -7,6 +7,19 @@ export async function get(url: string, headers?: Headers): Promise<string> {
   return response.text();
 }
 
+export async function post(url: string, body: object): Promise<string> {
+  const headers = new Headers();
+  headers.append("Content-Type", "application/json");
+  const response = await fetch(url, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(body),
+  }).catch((err) => {
+    throw new Error(`While trying to post: ${body} to ${url}: ${err}`);
+  });
+  return response.text();
+}
+
 export async function take_match_groups(
   url: string,
   regex: RegExp,

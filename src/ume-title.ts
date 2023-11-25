@@ -1,7 +1,13 @@
 import { MoviesGetDetailsResponse, TVGetDetailsResponse } from "tmdb-js-node";
 import { Ume } from ".";
-import { Title_Data_Page, Title_Details, Title_Search } from "./types";
+import {
+  Slider_Fetch,
+  Title_Data_Page,
+  Title_Details,
+  Title_Search,
+} from "./types";
 import { Ume_Seasons } from "./ume-seasons";
+import { Ume_Sliders_Queue } from "./ume-sliders-queue";
 import {
   DATA_PAGE_GROUP_INDEX,
   DATA_PAGE_REGEX,
@@ -11,9 +17,12 @@ import {
 
 export class Ume_Title {
   private _ume;
+  sliders_queue;
 
   constructor({ ume }: { ume: Ume }) {
     this._ume = ume;
+    this.sliders_queue = (sliders: Slider_Fetch[]) =>
+      new Ume_Sliders_Queue({ ume: this._ume, sliders });
   }
 
   /**
