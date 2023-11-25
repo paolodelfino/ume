@@ -1,6 +1,6 @@
 import { MoviesGetDetailsResponse, TVGetDetailsResponse } from "tmdb-js-node";
 import { Ume } from ".";
-import { Episode, Title_Data_Page, Title_Details, Title_Search } from "./types";
+import { Title_Data_Page, Title_Details, Title_Search } from "./types";
 import { Ume_Image } from "./ume-image";
 import { Ume_Seasons } from "./ume-seasons";
 import { Ume_Trailer } from "./ume-trailer";
@@ -152,24 +152,4 @@ export class Ume_Title {
 
     return `${master.url}?token=${master.params.token}&token720p=${master.params.token720p}&token360p=${master.params.token360p}&token480p=${master.params.token480p}&token1080p=${master.params.token1080p}&expires=${master.params.expires}`;
   }
-
-  utils = {
-    nextEpisode: async ({
-      title_id,
-      episode_id,
-    }: {
-      title_id: number;
-      episode_id: number;
-    }) => {
-      return JSON.parse(
-        (
-          await take_match_groups(
-            `${this._ume.sc.url}/watch/${title_id}?e=${episode_id}`,
-            DATA_PAGE_REGEX,
-            [DATA_PAGE_GROUP_INDEX]
-          )
-        )[0]
-      ).props.nextEpisode as Omit<Episode, "images"> | null;
-    },
-  };
 }

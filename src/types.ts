@@ -70,7 +70,6 @@ export interface Episode {
   name: string;
   plot: string;
   duration: number;
-  season_id: number;
   images: Title_Image[];
 }
 
@@ -82,3 +81,9 @@ export type Title_Details = Omit<Title_Data_Page["title"], "seasons"> & {
   related: Title_Search[] | null;
   id: number;
 };
+
+export interface SeekEpisode {
+  season_number: number;
+  episode_index: number;
+  data: Episode;
+}

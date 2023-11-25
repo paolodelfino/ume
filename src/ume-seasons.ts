@@ -1,4 +1,4 @@
-import { Episode } from "./types";
+import { Episode, SeekEpisode } from "./types";
 import {
   DATA_PAGE_GROUP_INDEX,
   DATA_PAGE_REGEX,
@@ -13,7 +13,7 @@ export class Ume_Seasons {
       }
     | undefined
   )[] = [];
-  private _cached: Episode[][] = [];
+  private _cached: (Episode[] | undefined)[] = [];
 
   constructor({
     seasons,
@@ -36,9 +36,60 @@ export class Ume_Seasons {
 
   async get(number: number) {
     if (!this._cached[number]) {
-      this._cached[number] = await this._fetchers[number]!.episodes();
+      this._cached[number] = await this._fetchers[number]?.episodes();
     }
 
     return this._cached[number];
+  }
+
+  async seek_bounds_episode({
+    episode_index,
+    season_number,
+  }: {
+    episode_index: number;
+    season_number: number;
+  }): Promise<[prev: SeekEpisode | null, next: SeekEpisode | null]> {
+    let prev: SeekEpisode | null = null;
+    let next: SeekEpisode | null = null;
+
+    const curr_season = (await this.get(season_number))!;
+
+    let i = episode_index - 1;
+    let s_num = season_number;
+    let data: Episode | null = curr_season[i];
+
+    if (episode_index < 1) {
+      i = 0;
+      s_num = season_number - 1;
+      data = (await this.get(s_num))?.[episode_index] ?? null;
+    }
+
+    if (data) {
+      prev = {
+        data,
+        episode_index: i,
+        season_number: s_num,
+      };
+    }
+
+    if (episode_index >= curr_season.length - 1) {
+      i = 0;
+      s_num = season_number + 1;
+      data = (await this.get(s_num))?.[i] ?? null;
+    } else {
+      i = episode_index + 1;
+      s_num = season_number;
+      data = curr_season[i];
+    }
+
+    if (data) {
+      next = {
+        data,
+        episode_index: i,
+        season_number: s_num,
+      };
+    }
+
+    return [prev, next];
   }
 }
