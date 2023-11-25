@@ -162,4 +162,17 @@ export class Ume_Title {
   allowfullscreen
 ></iframe>`;
   }
+
+  is_available({
+    release_date,
+    status,
+  }: {
+    release_date: Title_Details["release_date"];
+    status: Title_Details["status"];
+  }) {
+    return (
+      new Date(release_date).getTime() <= Date.now() &&
+      status != "Post Production"
+    );
+  }
 }
