@@ -49,13 +49,11 @@ export class Ume_Title {
     slug: string;
   }): Promise<Title_Details> {
     const data = JSON.parse(
-      (
-        await take_match_groups(
-          `${this._ume.sc.url}/titles/${id}-${slug}`,
-          DATA_PAGE_REGEX,
-          [DATA_PAGE_GROUP_INDEX]
-        )
-      )[0]
+      await take_match_groups(
+        `${this._ume.sc.url}/titles/${id}-${slug}`,
+        DATA_PAGE_REGEX,
+        DATA_PAGE_GROUP_INDEX
+      )
     ).props as Title_Data_Page;
 
     const {
@@ -132,21 +130,17 @@ export class Ume_Title {
     title_id: number;
     episode_id?: number;
   }) {
-    const embed_url = (
-      await take_match_groups(
-        `${this._ume.sc.url}/iframe/${title_id}?episode_id=${episode_id ?? ""}`,
-        new RegExp('src="(.+)".+frameborder', "s"),
-        [1]
-      )
-    )[0];
+    const embed_url = await take_match_groups(
+      `${this._ume.sc.url}/iframe/${title_id}?episode_id=${episode_id ?? ""}`,
+      new RegExp('src="(.+)".+frameborder', "s"),
+      1
+    );
 
-    const master_jsized = (
-      await take_match_groups(
-        embed_url,
-        new RegExp("window[.]masterPlaylist = (.+)window.canPlayFHD", "s"),
-        [1]
-      )
-    )[0];
+    const master_jsized = await take_match_groups(
+      embed_url,
+      new RegExp("window[.]masterPlaylist = (.+)window.canPlayFHD", "s"),
+      1
+    );
 
     const master = (0, eval)(`const b = ${master_jsized}; b`);
 

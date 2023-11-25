@@ -11,7 +11,19 @@ export async function take_match_groups(
   url: string,
   regex: RegExp,
   groups: number[]
-): Promise<string[]> {
+): Promise<string[]>;
+
+export async function take_match_groups(
+  url: string,
+  regex: RegExp,
+  groups: number
+): Promise<string>;
+
+export async function take_match_groups(
+  url: string,
+  regex: RegExp,
+  groups: number | number[]
+): Promise<string | string[]> {
   const parts: string[] = [];
 
   const raw = await get(url);
@@ -22,15 +34,25 @@ export async function take_match_groups(
     );
   }
 
-  groups.forEach((group) => {
-    if (!match[group]) {
+  if (Array.isArray(groups)) {
+    groups.forEach((group) => {
+      if (!match[group]) {
+        throw new Error(
+          `Expected data from group but got null: page(${url}), regex(${regex.source}), group(${group})`
+        );
+      }
+
+      parts.push(decode_utf8(decode_html(match[group])));
+    });
+  } else {
+    if (!match[groups]) {
       throw new Error(
-        `Expected data from group but got null: page(${url}), regex(${regex.source}), group(${group})`
+        `Expected data from group but got null: page(${url}), regex(${regex.source}), group(${groups})`
       );
     }
 
-    parts.push(decode_utf8(decode_html(match[group])));
-  });
+    return decode_utf8(decode_html(match[groups as number]));
+  }
 
   return parts;
 }
