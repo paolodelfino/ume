@@ -18,7 +18,7 @@ export type Title_Search = {
   id: number;
   slug: string;
   name: string;
-  score: string;
+  score: number | null;
   sub_ita: number;
   images: Title_Image[];
   seasons_count: number;
@@ -35,6 +35,7 @@ export type Title_Search = {
 
 export interface Title_Data_Page {
   title: {
+    score: number | null;
     plot: string;
     tmdb_id: number | null;
     name: string;

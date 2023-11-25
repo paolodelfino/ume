@@ -63,6 +63,7 @@ export class Ume_Title {
       trailers,
       images,
       runtime,
+      score,
     } = data.title;
 
     const sliders = data.sliders;
@@ -97,6 +98,7 @@ export class Ume_Title {
     }
 
     return {
+      score,
       slug,
       id,
       plot,
