@@ -39,13 +39,13 @@ await time("seasons (cache)", async () => {
 });
 
 await time("misc", async () => {
-  const image = ume.title.image.url({
+  const image = ume.title.image_url({
     filename: details.images[0].filename,
   });
-  const trailer = ume.title.trailer.url({
+  const trailer = ume.title.trailer_url({
     key: details.trailers[0].youtube_id,
   });
-  const iframe = ume.title.trailer.iframe({
+  const iframe = ume.title.trailer_iframe({
     url: trailer,
     className: "w-full h-full",
   });

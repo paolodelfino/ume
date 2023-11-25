@@ -1,9 +1,7 @@
 import { MoviesGetDetailsResponse, TVGetDetailsResponse } from "tmdb-js-node";
 import { Ume } from ".";
 import { Title_Data_Page, Title_Details, Title_Search } from "./types";
-import { Ume_Image } from "./ume-image";
 import { Ume_Seasons } from "./ume-seasons";
-import { Ume_Trailer } from "./ume-trailer";
 import {
   DATA_PAGE_GROUP_INDEX,
   DATA_PAGE_REGEX,
@@ -13,13 +11,9 @@ import {
 
 export class Ume_Title {
   private _ume;
-  image;
-  trailer;
 
   constructor({ ume }: { ume: Ume }) {
     this._ume = ume;
-    this.image = new Ume_Image({ ume });
-    this.trailer = new Ume_Trailer();
   }
 
   /**
@@ -145,5 +139,25 @@ export class Ume_Title {
     const master = (0, eval)(`const b = ${master_jsized}; b`);
 
     return `${master.url}?token=${master.params.token}&token720p=${master.params.token720p}&token360p=${master.params.token360p}&token480p=${master.params.token480p}&token1080p=${master.params.token1080p}&expires=${master.params.expires}`;
+  }
+
+  image_url({ filename }: { filename: string }) {
+    return `${this._ume.sc.image_endpoint}/${filename}`;
+  }
+
+  trailer_url({ key }: { key: string }) {
+    return `${this._ume.sc.trailer_endpoint}/${key}`;
+  }
+
+  trailer_iframe({ url, className }: { url: string; className: string }) {
+    return `
+<iframe
+  className="${className}"
+  src="${url}"
+  title="YouTube video player"
+  frameborder="0"
+  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+  allowfullscreen
+></iframe>`;
   }
 }

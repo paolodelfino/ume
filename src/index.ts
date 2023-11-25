@@ -10,7 +10,7 @@ export class Ume {
 
   constructor({ tmdb_api_key }: { tmdb_api_key: string }) {
     this.tmdb = new TMDBNodeApi(tmdb_api_key);
-    this.sc = new SC({ ume: this });
+    this.sc = new SC();
     this.title = new Ume_Title({ ume: this });
   }
 }

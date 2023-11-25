@@ -1,13 +1,11 @@
-import { Ume } from ".";
-
 export class SC {
-  private _ume;
   private _url!: string;
   image_endpoint!: string;
+  trailer_endpoint;
 
-  constructor({ ume }: { ume: Ume }) {
-    this._ume = ume;
+  constructor() {
     this.url = "https://streamingcommunity.care";
+    this.trailer_endpoint = "https://www.youtube-nocookie.com/embed";
   }
 
   get url() {
