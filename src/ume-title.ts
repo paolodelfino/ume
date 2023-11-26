@@ -49,6 +49,10 @@ export class Ume_Title {
     return res.data.slice(0, max_results);
   }
 
+  private _details_cache: {
+    [id_slug: string]: Title_Details;
+  } = {};
+
   async details({
     id,
     slug,
@@ -56,6 +60,11 @@ export class Ume_Title {
     id: number;
     slug: string;
   }): Promise<Title_Details> {
+    const cache_key = id + slug;
+    if (this._details_cache[cache_key]) {
+      return this._details_cache[cache_key];
+    }
+
     const data = JSON.parse(
       await take_match_groups(
         `${this._ume.sc.url}/titles/${id}-${slug}`,
@@ -112,7 +121,7 @@ export class Ume_Title {
       }
     }
 
-    return {
+    const title_details = {
       score,
       slug,
       id,
@@ -131,7 +140,10 @@ export class Ume_Title {
       cast: fromTmdb?.then((res) => res.credits.cast) ?? null,
       genres,
       related,
-    };
+    } satisfies Title_Details;
+
+    this._details_cache[cache_key] = title_details;
+    return title_details;
   }
 
   async master_playlist({

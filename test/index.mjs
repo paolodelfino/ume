@@ -15,7 +15,7 @@ const time = async (label, func) => {
  */
 let movie;
 await time("search", async () => {
-  const movies = await ume.title.search({ name: "enola holmes 2" });
+  const movies = await ume.title.search({ name: "rick" });
   console.assert(movies.length > 0);
   movie = movies[0];
 });
@@ -26,6 +26,13 @@ await time("search", async () => {
 let details;
 await time("details", async () => {
   details = await ume.title.details({ id: movie.id, slug: movie.slug });
+});
+
+await time("details (cache)", async () => {
+  console.assert(
+    (await ume.title.details({ id: movie.id, slug: movie.slug })).name ==
+      details.name
+  );
 });
 
 await time("misc", async () => {
