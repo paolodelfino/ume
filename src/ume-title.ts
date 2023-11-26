@@ -2,7 +2,7 @@ import crypto from "crypto";
 import { MoviesGetDetailsResponse, TVGetDetailsResponse } from "tmdb-js-node";
 import { Ume } from ".";
 import {
-  Download_Obj,
+  Dl_Res,
   Slider_Fetch,
   Title_Data_Page,
   Title_Details,
@@ -191,19 +191,19 @@ export class Ume_Title {
     );
   }
 
-  async parse_master_playlist(master_url: string): Promise<Download_Obj[]> {
-    const download_objs: Download_Obj[] = [];
+  async parse_master_playlist(master_url: string): Promise<Dl_Res[]> {
+    const dl_resources: Dl_Res[] = [];
 
     const master = (await get(master_url)).split("\n");
     for (const line of master) {
       if (line.indexOf("type=video") != -1) {
-        download_objs.push({
+        dl_resources.push({
           kind: "video",
           url: line,
           rendition: line.match(/rendition=([0-9a-zA-z]+)&/)![1],
         });
       } else if (line.indexOf("type=subtitle") != -1) {
-        download_objs.push({
+        dl_resources.push({
           kind: "subtitle",
           url: line.substring(line.indexOf("https"), line.length - 1),
           rendition: line.match(/rendition=([0-9a-zA-z-]+)&/)![1],
@@ -211,7 +211,7 @@ export class Ume_Title {
       }
     }
 
-    return download_objs;
+    return dl_resources;
   }
 
   private async _download_video(url: string): Promise<string | Buffer> {
@@ -297,12 +297,12 @@ export class Ume_Title {
       : Buffer.from(array_buffer);
   }
 
-  async download(download_obj: Download_Obj): Promise<string | Buffer> {
-    switch (download_obj.kind) {
+  async download(dl_res: Dl_Res): Promise<string | Buffer> {
+    switch (dl_res.kind) {
       case "video":
-        return await this._download_video(download_obj.url);
+        return await this._download_video(dl_res.url);
       case "subtitle":
-        return await this._download_subtitle(download_obj.url);
+        return await this._download_subtitle(dl_res.url);
     }
   }
 }

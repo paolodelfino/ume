@@ -113,7 +113,7 @@ export interface Seek_Episode {
   data: Episode;
 }
 
-export interface Download_Obj {
+export interface Dl_Res {
   url: string;
   kind: "video" | "subtitle";
   rendition: string;
