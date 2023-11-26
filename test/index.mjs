@@ -15,7 +15,7 @@ const time = async (label, func) => {
  */
 let movie;
 await time("search", async () => {
-  const movies = await ume.title.search({ name: "rick" });
+  const movies = await ume.title.search({ name: "enola" });
   console.assert(movies.length > 0);
   movie = movies[0];
 });
@@ -178,6 +178,12 @@ await time("download subtitle", async () => {
   /* buffer = await ume.title.download(subtitle_playlist);
   console.assert(buffer.byteLength > 0); */
 });
+
+if (details.type == "movie") {
+  await time("movie collection", async () => {
+    console.log((await details?.collection())?.length);
+  });
+}
 
 /* console.log("writing the downloaded content");
 fs.appendFileSync("test/output.vtt", buffer); */

@@ -3,6 +3,7 @@ import { MoviesGetDetailsResponse, TVGetDetailsResponse } from "tmdb-js-node";
 import { Ume } from ".";
 import {
   Dl_Res,
+  Movie_Collection,
   Slider_Fetch,
   Title_Data_Page,
   Title_Details,
@@ -121,6 +122,36 @@ export class Ume_Title {
       }
     }
 
+    const collection =
+      type == "tv"
+        ? null
+        : async () => {
+            const tmdb_details = await (fromTmdb as Promise<
+              MoviesGetDetailsResponse<[]>
+            >);
+            if (tmdb_details.belongs_to_collection) {
+              const collection = await this._ume.tmdb.v3.collections.getDetails(
+                tmdb_details.belongs_to_collection.id,
+                { language: "it-IT" }
+              );
+
+              const filtered_parts: Movie_Collection = [];
+              for (const part of collection.parts) {
+                if (part.poster_path) {
+                  filtered_parts.push({
+                    name: part.title,
+                    poster_path: part.poster_path,
+                  });
+                }
+              }
+
+              if (filtered_parts.length > 1) {
+                return filtered_parts;
+              }
+            }
+            return null;
+          };
+
     const title_details = {
       score,
       slug,
@@ -137,9 +168,10 @@ export class Ume_Title {
       seasons: seasons_handler,
       trailers,
       images,
-      cast: fromTmdb?.then((res) => res.credits.cast) ?? null,
+      cast: fromTmdb?.then((tmdb_details) => tmdb_details.credits.cast) ?? null,
       genres,
       related,
+      collection,
     } satisfies Title_Details;
 
     this._details_cache[cache_key] = title_details;

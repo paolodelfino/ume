@@ -99,12 +99,18 @@ export interface Episode {
   images: Title_Image[];
 }
 
+export type Movie_Collection = {
+  name: string;
+  poster_path: string;
+}[];
+
 export type Title_Details = Omit<Title_Data_Page["title"], "seasons"> & {
   slug: string;
   seasons: Ume_Seasons;
   cast: Promise<(MoviesGetCreditsCast | TVGetCreditsCast)[]> | null;
   related: Title_Search[] | null;
   id: number;
+  collection: (() => Promise<Movie_Collection | null>) | null;
 };
 
 export interface Seek_Episode {
