@@ -112,3 +112,9 @@ export interface Seek_Episode {
   episode_index: number;
   data: Episode;
 }
+
+export interface Download_Obj {
+  url: string;
+  kind: "video" | "subtitle";
+  rendition: string;
+}

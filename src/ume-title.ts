@@ -2,6 +2,7 @@ import crypto from "crypto";
 import { MoviesGetDetailsResponse, TVGetDetailsResponse } from "tmdb-js-node";
 import { Ume } from ".";
 import {
+  Download_Obj,
   Slider_Fetch,
   Title_Data_Page,
   Title_Details,
@@ -14,6 +15,7 @@ import {
   DATA_PAGE_REGEX,
   get,
   get_buffer,
+  parse_subtitle_playlist,
   parse_video_playlist,
   take_match_groups,
 } from "./utils";
@@ -132,7 +134,7 @@ export class Ume_Title {
     };
   }
 
-  async playlist({
+  async master_playlist({
     title_id,
     episode_id,
   }: {
@@ -189,7 +191,30 @@ export class Ume_Title {
     );
   }
 
-  async download(master_playlist_url: string): Promise<string | Buffer> {
+  async parse_master_playlist(master_url: string): Promise<Download_Obj[]> {
+    const download_objs: Download_Obj[] = [];
+
+    const master = (await get(master_url)).split("\n");
+    for (const line of master) {
+      if (line.indexOf("type=video") != -1) {
+        download_objs.push({
+          kind: "video",
+          url: line,
+          rendition: line.match(/rendition=([0-9a-zA-z]+)&/)![1],
+        });
+      } else if (line.indexOf("type=subtitle") != -1) {
+        download_objs.push({
+          kind: "subtitle",
+          url: line.substring(line.indexOf("https"), line.length - 1),
+          rendition: line.match(/rendition=([0-9a-zA-z-]+)&/)![1],
+        });
+      }
+    }
+
+    return download_objs;
+  }
+
+  private async _download_video(url: string): Promise<string | Buffer> {
     let subtle: SubtleCrypto | crypto.webcrypto.SubtleCrypto;
 
     const is_web =
@@ -200,9 +225,7 @@ export class Ume_Title {
       subtle = crypto.webcrypto.subtle;
     }
 
-    const [segments_urls, iv, aes_key_buffer] = await parse_video_playlist(
-      await get(master_playlist_url)
-    );
+    const [segments_urls, iv, aes_key_buffer] = await parse_video_playlist(url);
 
     const aes_key = aes_key_buffer
       ? await subtle.importKey(
@@ -264,5 +287,22 @@ export class Ume_Title {
     return is_web
       ? URL.createObjectURL(blob)
       : Buffer.from(await blob.arrayBuffer());
+  }
+
+  private async _download_subtitle(url: string): Promise<string | Buffer> {
+    const subtitle_url = await parse_subtitle_playlist(url);
+    const array_buffer = await get_buffer(subtitle_url);
+    return typeof window != "undefined" && typeof window.crypto != "undefined"
+      ? URL.createObjectURL(new Blob([array_buffer]))
+      : Buffer.from(array_buffer);
+  }
+
+  async download(download_obj: Download_Obj): Promise<string | Buffer> {
+    switch (download_obj.kind) {
+      case "video":
+        return await this._download_video(download_obj.url);
+      case "subtitle":
+        return await this._download_subtitle(download_obj.url);
+    }
   }
 }

@@ -1,6 +1,5 @@
 import { TMDBNodeApi } from "tmdb-js-node";
 import { SC } from "./sc";
-import { Title_Details, Title_Search } from "./types";
 import { Ume_Title } from "./ume-title";
 
 export class Ume {
@@ -14,5 +13,3 @@ export class Ume {
     this.title = new Ume_Title({ ume: this });
   }
 }
-
-export type { Title_Details, Title_Search };

@@ -12,17 +12,17 @@ const time = async (label, func) => {
 };
 
 /**
- * @type import("../dist/index.mjs").Title_Search
+ * @type {Awaited<ReturnType<typeof ume.title.search>>[number]}
  */
 let movie;
 await time("search", async () => {
-  const movies = await ume.title.search({ name: "rick" });
+  const movies = await ume.title.search({ name: "enola holmes 2" });
   console.assert(movies.length > 0);
   movie = movies[0];
 });
 
 /**
- * @type import("../dist/index.mjs").Title_Details
+ * @type {Awaited<ReturnType<typeof ume.title.details>>}
  */
 let details;
 await time("details", async () => {
@@ -46,16 +46,16 @@ await time("misc", async () => {
 });
 
 /**
- * @type string
+ * @type {string}
  */
-let playlist;
-await time("playlist", async () => {
-  playlist = await ume.title.playlist({
+let master_playlist;
+await time("master playlist", async () => {
+  master_playlist = await ume.title.master_playlist({
     title_id: details.id,
     episode_id:
       details.type == "tv" ? (await details.seasons.get(2))[5].id : undefined,
   });
-  console.log(playlist);
+  console.log(master_playlist);
 });
 
 if (details.type == "tv") {
@@ -133,11 +133,24 @@ await time("sliders", async () => {
 });
 
 /**
+ * @type {Awaited<ReturnType<typeof ume.title.parse_master_playlist>>}
+ */
+let download_objs;
+await time("parse master playlist", async () => {
+  download_objs = await ume.title.parse_master_playlist(master_playlist);
+  console.assert(download_objs.length > 0);
+});
+
+const video_playlist = download_objs.find((obj) => obj.kind == "video");
+console.assert(!!video_playlist);
+
+/**
  * @type {Buffer}
  */
 let buffer;
-await time("download title", async () => {
-  buffer = await ume.title.download(playlist);
+await time("download video", async () => {
+  // console.log("skipped");
+  buffer = await ume.title.download(video_playlist);
   console.assert(buffer.byteLength > 0);
 });
 
@@ -150,3 +163,14 @@ for (let i = 0; i < batch_count; ) {
     new Uint8Array(buffer.buffer.slice(batch_sz * i, batch_sz * ++i))
   );
 }
+
+const subtitle_playlist = download_objs.find((obj) => obj.kind == "subtitle");
+console.assert(!!subtitle_playlist);
+
+await time("download subtitle", async () => {
+  buffer = await ume.title.download(subtitle_playlist);
+  console.assert(buffer.byteLength > 0);
+});
+
+console.log("writing the downloaded content");
+fs.appendFileSync("test/output.vtt", buffer);

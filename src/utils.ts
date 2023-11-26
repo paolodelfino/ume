@@ -108,23 +108,9 @@ export async function get_buffer(url: string): Promise<ArrayBuffer> {
 }
 
 export async function parse_video_playlist(
-  master: string
+  url: string
 ): Promise<[segments: string[], iv?: Uint8Array, key?: ArrayBuffer]> {
-  let playlist_url: string | null = null;
-
-  for (const line of master.split("\n")) {
-    if (/^https:.+rendition=.+token=.+&expires.+/.test(line)) {
-      playlist_url = line;
-      break;
-    }
-  }
-  if (!playlist_url) {
-    throw new Error(
-      `While trying to get video playlist from ${master}: video playlist couldn't be found`
-    );
-  }
-
-  const playlist = (await get(playlist_url)).split("\n");
+  const playlist = (await get(url)).split("\n");
 
   let iv_bytes: Uint8Array | undefined;
   let key: ArrayBuffer | undefined;
@@ -147,4 +133,10 @@ export async function parse_video_playlist(
   }
 
   return [playlist.filter((line) => line.endsWith(".ts")), iv_bytes, key];
+}
+
+export async function parse_subtitle_playlist(url: string): Promise<string> {
+  return (await get(url))
+    .split("\n")
+    .find((line) => line.indexOf(".vtt") != -1)!;
 }
