@@ -93,10 +93,7 @@ function decode_with_table(s: string, table: Record<string, string>): string {
   return replace;
 }
 
-export const DATA_PAGE_REGEX = new RegExp(
-  '<div id="app" data-page="(.+)"><!--',
-  "s"
-);
+export const DATA_PAGE_REGEX = /<div id="app" data-page="(.+)"><!--/s;
 export const DATA_PAGE_GROUP_INDEX = 1;
 
 export async function get_buffer(url: string): Promise<ArrayBuffer> {

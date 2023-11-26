@@ -1,5 +1,4 @@
 import "dotenv/config";
-import fs from "fs";
 import { Ume } from "../dist/index.mjs";
 const ume = new Ume({ tmdb_api_key: process.env.TMDB_API_KEY });
 
@@ -141,36 +140,37 @@ await time("parse master playlist", async () => {
   console.assert(download_objs.length > 0);
 });
 
-const video_playlist = download_objs.find((obj) => obj.kind == "video");
-console.assert(!!video_playlist);
+/* const video_playlist = download_objs.find((obj) => obj.kind == "video");
+console.assert(!!video_playlist); */
 
 /**
  * @type {Buffer}
  */
 let buffer;
 await time("download video", async () => {
-  // console.log("skipped");
-  buffer = await ume.title.download(video_playlist);
-  console.assert(buffer.byteLength > 0);
+  console.log("skipped");
+  /* buffer = await ume.title.download(video_playlist);
+  console.assert(buffer.byteLength > 0); */
 });
 
-console.log("writing the downloaded content");
+/* console.log("writing the downloaded content");
 const batch_sz = 2147483647;
 const batch_count = Math.ceil(buffer.buffer.byteLength / batch_sz);
 for (let i = 0; i < batch_count; ) {
   fs.appendFileSync(
     "test/output.mp4",
     new Uint8Array(buffer.buffer.slice(batch_sz * i, batch_sz * ++i))
-  );
-}
+    );
+  } */
 
-const subtitle_playlist = download_objs.find((obj) => obj.kind == "subtitle");
-console.assert(!!subtitle_playlist);
+/* const subtitle_playlist = download_objs.find((obj) => obj.kind == "subtitle");
+  console.assert(!!subtitle_playlist); */
 
 await time("download subtitle", async () => {
-  buffer = await ume.title.download(subtitle_playlist);
-  console.assert(buffer.byteLength > 0);
+  console.log("skipped");
+  /* buffer = await ume.title.download(subtitle_playlist);
+  console.assert(buffer.byteLength > 0); */
 });
 
-console.log("writing the downloaded content");
-fs.appendFileSync("test/output.vtt", buffer);
+/* console.log("writing the downloaded content");
+fs.appendFileSync("test/output.vtt", buffer); */

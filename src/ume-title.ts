@@ -143,13 +143,13 @@ export class Ume_Title {
   }) {
     const embed_url = await take_match_groups(
       `${this._ume.sc.url}/iframe/${title_id}?episode_id=${episode_id ?? ""}`,
-      new RegExp('src="(.+)".+frameborder', "s"),
+      /src="(.+)".+frameborder/s,
       1
     );
 
     const master_jsized = await take_match_groups(
       embed_url,
-      new RegExp("window[.]masterPlaylist = (.+)window.canPlayFHD", "s"),
+      /window[.]masterPlaylist = (.+)window.canPlayFHD/s,
       1
     );
 
