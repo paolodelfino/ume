@@ -98,3 +98,53 @@ export const DATA_PAGE_REGEX = new RegExp(
   "s"
 );
 export const DATA_PAGE_GROUP_INDEX = 1;
+
+export async function get_buffer(url: string): Promise<ArrayBuffer> {
+  return await (
+    await fetch(url).catch((err) => {
+      throw new Error(`While trying to get ${url}: ${err}`);
+    })
+  ).arrayBuffer();
+}
+
+export async function parse_video_playlist(
+  master: string
+): Promise<[segments: string[], iv?: Uint8Array, key?: ArrayBuffer]> {
+  let playlist_url: string | null = null;
+
+  for (const line of master.split("\n")) {
+    if (/^https:.+rendition=.+token=.+&expires.+/.test(line)) {
+      playlist_url = line;
+      break;
+    }
+  }
+  if (!playlist_url) {
+    throw new Error(
+      `While trying to get video playlist from ${master}: video playlist couldn't be found`
+    );
+  }
+
+  const playlist = (await get(playlist_url)).split("\n");
+
+  let iv_bytes: Uint8Array | undefined;
+  let key: ArrayBuffer | undefined;
+
+  playlist.find((line) => {
+    const iv_index = line.indexOf("IV=");
+    if (iv_index != -1) {
+      const iv_str = line.substring(iv_index + 3);
+      iv_bytes = new Uint8Array(16);
+      for (let i = 0; i < iv_str.length; i += 2) {
+        iv_bytes[i / 2] = parseInt(iv_str.substring(i, i + 2), 16);
+      }
+
+      return true;
+    }
+  });
+
+  if (iv_bytes) {
+    key = await get_buffer("https://scws.work/storage/enc.key");
+  }
+
+  return [playlist.filter((line) => line.endsWith(".ts")), iv_bytes, key];
+}

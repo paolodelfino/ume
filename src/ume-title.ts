@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import { MoviesGetDetailsResponse, TVGetDetailsResponse } from "tmdb-js-node";
 import { Ume } from ".";
 import {
@@ -12,6 +13,8 @@ import {
   DATA_PAGE_GROUP_INDEX,
   DATA_PAGE_REGEX,
   get,
+  get_buffer,
+  parse_video_playlist,
   take_match_groups,
 } from "./utils";
 
@@ -184,5 +187,82 @@ export class Ume_Title {
       new Date(release_date).getTime() <= Date.now() &&
       status != "Post Production"
     );
+  }
+
+  async download(master_playlist_url: string): Promise<string | Buffer> {
+    let subtle: SubtleCrypto | crypto.webcrypto.SubtleCrypto;
+
+    const is_web =
+      typeof window != "undefined" && typeof window.crypto != "undefined";
+    if (is_web) {
+      subtle = window.crypto.subtle;
+    } else {
+      subtle = crypto.webcrypto.subtle;
+    }
+
+    const [segments_urls, iv, aes_key_buffer] = await parse_video_playlist(
+      await get(master_playlist_url)
+    );
+
+    const aes_key = aes_key_buffer
+      ? await subtle.importKey(
+          "raw",
+          aes_key_buffer,
+          { name: "AES-CBC" },
+          false,
+          ["decrypt"]
+        )
+      : undefined;
+
+    const segments: ArrayBuffer[] = [];
+
+    type Batch = (() => Promise<void>)[];
+    const batches: Batch[] = [];
+    const batch_sz = 100;
+    const batch_count = Math.ceil(segments_urls.length / batch_sz);
+
+    for (let i = 0; i < batch_count; i++) {
+      const batch: Batch = [];
+
+      for (
+        let j = batch_sz * i;
+        j < batch_sz * (i + 1) && j < segments_urls.length;
+        j++
+      ) {
+        batch.push(
+          async () =>
+            await new Promise(async (resolve) => {
+              const file_enc = await get_buffer(segments_urls[j]);
+
+              if (iv) {
+                const file_buffer = new Uint8Array(file_enc);
+
+                const file_dec_buffer = await subtle.decrypt(
+                  { name: "AES-CBC", iv: iv },
+                  aes_key!,
+                  file_buffer.buffer
+                );
+
+                segments[j] = file_dec_buffer;
+              } else {
+                segments[j] = file_enc;
+              }
+
+              resolve(void 0);
+            })
+        );
+      }
+
+      batches.push(batch);
+    }
+
+    for (const batch of batches) {
+      await Promise.all(batch.map((callback_array) => callback_array()));
+    }
+
+    const blob = new Blob(segments);
+    return is_web
+      ? URL.createObjectURL(blob)
+      : Buffer.from(await blob.arrayBuffer());
   }
 }

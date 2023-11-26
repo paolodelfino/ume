@@ -1,4 +1,5 @@
 import "dotenv/config";
+import fs from "fs";
 import { Ume } from "../dist/index.mjs";
 const ume = new Ume({ tmdb_api_key: process.env.TMDB_API_KEY });
 
@@ -15,7 +16,7 @@ const time = async (label, func) => {
  */
 let movie;
 await time("search", async () => {
-  const movies = await ume.title.search({ name: "enola" });
+  const movies = await ume.title.search({ name: "rick" });
   console.assert(movies.length > 0);
   movie = movies[0];
 });
@@ -44,8 +45,12 @@ await time("misc", async () => {
   console.log(iframe);
 });
 
+/**
+ * @type string
+ */
+let playlist;
 await time("playlist", async () => {
-  const playlist = await ume.title.playlist({
+  playlist = await ume.title.playlist({
     title_id: details.id,
     episode_id:
       details.type == "tv" ? (await details.seasons.get(2))[5].id : undefined,
@@ -126,3 +131,22 @@ await time("sliders", async () => {
   console.assert(!(await queue.next()).has_next);
   console.assert(queue.data.length == 8);
 });
+
+/**
+ * @type {Buffer}
+ */
+let buffer;
+await time("download title", async () => {
+  buffer = await ume.title.download(playlist);
+  console.assert(buffer.byteLength > 0);
+});
+
+console.log("writing the downloaded content");
+const batch_sz = 2147483647;
+const batch_count = Math.ceil(buffer.buffer.byteLength / batch_sz);
+for (let i = 0; i < batch_count; ) {
+  fs.appendFileSync(
+    "test/output.mp4",
+    new Uint8Array(buffer.buffer.slice(batch_sz * i, batch_sz * ++i))
+  );
+}
