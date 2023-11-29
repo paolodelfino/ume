@@ -1,6 +1,6 @@
 import { TMDBNodeApi } from "tmdb-js-node";
 import { SC } from "./sc";
-import { Ume_Title } from "./ume-title";
+import { Ume_Title } from "./ume_title";
 
 export class Ume {
   sc;

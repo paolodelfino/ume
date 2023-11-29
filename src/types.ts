@@ -1,5 +1,5 @@
 import { MoviesGetCreditsCast, TVGetCreditsCast } from "tmdb-js-node";
-import { Ume_Seasons } from "./ume-seasons";
+import { Ume_Seasons } from "./ume_seasons";
 
 export interface Title_Image {
   imageable_id: number;

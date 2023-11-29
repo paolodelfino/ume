@@ -9,8 +9,8 @@ import {
   Title_Details,
   Title_Search,
 } from "./types";
-import { Ume_Seasons } from "./ume-seasons";
-import { Ume_Sliders_Queue } from "./ume-sliders-queue";
+import { Ume_Seasons } from "./ume_seasons";
+import { Ume_Sliders_Queue } from "./ume_sliders_queue";
 import {
   DATA_PAGE_GROUP_INDEX,
   DATA_PAGE_REGEX,
