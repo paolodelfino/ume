@@ -10,6 +10,7 @@ const stopwatch = async (label: string, fn: any) => {
   console.timeEnd(label);
 };
 
+assert(process.env.TMDB_API_KEY);
 const ume = new Ume({ tmdb_api_key: process.env.TMDB_API_KEY });
 
 let movie: Awaited<ReturnType<typeof ume.title.search>>[number];
@@ -19,10 +20,8 @@ await stopwatch("search", async () => {
   movie = movies[0];
 });
 
-/**
- * @type {Awaited<ReturnType<typeof ume.title.details>>}
- */
-let details;
+// @ts-ignore
+let details: Awaited<ReturnType<typeof ume.title.details>> = null;
 await stopwatch("details", async () => {
   details = await ume.title.details({ id: movie.id, slug: movie.slug });
 });
@@ -55,7 +54,7 @@ await stopwatch("master playlist", async () => {
   master_playlist = await ume.title.master_playlist({
     title_id: details.id,
     episode_id:
-      details.type == "tv" ? (await details.seasons.get(2))[5].id : undefined,
+      details.type == "tv" ? (await details.seasons.get(2))![5].id : undefined,
   });
   console.log(master_playlist);
 });
@@ -63,11 +62,13 @@ await stopwatch("master playlist", async () => {
 if (details.type == "tv") {
   await stopwatch("seasons (fetch)", async () => {
     const episodes = await details.seasons.get(4);
+    assert(episodes);
     assert(episodes.length > 0);
   });
 
   await stopwatch("seasons (cache)", async () => {
     const episodes = await details.seasons.get(4);
+    assert(episodes);
     assert(episodes.length > 0);
   });
 
@@ -76,7 +77,10 @@ if (details.type == "tv") {
       season_number: 6,
       episode_index: 4,
     });
-    assert(!!prev && !!next && prev.data.number == 4 && next.data.number == 6);
+    assert(prev);
+    assert(next);
+    assert(prev.data.number == 4);
+    assert(next.data.number == 6);
   });
 
   await stopwatch("episode seek bounds (next not available)", async () => {
@@ -84,7 +88,9 @@ if (details.type == "tv") {
       season_number: 6,
       episode_index: 9,
     });
-    assert(!!prev && !next && prev.data.number == 9);
+    assert(prev);
+    assert(!next);
+    assert(prev.data.number == 9);
   });
 
   await stopwatch("episode seek bounds (prev not available)", async () => {
@@ -92,7 +98,9 @@ if (details.type == "tv") {
       season_number: 1,
       episode_index: 0,
     });
-    assert(!prev && !!next && next.data.number == 2);
+    assert(!prev);
+    assert(!!next);
+    assert(next.data.number == 2);
   });
 
   await stopwatch("double episode seek bounds", async () => {
@@ -100,15 +108,19 @@ if (details.type == "tv") {
       season_number: 4,
       episode_index: 3,
     });
-    assert(!!prev && !!next && prev.data.number == 3 && next.data.number == 5);
+    assert(!!prev);
+    assert(!!next);
+    assert(prev.data.number == 3);
+    assert(next.data.number == 5);
 
     const [prev2, next2] = await details.seasons.seek_bounds_episode({
       episode_index: next.episode_index,
       season_number: next.season_number,
     });
-    assert(
-      !!prev2 && !!next2 && prev2.data.number == 4 && next2.data.number == 6
-    );
+    assert(!!prev2);
+    assert(!!next2);
+    assert(prev2.data.number == 4);
+    assert(next2.data.number == 6);
   });
 }
 
@@ -138,7 +150,7 @@ await stopwatch("parse master playlist", async () => {
 });
 
 /* const video_playlist = download_objs.find((obj) => obj.kind == "video");
-assert(!!video_playlist); */
+assert(video_playlist); */
 
 let buffer: Buffer;
 await stopwatch("download video", async () => {
@@ -158,7 +170,7 @@ for (let i = 0; i < batch_count; ) {
   } */
 
 /* const subtitle_playlist = download_objs.find((obj) => obj.kind == "subtitle");
-  assert(!!subtitle_playlist); */
+  assert(subtitle_playlist); */
 
 await stopwatch("download subtitle", async () => {
   console.log("skipped");
@@ -168,7 +180,8 @@ await stopwatch("download subtitle", async () => {
 
 if (details.type == "movie") {
   await stopwatch("movie collection", async () => {
-    console.log((await details?.collection())?.length);
+    assert(details.collection);
+    console.log((await details.collection())?.length);
   });
 }
 

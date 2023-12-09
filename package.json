@@ -35,14 +35,14 @@
   "license": "MIT",
   "devDependencies": {
     "@types/chai": "^4.3.11",
-    "@types/node": "^20.10.0",
+    "@types/node": "^20.10.4",
     "chai": "^4.3.10",
     "dotenv": "^16.3.1",
     "tsup": "^8.0.1",
-    "typescript": "^5.3.2"
+    "typescript": "^5.3.3"
   },
   "dependencies": {
-    "pustore": "^0.3.1",
-    "tmdb-js-node": "^1.1.5"
+    "pustore": "^1.1.0",
+    "tmdb-js-node": "^1.1.6"
   }
 }
