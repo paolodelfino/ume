@@ -15,7 +15,7 @@
     "./dist/index.d.ts": "./dist/index.d.ts"
   },
   "scripts": {
-    "test": "deno run --allow-read test/index.ts",
+    "test": "cd test && echo building... && tsup > NUL && echo finished! && echo. && node dist/index.js",
     "dev": "tsup --watch",
     "build": "tsup",
     "prepublishOnly": "pnpm run build"
