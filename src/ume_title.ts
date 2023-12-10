@@ -1,4 +1,4 @@
-import crypto from "crypto";
+import crypto from "node:crypto";
 import { MoviesGetDetailsResponse, TVGetDetailsResponse } from "tmdb-js-node";
 import { Ume } from ".";
 import {
@@ -7,6 +7,7 @@ import {
   Slider_Fetch,
   Title_Data_Page,
   Title_Details,
+  Title_Entry,
   Title_Search,
 } from "./types";
 import { Ume_Seasons } from "./ume_seasons";
@@ -54,13 +55,7 @@ export class Ume_Title {
     [id_slug: string]: Title_Details;
   } = {};
 
-  async details({
-    id,
-    slug,
-  }: {
-    id: number;
-    slug: string;
-  }): Promise<Title_Details> {
+  async details({ id, slug }: Title_Entry): Promise<Title_Details> {
     const cache_key = id + slug;
     if (this._details_cache[cache_key]) {
       return this._details_cache[cache_key];

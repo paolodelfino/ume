@@ -21,8 +21,8 @@ export type Title_Search = {
 
 export interface Slider_Fetch {
   name: "top10" | "trending" | "latest" | "upcoming" | "genre";
-  title_type: "movie" | "tv" | null;
-  genre:
+  title_type?: "movie" | "tv" | null;
+  genre?:
     | "Crime"
     | "Commedia"
     | "War & Politics"
@@ -123,4 +123,9 @@ export interface Dl_Res {
   url: string;
   kind: "video" | "subtitle";
   rendition: string;
+}
+
+export interface Title_Entry {
+  id: number;
+  slug: string;
 }

@@ -1,31 +1,60 @@
+import { UStore } from "pustore";
 import { Ume } from ".";
+import { Title_Details, Title_Entry } from "./types";
 
 export class Ume_Mylist {
   private _ume;
+  private _store;
 
   constructor({ ume }: { ume: Ume }) {
     this._ume = ume;
+    this._store = new UStore<Title_Entry>({
+      identifier: "mylist",
+      kind: "local",
+    });
   }
 
-  add({ id, slug }: { id: number; slug: string }) {
-    const mylist = JSON.parse(this._ume.db.getItem("mylist") ?? "{}");
-    delete mylist[id + slug];
-
-    this._ume.db.setItem("mylist", JSON.stringify(mylist));
+  get length() {
+    return this._store.length;
   }
 
-  remove({ id, slug }: { id: number; slug: string }) {
-    const mylist = JSON.parse(this._ume.db.getItem("mylist") ?? "{}");
-    delete mylist[id + slug];
-
-    this._ume.db.setItem("mylist", JSON.stringify(mylist));
+  add(entry: Title_Entry) {
+    this._store.set({ key: entry.id + entry.slug, value: entry });
   }
 
-  get({ id, slug }: { id: number; slug: string }) {
-    const as_str = this._ume.db.getItem(id + slug)!;
-    if (as_str) {
+  rm(entry: Title_Entry) {
+    this._store.rm(entry.id + entry.slug);
+  }
+
+  get(quantity: number) {
+    return this._store
+      .all()
+      .slice(0, quantity)
+      .map((entry) => this._ume.title.details(entry));
+  }
+
+  data: Title_Details[] = [];
+
+  get pages() {
+    return Math.ceil(this.length / 10);
+  }
+
+  is_loading = false;
+
+  async next(page: number) {
+    this.is_loading = true;
+
+    const entries = this._store.all().slice(page * 10, ++page * 10);
+    for (const entry of entries) {
+      this.data.push(await this._ume.title.details(entry));
     }
 
-    return null;
+    this.is_loading = false;
   }
+
+  // async search({ name, max_results = 3 }: { name: string; max_results?: number }) {
+
+  // }
+
+  // search_next
 }

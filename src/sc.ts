@@ -4,7 +4,7 @@ export class SC {
   trailer_endpoint;
 
   constructor() {
-    this.url = "https://streamingcommunity.care";
+    this.url = "https://streamingcommunity.broker";
     this.trailer_endpoint = "https://www.youtube-nocookie.com/embed";
   }
 
