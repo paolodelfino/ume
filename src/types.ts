@@ -129,3 +129,7 @@ export interface Title_Entry {
   id: number;
   slug: string;
 }
+
+export type Title_Mylist = Title_Entry & {
+  images: Title_Search["images"];
+};

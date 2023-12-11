@@ -196,6 +196,7 @@ async function main() {
     ume.mylist.add({
       id: rick.id,
       slug: rick.slug,
+      images: rick.images,
     });
     // @ts-ignore
     assert(ume.mylist.length == 1);
@@ -203,6 +204,7 @@ async function main() {
     ume.mylist.add({
       id: enola.id,
       slug: enola.slug,
+      images: enola.images,
     });
     assert(ume.mylist.length == 2);
 
@@ -212,51 +214,41 @@ async function main() {
     ume.mylist.rm(enola);
     assert.equal(ume.mylist.length, 0);
 
-    let titles = await ume.title.search({ max_results: 30, name: "d" });
+    const titles = await ume.title.search({ max_results: 30, name: "d" });
     titles.forEach((title) =>
       ume.mylist.add({
         id: title.id,
         slug: title.slug,
+        images: title.images,
       })
     );
     assert.equal(titles.length, 30);
 
-    assert.equal(ume.mylist.length, titles.length);
-
     ume.mylist.add(rick);
     assert.equal(ume.mylist.length, 31);
 
-    titles = await Promise.all(ume.mylist.get(10));
-    assert.equal(titles.length, 10);
+    assert.equal(ume.mylist.get(10).length, 10);
 
     assert.equal(ume.mylist.pages, 4);
 
-    let page = 0;
-    assert.equal(ume.mylist.data.length, 0);
+    const page0 = ume.mylist.next(0);
+    assert.equal(page0.length, 10);
 
-    const page0 = ume.mylist.next(page++);
-    assert.equal(ume.mylist.is_loading, true);
-    await page0;
-    assert.equal(ume.mylist.is_loading, false);
-    assert.equal(ume.mylist.data.length, 10);
+    const page1 = ume.mylist.next(1);
+    assert.equal(page1.length, 10);
 
-    const page1 = ume.mylist.next(page++);
-    assert.equal(ume.mylist.is_loading, true);
-    await page1;
-    assert.equal(ume.mylist.is_loading, false);
-    assert.equal(ume.mylist.data.length, 20);
+    const page2 = ume.mylist.next(2);
+    assert.equal(page2.length, 10);
 
-    const page2 = ume.mylist.next(page++);
-    assert.equal(ume.mylist.is_loading, true);
-    await page2;
-    assert.equal(ume.mylist.is_loading, false);
-    assert.equal(ume.mylist.data.length, 30);
+    const page3 = ume.mylist.next(3);
+    assert.equal(page3.length, 1);
 
-    const page3 = ume.mylist.next(page++);
-    assert.equal(ume.mylist.is_loading, true);
-    await page3;
-    assert.equal(ume.mylist.is_loading, false);
-    assert.equal(ume.mylist.data.length, 31);
+    assert.notEqual(page0[0].id, page1[0].id);
+    assert.notEqual(page0[0].id, page2[0].id);
+    assert.notEqual(page0[0].id, page3[0].id);
+    assert.notEqual(page1[0].id, page2[0].id);
+    assert.notEqual(page1[0].id, page3[0].id);
+    assert.notEqual(page2[0].id, page3[0].id);
   });
 }
 
