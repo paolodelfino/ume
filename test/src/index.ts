@@ -9,7 +9,7 @@ async function main() {
   if (false) {
     let movie: Awaited<ReturnType<typeof ume.title.search>>[number];
     await stopwatch("search", async () => {
-      const movies = await ume.title.search({ name: "enola" });
+      const movies = await ume.title.search({ query: "enola" });
       assert(movies.length > 0);
       movie = movies[0];
     });
@@ -187,8 +187,8 @@ async function main() {
   fs.appendFileSync("test/output.vtt", buffer); */
   }
 
-  const rick = (await ume.title.search({ name: "rick and morty" }))[0];
-  const enola = (await ume.title.search({ name: "enola" }))[0];
+  const rick = (await ume.title.search({ query: "rick and morty" }))[0];
+  const enola = (await ume.title.search({ query: "enola" }))[0];
 
   await stopwatch("mylist", async () => {
     assert(ume.mylist.length == 0);
@@ -214,7 +214,7 @@ async function main() {
     ume.mylist.rm(enola);
     assert.equal(ume.mylist.length, 0);
 
-    const titles = await ume.title.search({ max_results: 30, name: "d" });
+    const titles = await ume.title.search({ max_results: 30, query: "enola" });
     titles.forEach((title) =>
       ume.mylist.add({
         id: title.id,
@@ -227,7 +227,7 @@ async function main() {
     ume.mylist.add(rick);
     assert.equal(ume.mylist.length, 31);
 
-    assert.equal(ume.mylist.get(10).length, 10);
+    assert.equal(ume.mylist.some(10).length, 10);
 
     assert.equal(ume.mylist.pages, 4);
 
@@ -249,6 +249,11 @@ async function main() {
     assert.notEqual(page1[0].id, page2[0].id);
     assert.notEqual(page1[0].id, page3[0].id);
     assert.notEqual(page2[0].id, page3[0].id);
+
+    const result = ume.mylist.search({ query: "en lomes" });
+    assert.isAtLeast(result.length, 2);
+    assert.isDefined(result.find((e) => e.slug == "enola-holmes"));
+    assert.isDefined(result.find((e) => e.slug == "enola-holmes-2"));
   });
 }
 

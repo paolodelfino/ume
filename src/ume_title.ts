@@ -37,14 +37,14 @@ export class Ume_Title {
    * @param max_results Defaults to 3
    */
   async search({
-    name,
+    query,
     max_results = 3,
   }: {
-    name: string;
+    query: string;
     max_results?: number;
   }): Promise<Title_Search[]> {
     const res = JSON.parse(
-      await get(`${this._ume.sc.url}/api/search?q=${name}`)
+      await get(`${this._ume.sc.url}/api/search?q=${query}`)
     ) as {
       data: Title_Search[];
     };

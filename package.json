@@ -42,7 +42,8 @@
     "typescript": "^5.3.3"
   },
   "dependencies": {
-    "pustore": "^1.1.0",
+    "pustore": "^1.2.0",
+    "string-comparison": "^1.3.0",
     "tmdb-js-node": "^1.1.6"
   }
 }
