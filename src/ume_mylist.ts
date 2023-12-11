@@ -1,16 +1,13 @@
 import { UStore } from "pustore";
 import str_compare from "string-comparison";
-import { Ume } from ".";
 import { Title_Mylist } from "./types";
 
 export class Ume_Mylist {
-  private _ume;
   private _store;
   private __cache_all: Title_Mylist[] = [];
   private _need_recache = false;
 
-  constructor({ ume }: { ume: Ume }) {
-    this._ume = ume;
+  constructor() {
     this._store = new UStore<Title_Mylist>({
       identifier: "mylist",
       kind: "local",

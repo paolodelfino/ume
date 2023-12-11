@@ -13,6 +13,6 @@ export class Ume {
     this.tmdb = new TMDBNodeApi(tmdb_api_key);
     this.sc = new SC();
     this.title = new Ume_Title({ ume: this });
-    this.mylist = new Ume_Mylist({ ume: this });
+    this.mylist = new Ume_Mylist();
   }
 }
