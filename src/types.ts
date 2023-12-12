@@ -138,3 +138,14 @@ export type Title_Continue_Watching = Title_Mylist & {
   season_number?: number;
   episode_number?: number;
 };
+
+export interface Title_Preview {
+  id: number;
+  type: "movie" | "tv";
+  runtime: number | null;
+  release_date: string;
+  plot: string;
+  seasons_count: number;
+  images: Title_Image[];
+  genres: Title_Genre[];
+}
