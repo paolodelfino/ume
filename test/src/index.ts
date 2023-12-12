@@ -8,10 +8,9 @@ async function main() {
 
   let movie: Awaited<ReturnType<typeof ume.title.search>>[number];
   await stopwatch("search", async () => {
-    const movies = await ume.title.search({ query: "enola" });
+    const movies = await ume.title.search({ query: "rick" });
     assert(movies.length > 0);
     movie = movies[0];
-    console.log(movie);
   });
 
   // @ts-ignore
@@ -64,7 +63,7 @@ async function main() {
   });
 
   if (details.type == "tv") {
-    await stopwatch("seasons (fetch)", async () => {
+    await stopwatch("seasons", async () => {
       const episodes = await details.seasons.get(4);
       assert(episodes);
       assert(episodes.length > 0);

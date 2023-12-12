@@ -48,9 +48,17 @@ export class Ume_Title {
     const res = JSON.parse(
       await get(`${this._ume.sc.url}/api/search?q=${query}`)
     ) as {
-      data: Title_Search[];
+      data: any[];
     };
-    return res.data.slice(0, max_results);
+    return res.data.slice(0, max_results).map((entry) => ({
+      id: entry.id,
+      slug: entry.slug,
+      name: entry.name,
+      score: entry.score,
+      images: entry.images,
+      seasons_count: entry.seasons_count,
+      type: entry.type,
+    }));
   }
 
   private _details_cache: {
