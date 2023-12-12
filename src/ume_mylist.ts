@@ -18,7 +18,7 @@ export class Ume_Mylist {
     return this._store.length;
   }
 
-  get _cache_all() {
+  private get _cache_all() {
     if (this._need_recache) {
       this._need_recache = false;
       this.__cache_all = this._store.all();
@@ -31,8 +31,8 @@ export class Ume_Mylist {
     this._need_recache = true;
   }
 
-  rm(entry: Title_Mylist) {
-    this._store.rm(entry.id + entry.slug);
+  rm({ id, slug }: { id: number; slug: string }) {
+    this._store.rm(id + slug);
     this._need_recache = true;
   }
 
@@ -57,6 +57,6 @@ export class Ume_Mylist {
       )
       .reverse()
       .filter(({ rating }) => rating >= 0.1)
-      .map(({ index, rating, member }) => all[index]);
+      .map(({ index }) => all[index]);
   }
 }
