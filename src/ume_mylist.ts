@@ -27,12 +27,12 @@ export class Ume_Mylist {
   }
 
   add(entry: Title_Mylist) {
-    this._store.set({ key: entry.id + entry.slug, value: entry });
+    this._store.set({ key: `${entry.id}`, value: entry });
     this._need_recache = true;
   }
 
-  rm({ id, slug }: { id: number; slug: string }) {
-    this._store.rm(id + slug);
+  rm(id: number) {
+    this._store.rm(`${id}`);
     this._need_recache = true;
   }
 
@@ -48,7 +48,7 @@ export class Ume_Mylist {
     return this._cache_all.slice(page * 10, ++page * 10);
   }
 
-  search({ query }: { query: string }) {
+  search({ query }: { query: string }): Title_Mylist[] {
     const all = this._cache_all;
     return str_compare.levenshtein
       .sortMatch(

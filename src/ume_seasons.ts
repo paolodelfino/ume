@@ -28,8 +28,18 @@ export class Ume_Seasons {
             season.episodesUrl,
             DATA_PAGE_REGEX,
             DATA_PAGE_GROUP_INDEX
-          ).then(
-            (res) => JSON.parse(res).props.loadedSeason.episodes as Episode[]
+          ).then((res) =>
+            (JSON.parse(res).props.loadedSeason.episodes as any[]).map(
+              ({ id, number, name, plot, duration, images }) =>
+                ({
+                  id,
+                  number,
+                  name,
+                  plot,
+                  duration,
+                  images,
+                } satisfies Episode)
+            )
           );
         },
       };

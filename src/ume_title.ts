@@ -8,6 +8,7 @@ import {
   Title_Data_Page,
   Title_Details,
   Title_Entry,
+  Title_Preview,
   Title_Search,
 } from "./types";
 import { Ume_Seasons } from "./ume_seasons";
@@ -19,6 +20,7 @@ import {
   get_buffer,
   parse_subtitle_playlist,
   parse_video_playlist,
+  post,
   take_match_groups,
 } from "./utils";
 
@@ -46,17 +48,28 @@ export class Ume_Title {
     const res = JSON.parse(
       await get(`${this._ume.sc.url}/api/search?q=${query}`)
     ) as {
-      data: Title_Search[];
+      data: any[];
     };
-    return res.data.slice(0, max_results);
+    return res.data.slice(0, max_results).map((entry) => ({
+      id: entry.id,
+      slug: entry.slug,
+      name: entry.name,
+      score: entry.score,
+      images: entry.images,
+      seasons_count: entry.seasons_count,
+      type: entry.type,
+    }));
   }
 
   private _details_cache: {
-    [id_slug: string]: Title_Details;
+    [id: string]: Title_Details;
   } = {};
 
-  async details({ id, slug }: Title_Entry): Promise<Title_Details> {
-    const cache_key = id + slug;
+  async details({
+    id,
+    slug,
+  }: Title_Entry & { slug: string }): Promise<Title_Details> {
+    const cache_key = `${id}`;
     if (this._details_cache[cache_key]) {
       return this._details_cache[cache_key];
     }
@@ -171,6 +184,38 @@ export class Ume_Title {
 
     this._details_cache[cache_key] = title_details;
     return title_details;
+  }
+
+  private _preview_cache: {
+    [id: string]: Title_Preview;
+  } = {};
+
+  async preview({ id }: Title_Entry): Promise<Title_Preview> {
+    const cache_key = `${id}`;
+    if (this._preview_cache[cache_key]) {
+      return this._preview_cache[cache_key];
+    }
+
+    const res = JSON.parse(
+      await post(
+        `https://streamingcommunity.broker/api/titles/preview/${id}`,
+        {}
+      )
+    );
+
+    const data = {
+      id: res.id,
+      type: res.type,
+      runtime: res.runtime,
+      release_date: res.release_date,
+      plot: res.plot,
+      seasons_count: res.seasons_count,
+      images: res.images,
+      genres: res.genres,
+    };
+    this._preview_cache[cache_key] = data;
+
+    return data;
   }
 
   async master_playlist({

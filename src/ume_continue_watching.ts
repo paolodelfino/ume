@@ -28,16 +28,14 @@ export class Ume_Continue_Watching {
 
   time({
     id,
-    slug,
     season_number,
     episode_number,
   }: {
     id: number;
-    slug: string;
     season_number?: number;
     episode_number?: number;
   }) {
-    const entry = this._store.get(id + slug);
+    const entry = this._store.get(`${id}`);
     if (!entry) {
       return null;
     }
@@ -53,24 +51,10 @@ export class Ume_Continue_Watching {
     return null;
   }
 
-  update({
-    id,
-    slug,
-    season_number,
-    episode_number,
-    new_time,
-  }: Omit<Title_Continue_Watching, "time" | "images"> & {
-    new_time: number;
-  }) {
+  update(entry: Title_Continue_Watching) {
     this._store.set({
-      key: id + slug,
-      value: {
-        id,
-        slug,
-        season_number,
-        episode_number,
-        time: new_time,
-      },
+      key: `${entry.id}`,
+      value: entry,
     });
     this._need_recache = true;
   }
