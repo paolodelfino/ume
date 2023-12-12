@@ -54,11 +54,14 @@ export class Ume_Title {
   }
 
   private _details_cache: {
-    [id_slug: string]: Title_Details;
+    [id: string]: Title_Details;
   } = {};
 
-  async details({ id, slug }: Title_Entry): Promise<Title_Details> {
-    const cache_key = id + slug;
+  async details({
+    id,
+    slug,
+  }: Title_Entry & { slug: string }): Promise<Title_Details> {
+    const cache_key = `${id}`;
     if (this._details_cache[cache_key]) {
       return this._details_cache[cache_key];
     }
@@ -176,11 +179,11 @@ export class Ume_Title {
   }
 
   private _preview_cache: {
-    [id_slug: string]: Title_Preview;
+    [id: string]: Title_Preview;
   } = {};
 
-  async preview({ id, slug }: Title_Entry): Promise<Title_Preview> {
-    const cache_key = id + slug;
+  async preview({ id }: Title_Entry): Promise<Title_Preview> {
+    const cache_key = `${id}`;
     if (this._preview_cache[cache_key]) {
       return this._preview_cache[cache_key];
     }

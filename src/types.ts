@@ -20,7 +20,7 @@ export type Title_Search = {
 };
 
 export interface Slider_Fetch {
-  name: "top10" | "trending" | "latest" | "upcoming" | "genre";
+  name: "top10" | "trending" | "latest" /* | "upcoming" */ | "genre";
   title_type?: "movie" | "tv" | null;
   genre?: Title_Genre["name"] | null;
 }
@@ -128,12 +128,14 @@ export interface Dl_Res {
 
 export interface Title_Entry {
   id: number;
-  slug: string;
 }
 
-export type Title_Mylist = Title_Entry;
+export type Title_Mylist = Title_Entry & {
+  slug: string;
+};
 
-export type Title_Continue_Watching = Title_Mylist & {
+export type Title_Continue_Watching = Title_Entry & {
+  slug: string;
   time: number;
   season_number?: number;
   episode_number?: number;

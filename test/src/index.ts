@@ -28,17 +28,11 @@ async function main() {
   });
 
   await stopwatch("preview", async () => {
-    assert.equal(
-      (await ume.title.preview({ id: movie.id, slug: movie.slug })).id,
-      movie.id
-    );
+    assert.equal((await ume.title.preview({ id: movie.id })).id, movie.id);
   });
 
   await stopwatch("preview (cache)", async () => {
-    assert.equal(
-      (await ume.title.preview({ id: movie.id, slug: movie.slug })).id,
-      movie.id
-    );
+    assert.equal((await ume.title.preview({ id: movie.id })).id, movie.id);
   });
 
   await stopwatch("misc", async () => {
@@ -143,14 +137,14 @@ async function main() {
       { name: "latest" },
       { name: "top10" },
       { name: "trending" },
-      { name: "upcoming" },
+      // { name: "upcoming" },
     ]);
     assert(queue.data.length == 0);
     assert((await queue.next()).has_next);
     // @ts-ignore
     assert(queue.data.length == 6);
     assert(!(await queue.next()).has_next);
-    assert(queue.data.length == 8);
+    assert.equal(queue.data.length, 7);
   });
 
   let download_objs: Awaited<
@@ -219,10 +213,10 @@ async function main() {
     });
     assert(ume.mylist.length == 2);
 
-    ume.mylist.rm(rick);
+    ume.mylist.rm(rick.id);
     assert(ume.mylist.length == 1);
 
-    ume.mylist.rm(enola);
+    ume.mylist.rm(enola.id);
     assert.equal(ume.mylist.length, 0);
 
     const titles = await ume.title.search({ max_results: 30, query: "enola" });
@@ -272,7 +266,6 @@ async function main() {
     assert.isNull(
       ume.continue_watching.time({
         id: rick.id,
-        slug: rick.slug,
         season_number: 4,
         episode_number: 2,
       })
@@ -283,14 +276,13 @@ async function main() {
       slug: rick.slug,
       season_number: 4,
       episode_number: 2,
-      new_time: 10,
+      time: 10,
     });
     // @ts-ignore
     assert(ume.continue_watching.length == 1);
 
     let time = ume.continue_watching.time({
       id: rick.id,
-      slug: rick.slug,
       season_number: 4,
       episode_number: 2,
     });
@@ -300,7 +292,6 @@ async function main() {
     assert.isNull(
       ume.continue_watching.time({
         id: rick.id,
-        slug: rick.slug,
         season_number: 3,
         episode_number: 2,
       })
@@ -311,13 +302,12 @@ async function main() {
       slug: rick.slug,
       season_number: 3,
       episode_number: 2,
-      new_time: 145,
+      time: 145,
     });
     assert(ume.continue_watching.length == 1);
 
     time = ume.continue_watching.time({
       id: rick.id,
-      slug: rick.slug,
       season_number: 3,
       episode_number: 2,
     });
@@ -327,7 +317,7 @@ async function main() {
     ume.continue_watching.update({
       id: enola.id,
       slug: enola.slug,
-      new_time: 15,
+      time: 15,
     });
     assert(ume.continue_watching.length == 2);
 
@@ -336,7 +326,7 @@ async function main() {
       ume.continue_watching.update({
         id: title.id,
         slug: title.slug,
-        new_time: 5,
+        time: 5,
       })
     );
     assert.equal(titles.length, 30);
