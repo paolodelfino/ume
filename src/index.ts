@@ -36,4 +36,8 @@ export class Ume {
     this.mylist = new Ume_Mylist();
     this.continue_watching = new Ume_Continue_Watching();
   }
+
+  init(){
+    // pastebin_token from Promise<string> to string; call sc's init
+  }
 }

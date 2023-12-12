@@ -8,8 +8,16 @@ export class SC {
 
   constructor({ ume }: { ume: Ume }) {
     this._ume = ume;
-    this.url = "https://streamingcommunity.broker";
     this.trailer_endpoint = "https://www.youtube-nocookie.com/embed";
+  }
+
+  async init() {
+    this.url =
+      "https://streamingcommunity." +
+      (await this._ume.pastebin.getRawPasteByKey({
+        pasteKey: "GciNrQJJ",
+        userKey: await this._ume.pastebin_token,
+      }));
   }
 
   get url() {
