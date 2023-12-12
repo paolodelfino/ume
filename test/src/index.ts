@@ -196,7 +196,6 @@ async function main() {
     ume.mylist.add({
       id: rick.id,
       slug: rick.slug,
-      images: rick.images,
     });
     // @ts-ignore
     assert(ume.mylist.length == 1);
@@ -204,7 +203,6 @@ async function main() {
     ume.mylist.add({
       id: enola.id,
       slug: enola.slug,
-      images: enola.images,
     });
     assert(ume.mylist.length == 2);
 
@@ -219,7 +217,6 @@ async function main() {
       ume.mylist.add({
         id: title.id,
         slug: title.slug,
-        images: title.images,
       })
     );
     assert.equal(titles.length, 30);
@@ -251,6 +248,111 @@ async function main() {
     assert.notEqual(page2[0].id, page3[0].id);
 
     const result = ume.mylist.search({ query: "en lomes" });
+    assert.isAtLeast(result.length, 2);
+    assert.isDefined(result.find((e) => e.slug == "enola-holmes"));
+    assert.isDefined(result.find((e) => e.slug == "enola-holmes-2"));
+  });
+
+  await stopwatch("continue_watching", async () => {
+    assert(ume.continue_watching.length == 0);
+
+    assert.isNull(
+      ume.continue_watching.time({
+        id: rick.id,
+        slug: rick.slug,
+        season_number: 4,
+        episode_number: 2,
+      })
+    );
+
+    ume.continue_watching.update({
+      id: rick.id,
+      slug: rick.slug,
+      season_number: 4,
+      episode_number: 2,
+      new_time: 10,
+    });
+    // @ts-ignore
+    assert(ume.continue_watching.length == 1);
+
+    let time = ume.continue_watching.time({
+      id: rick.id,
+      slug: rick.slug,
+      season_number: 4,
+      episode_number: 2,
+    });
+    assert.isNotNull(time);
+    assert.equal(time, 10);
+
+    assert.isNull(
+      ume.continue_watching.time({
+        id: rick.id,
+        slug: rick.slug,
+        season_number: 3,
+        episode_number: 2,
+      })
+    );
+
+    ume.continue_watching.update({
+      id: rick.id,
+      slug: rick.slug,
+      season_number: 3,
+      episode_number: 2,
+      new_time: 145,
+    });
+    assert(ume.continue_watching.length == 1);
+
+    time = ume.continue_watching.time({
+      id: rick.id,
+      slug: rick.slug,
+      season_number: 3,
+      episode_number: 2,
+    });
+    assert.isNotNull(time);
+    assert.equal(time, 145);
+
+    ume.continue_watching.update({
+      id: enola.id,
+      slug: enola.slug,
+      new_time: 15,
+    });
+    assert(ume.continue_watching.length == 2);
+
+    const titles = await ume.title.search({ max_results: 30, query: "enola" });
+    titles.forEach((title) =>
+      ume.continue_watching.update({
+        id: title.id,
+        slug: title.slug,
+        new_time: 5,
+      })
+    );
+    assert.equal(titles.length, 30);
+    assert.equal(ume.continue_watching.length, 31);
+
+    assert.equal(ume.continue_watching.some(10).length, 10);
+
+    assert.equal(ume.continue_watching.pages, 4);
+
+    const page0 = ume.continue_watching.next(0);
+    assert.equal(page0.length, 10);
+
+    const page1 = ume.continue_watching.next(1);
+    assert.equal(page1.length, 10);
+
+    const page2 = ume.continue_watching.next(2);
+    assert.equal(page2.length, 10);
+
+    const page3 = ume.continue_watching.next(3);
+    assert.equal(page3.length, 1);
+
+    assert.notEqual(page0[0].id, page1[0].id);
+    assert.notEqual(page0[0].id, page2[0].id);
+    assert.notEqual(page0[0].id, page3[0].id);
+    assert.notEqual(page1[0].id, page2[0].id);
+    assert.notEqual(page1[0].id, page3[0].id);
+    assert.notEqual(page2[0].id, page3[0].id);
+
+    const result = ume.continue_watching.search({ query: "en lomes" });
     assert.isAtLeast(result.length, 2);
     assert.isDefined(result.find((e) => e.slug == "enola-holmes"));
     assert.isDefined(result.find((e) => e.slug == "enola-holmes-2"));

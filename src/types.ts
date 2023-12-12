@@ -130,6 +130,10 @@ export interface Title_Entry {
   slug: string;
 }
 
-export type Title_Mylist = Title_Entry & {
-  images: Title_Search["images"];
+export type Title_Mylist = Title_Entry;
+
+export type Title_Continue_Watching = Title_Mylist & {
+  time: number;
+  season_number?: number;
+  episode_number?: number;
 };
