@@ -22,7 +22,17 @@ export type Title_Search = {
 export interface Slider_Fetch {
   name: "top10" | "trending" | "latest" | "upcoming" | "genre";
   title_type?: "movie" | "tv" | null;
-  genre?:
+  genre?: Title_Genre["name"] | null;
+}
+
+export interface Title_Slider {
+  name: string;
+  label: string;
+  titles: Title_Search[];
+}
+
+type Title_Genre = {
+  name:
     | "Crime"
     | "Commedia"
     | "War & Politics"
@@ -49,15 +59,8 @@ export interface Slider_Fetch {
     | "Famiglia"
     | "Thriller"
     | "Romance"
-    | "Horror"
-    | null;
-}
-
-export interface Title_Slider {
-  name: string;
-  label: string;
-  titles: Title_Search[];
-}
+    | "Horror";
+};
 
 export interface Title_Data_Page {
   title: {
@@ -83,9 +86,7 @@ export interface Title_Data_Page {
       youtube_id: string;
     }[];
     images: Title_Image[];
-    genres: {
-      name: NonNullable<Slider_Fetch["genre"]>;
-    }[];
+    genres: Title_Genre[];
   };
   sliders: Title_Slider[];
 }
