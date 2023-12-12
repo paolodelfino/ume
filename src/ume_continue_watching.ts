@@ -26,31 +26,6 @@ export class Ume_Continue_Watching {
     return this.__cache_all;
   }
 
-  exists({
-    id,
-    slug,
-    season_number,
-    episode_number,
-  }: {
-    id: number;
-    slug: string;
-    season_number?: number;
-    episode_number?: number;
-  }) {
-    const entry = this._store.get(id + slug);
-    if (!entry) return false;
-
-    if (
-      (!season_number || !episode_number) ||
-      (entry.season_number == season_number &&
-      entry.episode_number == episode_number)
-    ) {
-      return true;
-    }
-
-    return false;
-  }
-
   time({
     id,
     slug,
@@ -63,11 +38,12 @@ export class Ume_Continue_Watching {
     episode_number?: number;
   }) {
     const entry = this._store.get(id + slug);
-    if (!entry)
+    if (!entry) {
+      return null;
+    }
 
     if (
-      !season_number ||
-      !episode_number ||
+      (!season_number && !episode_number) ||
       (entry.season_number == season_number &&
         entry.episode_number == episode_number)
     ) {
@@ -80,29 +56,22 @@ export class Ume_Continue_Watching {
   update({
     id,
     slug,
-    time,
     season_number,
     episode_number,
     new_time,
-  }: {
-    id: number;
-    slug: string;
-    time: number;
-    season_number: number;
-    episode_number: number;
+  }: Omit<Title_Continue_Watching, "time" | "images"> & {
     new_time: number;
   }) {
-    this._store.get(id + slug);
-  }
-
-  // check this logic
-  add(entry: Title_Continue_Watching) {
-    this._store.set({ key: entry.id + entry.slug, value: entry });
-    this._need_recache = true;
-  }
-
-  rm({ id, slug }: { id: number; slug: string }) {
-    this._store.rm(id + slug);
+    this._store.set({
+      key: id + slug,
+      value: {
+        id,
+        slug,
+        season_number,
+        episode_number,
+        time: new_time,
+      },
+    });
     this._need_recache = true;
   }
 
