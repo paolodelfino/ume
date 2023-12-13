@@ -20,6 +20,31 @@ export async function post(url: string, body: object): Promise<string> {
   return response.text();
 }
 
+export async function conn_exists(url: string) {
+  try {
+    const controller = new AbortController();
+
+    const timeout = setTimeout(() => {
+      controller.abort();
+    }, 2000);
+
+    try {
+      await fetch(url, {
+        method: "HEAD",
+        signal: controller.signal,
+      });
+    } catch (error) {
+      return false;
+    } finally {
+      clearTimeout(timeout);
+    }
+
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
+
 export async function take_match_groups(
   url: string,
   regex: RegExp,

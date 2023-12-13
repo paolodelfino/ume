@@ -1,10 +1,26 @@
 import { assert } from "chai";
+import { exit } from "process";
 import { Ume } from "../../dist/index.mjs";
 import { stopwatch } from "./utils";
 
 async function main() {
   assert(process.env.TMDB_API_KEY);
-  const ume = new Ume({ tmdb_api_key: process.env.TMDB_API_KEY });
+  assert(process.env.PASTEBIN_API_KEY);
+  assert(process.env.PASTEBIN_NAME);
+  assert(process.env.PASTEBIN_PASSWORD);
+
+  const ume = new Ume();
+  await ume.init({
+    tmdb_api_key: process.env.TMDB_API_KEY,
+    pastebin_api_key: process.env.PASTEBIN_API_KEY,
+    pastebin_name: process.env.PASTEBIN_NAME,
+    pastebin_password: process.env.PASTEBIN_PASSWORD,
+  });
+
+  if (!(await ume.sc.check_url())) {
+    console.log("Url needs update");
+    exit(1);
+  }
 
   let movie: Awaited<ReturnType<typeof ume.title.search>>[number];
   await stopwatch("search", async () => {
