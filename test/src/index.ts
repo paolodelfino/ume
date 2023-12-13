@@ -8,6 +8,7 @@ async function main() {
   assert(process.env.PASTEBIN_API_KEY);
   assert(process.env.PASTEBIN_NAME);
   assert(process.env.PASTEBIN_PASSWORD);
+
   const ume = new Ume();
   await ume.init({
     tmdb_api_key: process.env.TMDB_API_KEY,

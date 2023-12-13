@@ -1,5 +1,5 @@
 import { Ume } from ".";
-import { is_url_ok } from "./utils";
+import { conn_exists } from "./utils";
 
 export class SC {
   private _ume;
@@ -13,27 +13,25 @@ export class SC {
   }
 
   async init() {
-    this.url =
-      "https://streamingcommunity." +
-      (await this._ume.pastebin.getRawPasteByKey({
-        pasteKey: "GciNrQJJ",
-        userKey: this._ume.pastebin_token,
-      }));
+    this.url = await this._ume.pastebin.getRawPasteByKey({
+      pasteKey: "GciNrQJJ",
+      userKey: this._ume.pastebin_token,
+    });
   }
 
   get url() {
     return this._url;
   }
 
-  set url(updated_url) {
-    this._url = updated_url;
-    this.image_endpoint = `${updated_url.replace(
+  set url(tld) {
+    this._url = `https://streamingcommunity.${tld}`;
+    this.image_endpoint = `${this.url.replace(
       "https://",
       "https://cdn."
     )}/images`;
   }
 
   async check_url() {
-    return await is_url_ok(this.url);
+    return await conn_exists(`${this.url}/api/search`);
   }
 }
