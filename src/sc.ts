@@ -1,7 +1,9 @@
+import { Publicity } from "pastebin-api";
 import { Ume } from ".";
 import { conn_exists } from "./utils";
 
 export class SC {
+  readonly TG_BOT = "https://t.me/BelloFigoIlRobot";
   private _ume;
   private _url!: string;
   image_endpoint!: string;
@@ -13,8 +15,16 @@ export class SC {
   }
 
   async init() {
+    const paste_tld = (
+      await this._ume.pastebin.getPastesByUser({
+        userKey: this._ume.pastebin_token,
+        limit: 1,
+      })
+    )[0];
+    console.assert(paste_tld.paste_title == "sc_tld");
+
     this.url = await this._ume.pastebin.getRawPasteByKey({
-      pasteKey: "GciNrQJJ",
+      pasteKey: paste_tld.paste_key,
       userKey: this._ume.pastebin_token,
     });
   }
@@ -23,7 +33,7 @@ export class SC {
     return this._url;
   }
 
-  set url(tld) {
+  private set url(tld) {
     this._url = `https://streamingcommunity.${tld}`;
     this.image_endpoint = `${this.url.replace(
       "https://",
@@ -33,5 +43,30 @@ export class SC {
 
   async check_url() {
     return await conn_exists(`${this.url}/api/search`);
+  }
+
+  async update_url(tld: string) {
+    const paste_tld = (
+      await this._ume.pastebin.getPastesByUser({
+        userKey: this._ume.pastebin_token,
+        limit: 1,
+      })
+    )[0];
+    console.assert(paste_tld.paste_title == "sc_tld");
+
+    this._ume.pastebin.deletePasteByKey({
+      pasteKey: paste_tld.paste_key,
+      userKey: this._ume.pastebin_token,
+    });
+
+    this._ume.pastebin.createPaste({
+      name: "sc_tld",
+      publicity: Publicity.Private,
+      apiUserKey: this._ume.pastebin_token,
+      code: tld,
+    });
+
+    this.url = tld;
+    return await this.check_url();
   }
 }
