@@ -1,4 +1,5 @@
 import { Ume } from ".";
+import { is_url_ok } from "./utils";
 
 export class SC {
   private _ume;
@@ -16,7 +17,7 @@ export class SC {
       "https://streamingcommunity." +
       (await this._ume.pastebin.getRawPasteByKey({
         pasteKey: "GciNrQJJ",
-        userKey: await this._ume.pastebin_token,
+        userKey: this._ume.pastebin_token,
       }));
   }
 
@@ -30,5 +31,9 @@ export class SC {
       "https://",
       "https://cdn."
     )}/images`;
+  }
+
+  async check_url() {
+    return await is_url_ok(this.url);
   }
 }

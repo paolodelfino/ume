@@ -20,6 +20,14 @@ export async function post(url: string, body: object): Promise<string> {
   return response.text();
 }
 
+export async function is_url_ok(url: string) {
+  return new Promise<boolean>((resolve) =>
+    fetch(url)
+      .then(() => resolve(true))
+      .catch(() => resolve(false))
+  ); 
+}
+
 export async function take_match_groups(
   url: string,
   regex: RegExp,
