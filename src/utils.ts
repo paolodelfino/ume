@@ -33,7 +33,7 @@ export async function conn_exists(url: string) {
         method: "HEAD",
         signal: controller.signal,
       });
-    } catch (error) {
+    } catch {
       return false;
     } finally {
       clearTimeout(timeout);

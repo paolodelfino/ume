@@ -18,7 +18,7 @@ async function main() {
   });
 
   if (!(await ume.sc.check_url())) {
-    console.log("Url needs update");
+    console.log(ume.sc.url, "is outdated");
     exit(1);
   }
 
