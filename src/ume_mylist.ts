@@ -48,7 +48,13 @@ export class Ume_Mylist {
     return this._cache_all.slice(page * 10, ++page * 10);
   }
 
-  search({ query }: { query: string }): Title_Mylist[] {
+  search({
+    query,
+    max_results = 10,
+  }: {
+    query: string;
+    max_results?: number;
+  }): Title_Mylist[] {
     const all = this._cache_all;
     return str_compare.levenshtein
       .sortMatch(
@@ -57,6 +63,7 @@ export class Ume_Mylist {
       )
       .reverse()
       .filter(({ rating }) => rating >= 0.1)
-      .map(({ index }) => all[index]);
+      .map(({ index }) => all[index])
+      .slice(0, max_results);
   }
 }
