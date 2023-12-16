@@ -15,7 +15,9 @@ export async function post(url: string, body: object): Promise<string> {
     headers,
     body: JSON.stringify(body),
   }).catch((err) => {
-    throw new Error(`While trying to post: ${body} to ${url}: ${err}`);
+    throw new Error(
+      `While trying to post: ${JSON.stringify(body)} to ${url}: ${err}`
+    );
   });
   return response.text();
 }

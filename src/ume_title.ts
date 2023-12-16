@@ -197,10 +197,7 @@ export class Ume_Title {
     }
 
     const res = JSON.parse(
-      await post(
-        `https://streamingcommunity.broker/api/titles/preview/${id}`,
-        {}
-      )
+      await post(`${this._ume.sc.url}/api/titles/preview/${id}`, {})
     );
 
     const data = {

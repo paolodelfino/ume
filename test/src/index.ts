@@ -8,6 +8,7 @@ async function main() {
   assert(process.env.PASTEBIN_API_KEY);
   assert(process.env.PASTEBIN_NAME);
   assert(process.env.PASTEBIN_PASSWORD);
+  assert(process.env.SENDGRID_API_KEY);
 
   const ume = new Ume();
   await ume.init({
@@ -15,10 +16,15 @@ async function main() {
     pastebin_api_key: process.env.PASTEBIN_API_KEY,
     pastebin_name: process.env.PASTEBIN_NAME,
     pastebin_password: process.env.PASTEBIN_PASSWORD,
+    sendgrid_api_key: process.env.SENDGRID_API_KEY,
   });
 
   if (!(await ume.sc.check_url())) {
     console.log(ume.sc.url, "is outdated");
+    await ume.report.send({
+      subject: "Url is outdated",
+      text: `${ume.sc.url} is outdated. ${ume.sc.TG_BOT}`,
+    });
     exit(1);
   }
 
