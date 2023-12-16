@@ -7,7 +7,6 @@ import {
   Slider_Fetch,
   Title_Data_Page,
   Title_Details,
-  Title_Entry,
   Title_Preview,
   Title_Search,
 } from "./types";
@@ -68,7 +67,10 @@ export class Ume_Title {
   async details({
     id,
     slug,
-  }: Title_Entry & { slug: string }): Promise<Title_Details> {
+  }: {
+    id: number;
+    slug: string;
+  }): Promise<Title_Details> {
     const cache_key = `${id}`;
     if (this._details_cache[cache_key]) {
       return this._details_cache[cache_key];
@@ -190,7 +192,7 @@ export class Ume_Title {
     [id: string]: Title_Preview;
   } = {};
 
-  async preview({ id }: Title_Entry): Promise<Title_Preview> {
+  async preview({ id }: { id: number }): Promise<Title_Preview> {
     const cache_key = `${id}`;
     if (this._preview_cache[cache_key]) {
       return this._preview_cache[cache_key];

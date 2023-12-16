@@ -126,15 +126,13 @@ export interface Dl_Res {
   rendition: string;
 }
 
-export interface Title_Entry {
+export type Title_Mylist = {
   id: number;
-}
-
-export type Title_Mylist = Title_Entry & {
   slug: string;
 };
 
-export type Title_Continue_Watching = Title_Entry & {
+export type Title_Continue_Watching = {
+  id: number;
   slug: string;
   time: number;
   season_number?: number;
