@@ -41,7 +41,6 @@ async function main() {
   await stopwatch("details", async () => {
     details = await ume.title.details({ id: movie.id, slug: movie.slug });
   });
-  console.log(details.genres, details.images);
 
   await stopwatch("details (cache)", async () => {
     assert(
@@ -387,6 +386,19 @@ async function main() {
     assert.isAtLeast(result.length, 2);
     assert.isDefined(result.find((e) => e.slug == "enola-holmes"));
     assert.isDefined(result.find((e) => e.slug == "enola-holmes-2"));
+  });
+
+  await stopwatch("person_search", async () => {
+    const people = await ume.person.search({ query: "millie" });
+    assert.isNotEmpty(people);
+  });
+
+  await stopwatch("person_details", async () => {
+    const tennant = (await ume.person.details(20049))!;
+    assert.isNotNull(tennant);
+    Object.entries(tennant).forEach(([, value]) => assert.isDefined(value));
+    assert.equal(tennant.name, "David Tennant");
+    assert.isNotEmpty(tennant.known_for_movies);
   });
 }
 

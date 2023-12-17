@@ -151,3 +151,20 @@ export interface Title_Preview {
   images: Title_Image[];
   genres: Title_Genre[];
 }
+
+export interface Person_Search {
+  id: number;
+  name: string;
+  profile_path: string;
+}
+
+export interface Person_Details {
+  name: string;
+  profile_path: string;
+  known_for_movies: {
+    name: string;
+    poster_path: string;
+    popularity: number;
+  }[];
+  known_for_department: string;
+}
