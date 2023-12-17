@@ -107,7 +107,11 @@ export type Movie_Collection = {
   poster_path: string;
 }[];
 
-export type Title_Details = Omit<Title_Data_Page["title"], "seasons"> & {
+export type Title_Details = Omit<
+  Title_Data_Page["title"],
+  "seasons" | "trailers"
+> & {
+  videos: Title_Data_Page["title"]["trailers"];
   slug: string;
   seasons: Ume_Seasons;
   cast: Promise<(MoviesGetCreditsCast | TVGetCreditsCast)[]> | null;

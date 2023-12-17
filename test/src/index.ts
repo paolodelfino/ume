@@ -62,15 +62,15 @@ async function main() {
       filename: details.images[0].filename,
     });
     console.log(image);
-    if (details.trailers[0]) {
-      const trailer = ume.title.trailer_url({
-        key: details.trailers[0].key,
+    if (details.videos[0]) {
+      const video = ume.title.video_url({
+        key: details.videos[0].key,
       });
-      const iframe = ume.title.trailer_iframe({
-        url: trailer,
+      const iframe = ume.title.video_iframe({
+        url: video,
         className: "w-full h-full",
       });
-      console.log(trailer);
+      console.log(video);
       console.log(iframe);
     }
   });

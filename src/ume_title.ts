@@ -100,9 +100,9 @@ export class Ume_Title {
       score,
     } = data.title;
 
-    const trailers = data.title.trailers.map((trailer: any) => ({
-      name: trailer.name,
-      key: trailer.youtube_id,
+    const videos = data.title.trailers.map((video: any) => ({
+      name: video.name,
+      key: video.youtube_id,
     }));
     const images = data.title.images.map(
       (image) =>
@@ -144,8 +144,8 @@ export class Ume_Title {
         });
       }
 
-      if (trailers.length == 0) {
-        trailers.push(
+      if (videos.length == 0) {
+        videos.push(
           ...(await fromTmdb.then((tmdb_details) =>
             tmdb_details.videos.results
               .filter(
@@ -158,7 +158,7 @@ export class Ume_Title {
                   ({
                     key: video.key,
                     name: video.name,
-                  } satisfies Awaited<Title_Details["trailers"]>[number])
+                  } satisfies Awaited<Title_Details["videos"]>[number])
               )
           ))
         );
@@ -209,7 +209,7 @@ export class Ume_Title {
       status,
       seasons_count: seasons_count,
       seasons: seasons_handler,
-      trailers,
+      videos,
       images,
       cast: fromTmdb?.then((tmdb_details) => tmdb_details.credits.cast) ?? null,
       genres,
@@ -278,11 +278,11 @@ export class Ume_Title {
     return `${this._ume.sc.image_endpoint}/${filename}`;
   }
 
-  trailer_url({ key }: { key: string }) {
+  video_url({ key }: { key: string }) {
     return `${this._ume.sc.trailer_endpoint}/${key}`;
   }
 
-  trailer_iframe({ url, className }: { url: string; className: string }) {
+  video_iframe({ url, className }: { url: string; className: string }) {
     return `
 <iframe
   className="${className}"
