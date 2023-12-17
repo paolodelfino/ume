@@ -49,15 +49,17 @@ export class Ume_Title {
     ) as {
       data: any[];
     };
-    return res.data.slice(0, max_results).map((entry) => ({
-      id: entry.id,
-      slug: entry.slug,
-      name: entry.name,
-      score: entry.score,
-      images: entry.images,
-      seasons_count: entry.seasons_count,
-      type: entry.type,
-    }));
+    return res.data.slice(0, max_results).map((entry) => {
+      return {
+        id: entry.id,
+        slug: entry.slug,
+        name: entry.name,
+        score: entry.score,
+        images: entry.images,
+        seasons_count: entry.seasons_count,
+        type: entry.type,
+      };
+    });
   }
 
   private _details_cache: {
@@ -94,16 +96,29 @@ export class Ume_Title {
       status,
       seasons_count,
       seasons,
-      trailers,
-      images,
       runtime,
       score,
-      genres,
     } = data.title;
 
-    const sliders = data.sliders;
+    const videos = data.title.trailers.map((video: any) => ({
+      name: video.name,
+      key: video.youtube_id,
+    }));
+    const images = data.title.images.map(
+      (image) =>
+        ({
+          filename: image.filename,
+          type: image.type,
+        } satisfies Title_Details["images"][number])
+    );
+    const genres = data.title.genres.map(
+      (genre) =>
+        ({
+          name: genre.name,
+        } satisfies Title_Details["genres"][number])
+    );
     const related =
-      sliders.find((slider) => slider.name == "related")?.titles ?? null;
+      data.sliders.find((slider) => slider.name == "related")?.titles ?? null;
 
     const seasons_handler = new Ume_Seasons({
       seasons: seasons.map((season) => ({
@@ -114,21 +129,39 @@ export class Ume_Title {
 
     let fromTmdb:
       | (
-          | Promise<MoviesGetDetailsResponse<"credits"[]>>
-          | Promise<TVGetDetailsResponse<"credits"[]>>
+          | Promise<MoviesGetDetailsResponse<("credits" | "videos")[]>>
+          | Promise<TVGetDetailsResponse<("credits" | "videos")[]>>
         )
       | null = null;
     if (tmdb_id) {
       if (type == "movie") {
         fromTmdb = this._ume.tmdb.v3.movies.getDetails(tmdb_id, {
-          append_to_response: ["credits"],
-          language: "it-IT",
+          append_to_response: ["credits", "videos"],
         });
       } else {
         fromTmdb = this._ume.tmdb.v3.tv.getDetails(tmdb_id, {
-          append_to_response: ["credits"],
-          language: "it-IT",
+          append_to_response: ["credits", "videos"],
         });
+      }
+
+      if (videos.length == 0) {
+        videos.push(
+          ...(await fromTmdb.then((tmdb_details) =>
+            tmdb_details.videos.results
+              .filter(
+                (video) =>
+                  (video.type == "Trailer" || video.type == "Teaser") &&
+                  video.site == "YouTube"
+              )
+              .map(
+                (video) =>
+                  ({
+                    key: video.key,
+                    name: video.name,
+                  } satisfies Awaited<Title_Details["videos"]>[number])
+              )
+          ))
+        );
       }
     }
 
@@ -176,7 +209,7 @@ export class Ume_Title {
       status,
       seasons_count: seasons_count,
       seasons: seasons_handler,
-      trailers,
+      videos,
       images,
       cast: fromTmdb?.then((tmdb_details) => tmdb_details.credits.cast) ?? null,
       genres,
@@ -245,11 +278,11 @@ export class Ume_Title {
     return `${this._ume.sc.image_endpoint}/${filename}`;
   }
 
-  trailer_url({ key }: { key: string }) {
+  video_url({ key }: { key: string }) {
     return `${this._ume.sc.trailer_endpoint}/${key}`;
   }
 
-  trailer_iframe({ url, className }: { url: string; className: string }) {
+  video_iframe({ url, className }: { url: string; className: string }) {
     return `
 <iframe
   className="${className}"
@@ -264,13 +297,16 @@ export class Ume_Title {
   is_available({
     release_date,
     status,
+    episodes_count,
   }: {
     release_date: Title_Details["release_date"];
-    status: Title_Details["status"];
+    status?: Title_Details["status"];
+    episodes_count?: number;
   }) {
     return (
       new Date(release_date).getTime() <= Date.now() &&
-      status != "Post Production"
+      (!status || status != "Post Production") &&
+      (!episodes_count || episodes_count > 0)
     );
   }
 

@@ -2,6 +2,7 @@ import _sendgrid from "@sendgrid/mail";
 import PasteClient from "pastebin-api";
 import { TMDBNodeApi } from "tmdb-js-node";
 import { SC } from "./sc";
+import { Ume_Person } from "./ume_person";
 import { Ume_Continue_Watching } from "./ume_continue_watching";
 import { Ume_Mylist } from "./ume_mylist";
 import { Ume_Report } from "./ume_report";
@@ -15,6 +16,7 @@ export class Ume {
   report!: Ume_Report;
   sc!: SC;
   title!: Ume_Title;
+  person!: Ume_Person;
   mylist!: Ume_Mylist;
   continue_watching!: Ume_Continue_Watching;
 
@@ -48,6 +50,7 @@ export class Ume {
     await this.sc.init();
 
     this.title = new Ume_Title({ ume: this });
+    this.person = new Ume_Person({ ume: this });
     this.mylist = new Ume_Mylist();
     this.continue_watching = new Ume_Continue_Watching();
   }

@@ -30,7 +30,8 @@ async function main() {
 
   let movie: Awaited<ReturnType<typeof ume.title.search>>[number];
   await stopwatch("search", async () => {
-    const movies = await ume.title.search({ query: "rick" });
+    // Should use "rick" as query or "enola" to test films
+    const movies = await ume.title.search({ query: "enola" });
     assert(movies.length > 0);
     movie = movies[0];
   });
@@ -60,16 +61,18 @@ async function main() {
     const image = ume.title.image_url({
       filename: details.images[0].filename,
     });
-    const trailer = ume.title.trailer_url({
-      key: details.trailers[0].youtube_id,
-    });
-    const iframe = ume.title.trailer_iframe({
-      url: trailer,
-      className: "w-full h-full",
-    });
     console.log(image);
-    console.log(trailer);
-    console.log(iframe);
+    if (details.videos[0]) {
+      const video = ume.title.video_url({
+        key: details.videos[0].key,
+      });
+      const iframe = ume.title.video_iframe({
+        url: video,
+        className: "w-full h-full",
+      });
+      console.log(video);
+      console.log(iframe);
+    }
   });
 
   let master_playlist: string;
@@ -158,14 +161,14 @@ async function main() {
       { name: "latest" },
       { name: "top10" },
       { name: "trending" },
-      // { name: "upcoming" },
+      { name: "upcoming" },
     ]);
     assert(queue.data.length == 0);
     assert((await queue.next()).has_next);
     // @ts-ignore
     assert(queue.data.length == 6);
     assert(!(await queue.next()).has_next);
-    assert.equal(queue.data.length, 7);
+    assert.equal(queue.data.length, 8);
   });
 
   let download_objs: Awaited<
@@ -383,6 +386,19 @@ async function main() {
     assert.isAtLeast(result.length, 2);
     assert.isDefined(result.find((e) => e.slug == "enola-holmes"));
     assert.isDefined(result.find((e) => e.slug == "enola-holmes-2"));
+  });
+
+  await stopwatch("person_search", async () => {
+    const people = await ume.person.search({ query: "millie" });
+    assert.isNotEmpty(people);
+  });
+
+  await stopwatch("person_details", async () => {
+    const tennant = (await ume.person.details(20049))!;
+    assert.isNotNull(tennant);
+    Object.entries(tennant).forEach(([, value]) => assert.isDefined(value));
+    assert.equal(tennant.name, "David Tennant");
+    assert.isNotEmpty(tennant.known_for_movies);
   });
 }
 

@@ -2,11 +2,9 @@ import { MoviesGetCreditsCast, TVGetCreditsCast } from "tmdb-js-node";
 import { Ume_Seasons } from "./ume_seasons";
 
 export interface Title_Image {
-  imageable_id: number;
-  imageable_type: "title" | "episode";
+  // imageable_type: "title" | "episode";
   filename: string;
   type: "cover_mobile" | "poster" | "background" | "logo" | "cover";
-  original_url_field: string | null;
 }
 
 export type Title_Search = {
@@ -20,7 +18,7 @@ export type Title_Search = {
 };
 
 export interface Slider_Fetch {
-  name: "top10" | "trending" | "latest" /* | "upcoming" */ | "genre";
+  name: "top10" | "trending" | "latest" | "upcoming" | "genre";
   title_type?: "movie" | "tv" | null;
   genre?: Title_Genre["name"] | null;
 }
@@ -28,7 +26,12 @@ export interface Slider_Fetch {
 export interface Title_Slider {
   name: string;
   label: string;
-  titles: Title_Search[];
+  titles: (Title_Search & {
+    upcoming_seasons: {
+      number: number;
+      release_date: string;
+    }[];
+  })[];
 }
 
 type Title_Genre = {
@@ -81,9 +84,8 @@ export interface Title_Data_Page {
       episodes_count: number;
     }[];
     trailers: {
-      id: number;
+      key: string;
       name: string;
-      youtube_id: string;
     }[];
     images: Title_Image[];
     genres: Title_Genre[];
@@ -105,7 +107,11 @@ export type Movie_Collection = {
   poster_path: string;
 }[];
 
-export type Title_Details = Omit<Title_Data_Page["title"], "seasons"> & {
+export type Title_Details = Omit<
+  Title_Data_Page["title"],
+  "seasons" | "trailers"
+> & {
+  videos: Title_Data_Page["title"]["trailers"];
   slug: string;
   seasons: Ume_Seasons;
   cast: Promise<(MoviesGetCreditsCast | TVGetCreditsCast)[]> | null;
@@ -148,4 +154,21 @@ export interface Title_Preview {
   seasons_count: number;
   images: Title_Image[];
   genres: Title_Genre[];
+}
+
+export interface Person_Search {
+  id: number;
+  name: string;
+  profile_path: string;
+}
+
+export interface Person_Details {
+  name: string;
+  profile_path: string;
+  known_for_movies: {
+    name: string;
+    poster_path: string;
+    popularity: number;
+  }[];
+  known_for_department: string;
 }
