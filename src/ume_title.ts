@@ -96,20 +96,29 @@ export class Ume_Title {
       status,
       seasons_count,
       seasons,
-      images,
       runtime,
       score,
-      genres,
     } = data.title;
 
     const trailers = data.title.trailers.map((trailer: any) => ({
       name: trailer.name,
       key: trailer.youtube_id,
     }));
-
-    const sliders = data.sliders;
+    const images = data.title.images.map(
+      (image) =>
+        ({
+          filename: image.filename,
+          type: image.type,
+        } satisfies Title_Details["images"][number])
+    );
+    const genres = data.title.genres.map(
+      (genre) =>
+        ({
+          name: genre.name,
+        } satisfies Title_Details["genres"][number])
+    );
     const related =
-      sliders.find((slider) => slider.name == "related")?.titles ?? null;
+      data.sliders.find((slider) => slider.name == "related")?.titles ?? null;
 
     const seasons_handler = new Ume_Seasons({
       seasons: seasons.map((season) => ({
