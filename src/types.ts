@@ -20,7 +20,7 @@ export type Title_Search = {
 };
 
 export interface Slider_Fetch {
-  name: "top10" | "trending" | "latest" /* | "upcoming" */ | "genre";
+  name: "top10" | "trending" | "latest" | "upcoming" | "genre";
   title_type?: "movie" | "tv" | null;
   genre?: Title_Genre["name"] | null;
 }
@@ -28,7 +28,12 @@ export interface Slider_Fetch {
 export interface Title_Slider {
   name: string;
   label: string;
-  titles: Title_Search[];
+  titles: (Title_Search & {
+    upcoming_seasons: {
+      number: number;
+      release_date: string;
+    }[];
+  })[];
 }
 
 type Title_Genre = {

@@ -30,7 +30,8 @@ async function main() {
 
   let movie: Awaited<ReturnType<typeof ume.title.search>>[number];
   await stopwatch("search", async () => {
-    const movies = await ume.title.search({ query: "rick" });
+    // Should use "rick" as query or "enola" to test films
+    const movies = await ume.title.search({ query: "berlino" });
     assert(movies.length > 0);
     movie = movies[0];
   });
@@ -60,16 +61,18 @@ async function main() {
     const image = ume.title.image_url({
       filename: details.images[0].filename,
     });
-    const trailer = ume.title.trailer_url({
-      key: details.trailers[0].youtube_id,
-    });
-    const iframe = ume.title.trailer_iframe({
-      url: trailer,
-      className: "w-full h-full",
-    });
     console.log(image);
-    console.log(trailer);
-    console.log(iframe);
+    if (details.trailers[0]) {
+      const trailer = ume.title.trailer_url({
+        key: details.trailers[0].youtube_id,
+      });
+      const iframe = ume.title.trailer_iframe({
+        url: trailer,
+        className: "w-full h-full",
+      });
+      console.log(trailer);
+      console.log(iframe);
+    }
   });
 
   let master_playlist: string;
@@ -158,14 +161,14 @@ async function main() {
       { name: "latest" },
       { name: "top10" },
       { name: "trending" },
-      // { name: "upcoming" },
+      { name: "upcoming" },
     ]);
     assert(queue.data.length == 0);
     assert((await queue.next()).has_next);
     // @ts-ignore
     assert(queue.data.length == 6);
     assert(!(await queue.next()).has_next);
-    assert.equal(queue.data.length, 7);
+    assert.equal(queue.data.length, 8);
   });
 
   let download_objs: Awaited<

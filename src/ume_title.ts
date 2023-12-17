@@ -49,15 +49,17 @@ export class Ume_Title {
     ) as {
       data: any[];
     };
-    return res.data.slice(0, max_results).map((entry) => ({
-      id: entry.id,
-      slug: entry.slug,
-      name: entry.name,
-      score: entry.score,
-      images: entry.images,
-      seasons_count: entry.seasons_count,
-      type: entry.type,
-    }));
+    return res.data.slice(0, max_results).map((entry) => {
+      return {
+        id: entry.id,
+        slug: entry.slug,
+        name: entry.name,
+        score: entry.score,
+        images: entry.images,
+        seasons_count: entry.seasons_count,
+        type: entry.type,
+      };
+    });
   }
 
   private _details_cache: {
@@ -264,13 +266,16 @@ export class Ume_Title {
   is_available({
     release_date,
     status,
+    episodes_count,
   }: {
     release_date: Title_Details["release_date"];
-    status: Title_Details["status"];
+    status?: Title_Details["status"];
+    episodes_count?: number;
   }) {
     return (
       new Date(release_date).getTime() <= Date.now() &&
-      status != "Post Production"
+      (!status || status != "Post Production") &&
+      (!episodes_count || episodes_count > 0)
     );
   }
 
