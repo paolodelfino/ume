@@ -96,12 +96,16 @@ export class Ume_Title {
       status,
       seasons_count,
       seasons,
-      trailers,
       images,
       runtime,
       score,
       genres,
     } = data.title;
+
+    const trailers = data.title.trailers.map((trailer: any) => ({
+      name: trailer.name,
+      key: trailer.youtube_id,
+    }));
 
     const sliders = data.sliders;
     const related =
@@ -116,21 +120,39 @@ export class Ume_Title {
 
     let fromTmdb:
       | (
-          | Promise<MoviesGetDetailsResponse<"credits"[]>>
-          | Promise<TVGetDetailsResponse<"credits"[]>>
+          | Promise<MoviesGetDetailsResponse<("credits" | "videos")[]>>
+          | Promise<TVGetDetailsResponse<("credits" | "videos")[]>>
         )
       | null = null;
     if (tmdb_id) {
       if (type == "movie") {
         fromTmdb = this._ume.tmdb.v3.movies.getDetails(tmdb_id, {
-          append_to_response: ["credits"],
-          language: "it-IT",
+          append_to_response: ["credits", "videos"],
         });
       } else {
         fromTmdb = this._ume.tmdb.v3.tv.getDetails(tmdb_id, {
-          append_to_response: ["credits"],
-          language: "it-IT",
+          append_to_response: ["credits", "videos"],
         });
+      }
+
+      if (trailers.length == 0) {
+        trailers.push(
+          ...(await fromTmdb.then((tmdb_details) =>
+            tmdb_details.videos.results
+              .filter(
+                (video) =>
+                  (video.type == "Trailer" || video.type == "Teaser") &&
+                  video.site == "YouTube"
+              )
+              .map(
+                (video) =>
+                  ({
+                    key: video.key,
+                    name: video.name,
+                  } satisfies Awaited<Title_Details["trailers"]>[number])
+              )
+          ))
+        );
       }
     }
 

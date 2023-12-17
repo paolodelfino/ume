@@ -31,7 +31,7 @@ async function main() {
   let movie: Awaited<ReturnType<typeof ume.title.search>>[number];
   await stopwatch("search", async () => {
     // Should use "rick" as query or "enola" to test films
-    const movies = await ume.title.search({ query: "berlino" });
+    const movies = await ume.title.search({ query: "rick" });
     assert(movies.length > 0);
     movie = movies[0];
   });
@@ -41,6 +41,7 @@ async function main() {
   await stopwatch("details", async () => {
     details = await ume.title.details({ id: movie.id, slug: movie.slug });
   });
+  console.log(details.trailers);
 
   await stopwatch("details (cache)", async () => {
     assert(
@@ -64,7 +65,7 @@ async function main() {
     console.log(image);
     if (details.trailers[0]) {
       const trailer = ume.title.trailer_url({
-        key: details.trailers[0].youtube_id,
+        key: details.trailers[0].key,
       });
       const iframe = ume.title.trailer_iframe({
         url: trailer,

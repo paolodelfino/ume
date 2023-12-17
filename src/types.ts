@@ -86,9 +86,8 @@ export interface Title_Data_Page {
       episodes_count: number;
     }[];
     trailers: {
-      id: number;
+      key: string;
       name: string;
-      youtube_id: string;
     }[];
     images: Title_Image[];
     genres: Title_Genre[];
