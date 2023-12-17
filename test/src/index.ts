@@ -342,6 +342,9 @@ async function main() {
     });
     assert(ume.continue_watching.length == 2);
 
+    ume.continue_watching.rm(enola.id);
+    assert.equal(ume.continue_watching.length, 1);
+
     const titles = await ume.title.search({ max_results: 30, query: "enola" });
     titles.forEach((title) =>
       ume.continue_watching.update({

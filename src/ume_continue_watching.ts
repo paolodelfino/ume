@@ -59,6 +59,11 @@ export class Ume_Continue_Watching {
     this._need_recache = true;
   }
 
+  rm(id: number) {
+    this._store.rm(`${id}`);
+    this._need_recache = true;
+  }
+
   some(quantity: number) {
     return this._cache_all.slice(0, quantity);
   }
