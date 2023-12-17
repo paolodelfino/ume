@@ -2,11 +2,9 @@ import { MoviesGetCreditsCast, TVGetCreditsCast } from "tmdb-js-node";
 import { Ume_Seasons } from "./ume_seasons";
 
 export interface Title_Image {
-  imageable_id: number;
-  imageable_type: "title" | "episode";
+  // imageable_type: "title" | "episode";
   filename: string;
   type: "cover_mobile" | "poster" | "background" | "logo" | "cover";
-  original_url_field: string | null;
 }
 
 export type Title_Search = {
