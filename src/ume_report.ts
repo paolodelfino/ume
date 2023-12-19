@@ -1,18 +1,30 @@
-import { Ume } from ".";
+import { WebhookClient, WebhookMessageCreateOptions } from "discord.js";
 
 export class Ume_Report {
-  private _ume;
+  private _client;
 
-  constructor({ ume }: { ume: Ume }) {
-    this._ume = ume;
+  constructor({ webhook_url }: { webhook_url: string }) {
+    this._client = new WebhookClient({
+      url: webhook_url,
+    });
   }
 
-  async send({ subject, text }: { subject: string; text: string }) {
-    await this._ume.sendgrid.send({
-      from: "hackymail12@gmail.com",
-      to: "hackymail12@gmail.com",
-      subject,
-      text,
-    });
+  async send({ title, description }: { title: string; description: string }) {
+    const options: WebhookMessageCreateOptions = {
+      username: "Ume",
+      content: `## ${title}
+*${description}*
+
+*Sent on ${new Date(Date.now()).toLocaleString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+      })}*
+`,
+    };
+    await this._client.send(options);
   }
 }

@@ -69,4 +69,11 @@ export class SC {
     this.url = tld;
     return await this.check_url();
   }
+
+  async report_outdated_url() {
+    await this._ume.report.send({
+      title: "Url is outdated",
+      description: `"${this._ume.sc.url}" needs to be updated`,
+    });
+  }
 }
