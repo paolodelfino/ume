@@ -3,6 +3,7 @@ import fs from "fs";
 import path from "path";
 import { exit } from "process";
 import { UTesting } from "putesting";
+import { parseArgs } from "util";
 import { Ume } from "../../dist/index.mjs";
 import "./utils";
 
@@ -533,7 +534,34 @@ async function main() {
     assert.isNotEmpty(tennant.known_for_movies);
   });
 
-  await tests.run();
+  const argc = process.argv.length - 2;
+  const argv = process.argv.slice(2);
+
+  if (argc == 0) {
+    await tests.run();
+  } else {
+    const { values, positionals } = parseArgs({
+      args: argv,
+      allowPositionals: true,
+      options: {
+        list: {
+          type: "boolean",
+        },
+      },
+    });
+
+    if (values.list) {
+      console.log(tests.names);
+      return;
+    }
+
+    for (const arg of positionals) {
+      if (!tests.get(arg)) {
+        throw new Error(`"${arg}" is not a valid test`);
+      }
+      await tests.run(arg);
+    }
+  }
 }
 
 main();
