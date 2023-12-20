@@ -2,3 +2,5 @@ node_modules
 dist
 pnpm-lock.yaml
 .env*
+test/output.mp4
+test/output.vtt
