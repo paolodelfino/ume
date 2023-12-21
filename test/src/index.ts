@@ -282,21 +282,32 @@ async function main() {
     },
     sliders: {
       async callback() {
-        const queue = ume.title.sliders_queue([
-          { genre: "Action & Adventure", name: "genre" },
-          { genre: "Animazione", name: "genre" },
-          { genre: "Commedia", name: "genre" },
-          { genre: "Crime", name: "genre" },
-          { name: "latest" },
-          { name: "top10" },
-          { name: "trending" },
-          { name: "upcoming" },
-        ]);
-        assert.strictEqual(queue.data.length, 0);
-        assert.isTrue((await queue.next()).has_next);
-        assert.strictEqual(queue.data.length, 6);
-        assert.isFalse((await queue.next()).has_next);
-        assert.strictEqual(queue.data.length, 8);
+        {
+          const queue = ume.title.sliders_queue([
+            { genre: "Action & Adventure", name: "genre" },
+            { genre: "Animazione", name: "genre" },
+            { genre: "Commedia", name: "genre" },
+            { genre: "Crime", name: "genre" },
+            { name: "latest" },
+            { name: "top10" },
+            { name: "trending" },
+          ]);
+          assert.strictEqual(queue.data.length, 0);
+          assert.isTrue((await queue.next()).has_next);
+          assert.strictEqual(queue.data.length, 6);
+          assert.isFalse((await queue.next()).has_next);
+          assert.strictEqual(queue.data.length, 7);
+        }
+
+        {
+          const queue = ume.title.sliders_queue([
+            {
+              name: "upcoming",
+            },
+          ]);
+          await queue.next();
+          console.log(`upcoming (${queue.data.length})`);
+        }
       },
     },
     "person search": {

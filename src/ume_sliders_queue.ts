@@ -30,10 +30,6 @@ export class Ume_Sliders_Queue {
       this.data.push(...(await fetch_next()));
     }
 
-    let has_next = true;
-    if (this._batches.length < 1) {
-      has_next = false;
-    }
-    return { has_next };
+    return { has_next: this._batches.length >= 1 };
   }
 }
