@@ -10,10 +10,9 @@ import "./utils";
 
 type Tests =
   | "search"
+  | "details caching system"
   | "details"
-  | "details (cached)"
   | "preview"
-  | "preview (cached)"
   | "misc"
   | "master playlist"
   | "sliders"
@@ -67,18 +66,19 @@ async function main() {
   const tests = new Test_Set<Tests>({
     search: {
       async callback() {
-        // Should use "rick" as query or "enola" to test films
+        // testing query should be "rick" for series and "enola" for films
         const movies = await ume.title.search({ query: "enola" });
         assert.isAbove(movies.length, 0);
         movie = movies[0];
       },
     },
-    details: {
-      async before() {
+    "details caching system": {
+      async callback() {
         const cache = new UStore<any>({
           identifier: "details_cache",
           kind: "local",
         });
+        cache.clear();
         assert.strictEqual(cache.length, 0);
 
         const samples = [
@@ -121,12 +121,28 @@ async function main() {
 
         assert.isNull(cache.get(samples[2].id.toString()));
         assert.isNotNull(cache.get(samples[samples.length - 1].id.toString()));
+
+        cache.clear();
+        assert.strictEqual(cache.length, 0);
       },
+    },
+    details: {
       async callback() {
         details = await ume.title.details({ id: movie.id, slug: movie.slug });
       },
       deps: ["search"],
       async after() {
+        await tests.run("details (cached)", {
+          async callback() {
+            assert.strictEqual(
+              (await ume.title.details({ id: movie.id, slug: movie.slug }))
+                .name,
+              details.name
+            );
+          },
+          deps: ["search", "details"],
+        });
+
         if (details.type == "movie") {
           await tests.run("movie collection", {
             async callback() {
@@ -219,15 +235,6 @@ async function main() {
         }
       },
     },
-    "details (cached)": {
-      async callback() {
-        assert.strictEqual(
-          (await ume.title.details({ id: movie.id, slug: movie.slug })).name,
-          details.name
-        );
-      },
-      deps: ["search", "details"],
-    },
     preview: {
       async callback() {
         assert.strictEqual(
@@ -235,16 +242,18 @@ async function main() {
           movie.id
         );
       },
-      deps: ["search"],
-    },
-    "preview (cached)": {
-      async callback() {
-        assert.strictEqual(
-          (await ume.title.preview({ id: movie.id })).id,
-          movie.id
-        );
+      async after() {
+        await tests.run("preview (cached)", {
+          async callback() {
+            assert.strictEqual(
+              (await ume.title.preview({ id: movie.id })).id,
+              movie.id
+            );
+          },
+          deps: ["search", "preview"],
+        });
       },
-      deps: ["search", "preview"],
+      deps: ["search"],
     },
     misc: {
       async callback() {
