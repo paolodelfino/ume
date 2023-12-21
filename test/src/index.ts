@@ -10,9 +10,9 @@ import "./utils";
 type Tests =
   | "search"
   | "details"
-  | "details (cache)"
+  | "details (cached)"
   | "preview"
-  | "preview (cache)"
+  | "preview (cached)"
   | "misc"
   | "master playlist"
   | "sliders"
@@ -170,7 +170,7 @@ async function main() {
         }
       },
     },
-    "details (cache)": {
+    "details (cached)": {
       async callback() {
         assert.strictEqual(
           (await ume.title.details({ id: movie.id, slug: movie.slug })).name,
@@ -188,7 +188,7 @@ async function main() {
       },
       deps: ["search"],
     },
-    "preview (cache)": {
+    "preview (cached)": {
       async callback() {
         assert.strictEqual(
           (await ume.title.preview({ id: movie.id })).id,

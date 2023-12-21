@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import { UStore } from "pustore";
 import { MoviesGetDetailsResponse, TVGetDetailsResponse } from "tmdb-js-node";
 import { Ume } from ".";
 import {
@@ -26,11 +27,20 @@ import {
 export class Ume_Title {
   private _ume;
   sliders_queue;
+  _details_cache_test;
 
   constructor({ ume }: { ume: Ume }) {
     this._ume = ume;
     this.sliders_queue = (sliders: Slider_Fetch[]) =>
       new Ume_Sliders_Queue({ ume: this._ume, sliders });
+    this._details_cache_test = new UStore<{
+      key: string;
+      data: Title_Details;
+      interacts: number;
+    }>({
+      identifier: "details_cache",
+      kind: "local",
+    });
   }
 
   /**
@@ -74,8 +84,17 @@ export class Ume_Title {
     slug: string;
   }): Promise<Title_Details> {
     const cache_key = `${id}`;
-    if (this._details_cache[cache_key]) {
-      return this._details_cache[cache_key];
+    // if (this._details_cache[cache_key]) {
+    //   return this._details_cache[cache_key];
+    // }
+    if (this._details_cache_test.get(cache_key)) {
+      this._details_cache_test.update({
+        key: cache_key,
+        value: {
+          interacts: ++this._details_cache_test.get(cache_key)!.interacts,
+        },
+      });
+      return this._details_cache_test.get(cache_key)!.data;
     }
 
     const data = JSON.parse(
@@ -217,7 +236,18 @@ export class Ume_Title {
       collection,
     } satisfies Title_Details;
 
-    this._details_cache[cache_key] = title_details;
+    // this._details_cache[cache_key] = title_details;
+    if (this._details_cache_test.length >= 8) {
+      const less = this._details_cache_test
+        .all()
+        .sort((a, b) => a.interacts - b.interacts)[0];
+      this._details_cache_test.rm(less.key);
+    }
+    this._details_cache_test.set({
+      key: cache_key,
+      value: { key: cache_key, data: title_details, interacts: 0 },
+      expiry: Date.now() + 7 * 24 * 60 * 60 * 1000,
+    });
     return title_details;
   }
 
