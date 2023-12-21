@@ -10,7 +10,7 @@ import "./utils";
 
 type Tests =
   | "search"
-  | "details caching system"
+  | "details' caching system"
   | "details"
   | "preview"
   | "misc"
@@ -72,7 +72,7 @@ async function main() {
         movie = movies[0];
       },
     },
-    "details caching system": {
+    "details' caching system": {
       async callback() {
         const cache = new UStore<any>({
           identifier: "details_cache",
