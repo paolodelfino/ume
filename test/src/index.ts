@@ -2,6 +2,7 @@ import { assert } from "chai";
 import fs from "fs";
 import path from "path";
 import { exit } from "process";
+import { UStore } from "pustore";
 import { Test_Set } from "putesting";
 import { parseArgs } from "util";
 import { Ume } from "../../dist/index.mjs";
@@ -73,6 +74,54 @@ async function main() {
       },
     },
     details: {
+      async before() {
+        const cache = new UStore<any>({
+          identifier: "details_cache",
+          kind: "local",
+        });
+        assert.strictEqual(cache.length, 0);
+
+        const samples = [
+          { id: 739, slug: "escobar-il-fascino-del-male" }, // 1
+          { id: 1441, slug: "escape-plan-fuga-dallinferno", times: 3 }, // 3
+          { id: 1442, slug: "escape-plan-2-ritorno-allinferno", times: 0 }, // 0
+          { id: 1649, slug: "esp-fenomeni-paranormali", times: 0 }, // 0
+          { id: 1650, slug: "esp-fenomeni-paranormali", times: 2 }, // 2
+          { id: 1663, slug: "estate-di-morte", times: 3 }, // 3
+          { id: 2711, slug: "escape-room", times: 1 }, // 1
+          { id: 3192, slug: "estraneo-a-bordo", times: 2 }, // 2
+          { id: 3550, slug: "escape-room-2-gioco-mortale" },
+        ];
+
+        await ume.title.details(samples[0]);
+        assert.strictEqual(cache.length, 1);
+
+        const only_8 = samples.slice(0, samples.length - 1);
+        assert.strictEqual(only_8.length, 8);
+        for (const sample of only_8) {
+          await ume.title.details(sample);
+        }
+        assert.strictEqual(cache.length, 8);
+
+        assert.strictEqual(cache.get(samples[0].id.toString()).interacts, 1);
+        for (const sample of only_8.slice(1)) {
+          assert.strictEqual(cache.get(sample.id.toString()).interacts, 0);
+        }
+
+        for (const sample of only_8.slice(1)) {
+          for (let i = 0; i < sample.times!; ++i) {
+            await ume.title.details(sample);
+          }
+        }
+
+        assert.isNotNull(cache.get(samples[2].id.toString()));
+
+        await ume.title.details(samples[samples.length - 1]);
+        assert.strictEqual(cache.length, 8);
+
+        assert.isNull(cache.get(samples[2].id.toString()));
+        assert.isNotNull(cache.get(samples[samples.length - 1].id.toString()));
+      },
       async callback() {
         details = await ume.title.details({ id: movie.id, slug: movie.slug });
       },
