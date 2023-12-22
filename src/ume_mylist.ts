@@ -21,13 +21,13 @@ export class Ume_Mylist {
   private get _cache_all() {
     if (this._need_recache) {
       this._need_recache = false;
-      this.__cache_all = this._store.all();
+      this.__cache_all = this._store.all;
     }
     return this.__cache_all;
   }
 
   add(entry: Title_Mylist) {
-    this._store.set({ key: `${entry.id}`, value: entry });
+    this._store.set(`${entry.id}`, entry);
     this._need_recache = true;
   }
 

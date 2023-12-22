@@ -21,7 +21,7 @@ export class Ume_Continue_Watching {
   private get _cache_all() {
     if (this._need_recache) {
       this._need_recache = false;
-      this.__cache_all = this._store.all();
+      this.__cache_all = this._store.all;
     }
     return this.__cache_all;
   }
@@ -52,10 +52,7 @@ export class Ume_Continue_Watching {
   }
 
   update(entry: Title_Continue_Watching) {
-    this._store.set({
-      key: `${entry.id}`,
-      value: entry,
-    });
+    this._store.set(`${entry.id}`, entry);
     this._need_recache = true;
   }
 
