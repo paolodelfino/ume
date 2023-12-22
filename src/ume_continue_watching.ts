@@ -2,6 +2,10 @@ import { UStore } from "pustore";
 import str_compare from "string-comparison";
 import { Title_Continue_Watching } from "./types";
 
+type Import_Export = {
+  store: string;
+};
+
 export class Ume_Continue_Watching {
   private _store;
   private __cache_all: Title_Continue_Watching[] = [];
@@ -12,6 +16,19 @@ export class Ume_Continue_Watching {
       identifier: "continue_watching",
       kind: "local",
     });
+  }
+
+  import_store(stores: Import_Export) {
+    for (const key in stores) {
+      // @ts-ignore
+      this[`_${key}`].import(stores[key]);
+    }
+  }
+
+  export_store(): Import_Export {
+    return {
+      store: this._store.export(),
+    };
   }
 
   get length() {

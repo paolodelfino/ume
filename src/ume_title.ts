@@ -24,16 +24,22 @@ import {
   take_match_groups,
 } from "./utils";
 
+type Import_Export = {
+  details: string;
+};
+
 export class Ume_Title {
   private _ume;
   sliders_queue;
-  private _details_cache;
+
+  private _details;
 
   constructor({ ume }: { ume: Ume }) {
     this._ume = ume;
     this.sliders_queue = (sliders: Slider_Fetch[]) =>
       new Ume_Sliders_Queue({ ume: this._ume, sliders });
-    this._details_cache = new UStore<{
+
+    this._details = new UStore<{
       key: string;
       data: Title_Details;
       interacts: number;
@@ -49,6 +55,19 @@ export class Ume_Title {
         },
       },
     });
+  }
+
+  import_store(stores: Import_Export) {
+    for (const key in stores) {
+      // @ts-ignore
+      this[`_${key}`].import(stores[key]);
+    }
+  }
+
+  export_store(): Import_Export {
+    return {
+      details: this._details.export(),
+    };
   }
 
   /**
@@ -88,8 +107,8 @@ export class Ume_Title {
     slug: string;
   }): Promise<Title_Details> {
     const cache_key = `${id}`;
-    if (this._details_cache.has(cache_key)) {
-      return this._details_cache.get(cache_key)!.data;
+    if (this._details.has(cache_key)) {
+      return this._details.get(cache_key)!.data;
     }
 
     const data = JSON.parse(
@@ -231,14 +250,14 @@ export class Ume_Title {
       collection,
     } satisfies Title_Details;
 
-    if (this._details_cache.length >= 8) {
-      const less = this._details_cache.all.sort(
+    if (this._details.length >= 8) {
+      const less = this._details.all.sort(
         (a, b) => a.interacts - b.interacts
       )[0];
-      this._details_cache.rm(less.key);
+      this._details.rm(less.key);
     }
 
-    this._details_cache.set(
+    this._details.set(
       cache_key,
       { key: cache_key, data: title_details, interacts: 0 },
       {

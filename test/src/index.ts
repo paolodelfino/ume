@@ -9,6 +9,7 @@ import { Ume } from "../../dist/index.mjs";
 import "./utils";
 
 type Tests =
+  | "store"
   | "search"
   | "details' caching system"
   | "details"
@@ -64,6 +65,28 @@ async function main() {
   let enola: Awaited<ReturnType<typeof ume.title.search>>[number];
 
   const tests = new Test_Set<Tests>({
+    store: {
+      async callback() {
+        assert.strictEqual(ume.mylist.length, 0);
+
+        ume.mylist.add({
+          id: 1,
+          slug: "test",
+        });
+        assert.strictEqual(ume.mylist.length, 1);
+
+        const backup = ume.store.export();
+
+        new UStore({ identifier: "mylist", kind: "local" }).clear();
+
+        assert.strictEqual(ume.mylist.length, 0);
+
+        ume.store.import(backup);
+
+        assert.strictEqual(ume.mylist.length, 1);
+        assert.strictEqual(ume.mylist.some(1)[0].slug, "test");
+      },
+    },
     search: {
       async callback() {
         // testing query should be "rick" for series and "enola" for films
