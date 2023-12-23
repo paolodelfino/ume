@@ -107,8 +107,8 @@ export class Ume_Continue_Watching {
         query,
         all.map(({ slug }) => slug)
       )
-      .reverse()
       .filter(({ rating }) => rating >= 0.1)
+      .reverse()
       .map(({ index }) => all[index])
       .slice(0, max_results);
   }

@@ -3,7 +3,7 @@ import { UStore } from "pustore";
 export class Cache_Store<T> {
   private _expiry_offset!: number;
   private _max_entries!: number;
-  private _store;
+  private readonly _store;
 
   constructor() {
     this._store = new UStore<{
@@ -69,5 +69,9 @@ export class Cache_Store<T> {
         expiry: Date.now() + this._expiry_offset,
       }
     );
+  }
+
+  async all() {
+    return (await this._store.all()).map((e) => e.data);
   }
 }

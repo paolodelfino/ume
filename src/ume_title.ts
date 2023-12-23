@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import { MoviesGetDetailsResponse, TVGetDetailsResponse } from "tmdb-js-node";
 import { Ume } from ".";
 import { Cache_Store } from "./cache_store";
+import { Search_Suggestion } from "./search_suggestion";
 import {
   Dl_Res,
   Movie_Collection,
@@ -25,34 +26,38 @@ import {
 } from "./utils";
 
 export class Ume_Title {
-  private _ume;
-  sliders_queue;
+  private _ume!: Ume;
 
-  private _details;
-  private _search_history;
+  private _details!: Cache_Store<Title_Details>;
+  private _search_history!: Cache_Store<string>;
 
-  constructor({ ume }: { ume: Ume }) {
+  sliders_queue!: (sliders: Slider_Fetch[]) => Ume_Sliders_Queue;
+  search_suggestion!: Search_Suggestion;
+
+  async init({ ume }: { ume: Ume }) {
     this._ume = ume;
-    this.sliders_queue = (sliders: Slider_Fetch[]) =>
-      new Ume_Sliders_Queue({ ume: this._ume, sliders });
 
     this._details = new Cache_Store<Title_Details>();
-    this._search_history = new Cache_Store<string>();
-  }
-
-  async init() {
     await this._details.init({
       identifier: "details",
       kind: "indexeddb",
       expiry_offset: 7 * 24 * 60 * 60 * 1000,
       max_entries: 8,
     });
+
+    this._search_history = new Cache_Store<string>();
     await this._search_history.init({
       identifier: "search_history",
       kind: "indexeddb",
       expiry_offset: 7 * 24 * 60 * 60 * 1000,
       max_entries: 50,
     });
+
+    this.sliders_queue = (sliders: Slider_Fetch[]) =>
+      new Ume_Sliders_Queue({ ume: this._ume, sliders });
+    this.search_suggestion = new Search_Suggestion(() =>
+      this._search_history.all()
+    );
   }
 
   async import_store(stores: Awaited<ReturnType<typeof this.export_store>>) {

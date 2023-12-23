@@ -11,6 +11,7 @@ import "./utils";
 type Tests =
   | "store"
   | "search"
+  | "search suggestion"
   | "details' caching system"
   | "details"
   | "preview"
@@ -132,6 +133,19 @@ async function main() {
               "query exceeds 256 chars limit"
             )
           );
+      },
+    },
+    "search suggestion": {
+      async before() {
+        await ume.title.search({ query: "rick" });
+        await ume.title.search({ query: "enola" });
+        await ume.title.search({ query: "e" });
+      },
+      async callback() {
+        const suggestions = await ume.title.search_suggestion.get({
+          query: "eo",
+        });
+        assert.include(suggestions, "enola");
       },
     },
     "details' caching system": {
