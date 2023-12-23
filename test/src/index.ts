@@ -94,10 +94,31 @@ async function main() {
         // These queries shouldn't give any error, everywhere
         const query_movie = "enola";
         const query_series = "rick";
+        const query = query_movie;
 
-        const movies = await ume.title.search({ query: query_movie });
+        const search_history = new UStore<any>();
+        await search_history.init({
+          identifier: "search_history",
+          kind: "indexeddb",
+        });
+        await search_history.clear();
+
+        assert.strictEqual(await search_history.length(), 0);
+
+        const movies = await ume.title.search({ query });
         assert.isAbove(movies.length, 0);
         movie = movies[0];
+
+        assert.strictEqual(await search_history.length(), 1);
+        assert.strictEqual((await search_history.all())[0].data, query);
+
+        await ume.title.search({ query: "he" });
+
+        assert.strictEqual(await search_history.length(), 2);
+
+        const history = await search_history.all();
+        assert.strictEqual(history[0].data, query);
+        assert.strictEqual(history[1].data, "he");
 
         await ume.title
           .search({

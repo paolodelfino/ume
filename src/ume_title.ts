@@ -90,6 +90,9 @@ export class Ume_Title {
     ) as {
       data: any[];
     };
+
+    await this._search_history.set(query, query);
+
     return res.data.slice(0, max_results).map((entry) => {
       return {
         id: entry.id,
