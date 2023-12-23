@@ -4,3 +4,4 @@ pnpm-lock.yaml
 .env*
 test/output.mp4
 test/output.vtt
+a.txt
