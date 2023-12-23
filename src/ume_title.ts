@@ -24,16 +24,12 @@ import {
   take_match_groups,
 } from "./utils";
 
-type Import_Export = {
-  details: string;
-};
-
 export class Ume_Title {
   private _ume;
   sliders_queue;
 
   private _details;
-  // private _search_history;
+  private _search_history;
 
   constructor({ ume }: { ume: Ume }) {
     this._ume = ume;
@@ -41,7 +37,7 @@ export class Ume_Title {
       new Ume_Sliders_Queue({ ume: this._ume, sliders });
 
     this._details = new Cache_Store<Title_Details>();
-    // this._search_history = new Cache_Store<string>();
+    this._search_history = new Cache_Store<string>();
   }
 
   async init() {
@@ -51,23 +47,25 @@ export class Ume_Title {
       expiry_offset: 7 * 24 * 60 * 60 * 1000,
       max_entries: 8,
     });
-    // await this._search_history.init({
-    //   identifier: "search_history",
-    //   kind: "indexeddb",
-    //   expiry_offset: 7 * 24 * 60 * 60 * 1000,
-    // });
+    await this._search_history.init({
+      identifier: "search_history",
+      kind: "indexeddb",
+      expiry_offset: 7 * 24 * 60 * 60 * 1000,
+      max_entries: 50,
+    });
   }
 
-  async import_store(stores: Import_Export) {
+  async import_store(stores: Awaited<ReturnType<typeof this.export_store>>) {
     for (const key in stores) {
       // @ts-ignore
       await this[`_${key}`].import(stores[key]);
     }
   }
 
-  async export_store(): Promise<Import_Export> {
+  async export_store() {
     return {
       details: await this._details.export(),
+      search_history: await this._search_history.export(),
     };
   }
 
