@@ -1,4 +1,5 @@
 import { config } from "dotenv";
+import "fake-indexeddb/auto";
 import path from "path";
 
 config({
