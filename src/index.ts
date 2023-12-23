@@ -55,9 +55,12 @@ export class Ume {
     await this.sc.init();
 
     this.title = new Ume_Title({ ume: this });
+    await this.title.init();
     this.person = new Ume_Person({ ume: this });
 
     this.mylist = new Ume_Mylist();
+    await this.mylist.init();
     this.continue_watching = new Ume_Continue_Watching();
+    await this.continue_watching.init();
   }
 }

@@ -7,18 +7,18 @@ export class Ume_Store {
     this._ume = ume;
   }
 
-  import(stores: ReturnType<typeof this.export>) {
+  async import(stores: Awaited<ReturnType<typeof this.export>>) {
     for (const category in stores) {
       // @ts-ignore
-      this._ume[category].import_store(stores[category]);
+      await this._ume[category].import_store(stores[category]);
     }
   }
 
-  export() {
+  async export() {
     return {
-      title: this._ume.title.export_store(),
-      mylist: this._ume.mylist.export_store(),
-      continue_watching: this._ume.continue_watching.export_store(),
+      title: await this._ume.title.export_store(),
+      mylist: await this._ume.mylist.export_store(),
+      continue_watching: await this._ume.continue_watching.export_store(),
     };
   }
 }

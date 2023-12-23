@@ -43,13 +43,17 @@ export class Ume_Title {
       key: string;
       data: Title_Details;
       interacts: number;
-    }>({
+    }>();
+  }
+
+  async init() {
+    await this._details.init({
       identifier: "details_cache",
-      kind: "local",
+      kind: "indexeddb",
       middlewares: {
-        get(store, key) {
-          store.update(key, {
-            interacts: ++store.get(key)!.interacts,
+        async get(store, key) {
+          await store.update(key, {
+            interacts: ++(await store.get(key))!.interacts,
           });
           return key;
         },
@@ -57,16 +61,16 @@ export class Ume_Title {
     });
   }
 
-  import_store(stores: Import_Export) {
+  async import_store(stores: Import_Export) {
     for (const key in stores) {
       // @ts-ignore
-      this[`_${key}`].import(stores[key]);
+      await this[`_${key}`].import(stores[key]);
     }
   }
 
-  export_store(): Import_Export {
+  async export_store(): Promise<Import_Export> {
     return {
-      details: this._details.export(),
+      details: await this._details.export(),
     };
   }
 
@@ -107,8 +111,8 @@ export class Ume_Title {
     slug: string;
   }): Promise<Title_Details> {
     const cache_key = `${id}`;
-    if (this._details.has(cache_key)) {
-      return this._details.get(cache_key)!.data;
+    if (await this._details.has(cache_key)) {
+      return (await this._details.get(cache_key))!.data;
     }
 
     const data = JSON.parse(
@@ -250,14 +254,14 @@ export class Ume_Title {
       collection,
     } satisfies Title_Details;
 
-    if (this._details.length >= 8) {
-      const less = this._details.all.sort(
+    if ((await this._details.length()) >= 8) {
+      const less = (await this._details.all()).sort(
         (a, b) => a.interacts - b.interacts
       )[0];
-      this._details.rm(less.key);
+      await this._details.rm(less.key);
     }
 
-    this._details.set(
+    await this._details.set(
       cache_key,
       { key: cache_key, data: title_details, interacts: 0 },
       {

@@ -67,24 +67,26 @@ async function main() {
   const tests = new Test_Set<Tests>({
     store: {
       async callback() {
-        assert.strictEqual(ume.mylist.length, 0);
+        assert.strictEqual(await ume.mylist.length(), 0);
 
-        ume.mylist.add({
+        await ume.mylist.add({
           id: 1,
           slug: "test",
         });
-        assert.strictEqual(ume.mylist.length, 1);
+        assert.strictEqual(await ume.mylist.length(), 1);
 
-        const backup = ume.store.export();
+        const backup = await ume.store.export();
 
-        new UStore({ identifier: "mylist", kind: "local" }).clear();
+        const connect = new UStore();
+        await connect.init({ identifier: "mylist", kind: "indexeddb" });
+        await connect.clear();
 
-        assert.strictEqual(ume.mylist.length, 0);
+        assert.strictEqual(await ume.mylist.length(), 0);
 
-        ume.store.import(backup);
+        await ume.store.import(backup);
 
-        assert.strictEqual(ume.mylist.length, 1);
-        assert.strictEqual(ume.mylist.some(1)[0].slug, "test");
+        assert.strictEqual(await ume.mylist.length(), 1);
+        assert.strictEqual((await ume.mylist.some(1))[0].slug, "test");
       },
     },
     search: {
@@ -97,12 +99,13 @@ async function main() {
     },
     "details' caching system": {
       async callback() {
-        const cache = new UStore<any>({
+        const connect = new UStore<any>();
+        await connect.init({
           identifier: "details_cache",
-          kind: "local",
+          kind: "indexeddb",
         });
-        cache.clear();
-        assert.strictEqual(cache.length, 0);
+        await connect.clear();
+        assert.strictEqual(await connect.length(), 0);
 
         const samples = [
           { id: 739, slug: "escobar-il-fascino-del-male" }, // 1
@@ -117,18 +120,24 @@ async function main() {
         ];
 
         await ume.title.details(samples[0]);
-        assert.strictEqual(cache.length, 1);
+        assert.strictEqual(await connect.length(), 1);
 
         const only_8 = samples.slice(0, samples.length - 1);
         assert.strictEqual(only_8.length, 8);
         for (const sample of only_8) {
           await ume.title.details(sample);
         }
-        assert.strictEqual(cache.length, 8);
+        assert.strictEqual(await connect.length(), 8);
 
-        assert.strictEqual(cache.get(samples[0].id.toString()).interacts, 1);
+        assert.strictEqual(
+          (await connect.get(samples[0].id.toString())).interacts,
+          1
+        );
         for (const sample of only_8.slice(1)) {
-          assert.strictEqual(cache.get(sample.id.toString()).interacts, 0);
+          assert.strictEqual(
+            (await connect.get(sample.id.toString())).interacts,
+            0
+          );
         }
 
         for (const sample of only_8.slice(1)) {
@@ -137,16 +146,18 @@ async function main() {
           }
         }
 
-        assert.isNotNull(cache.get(samples[2].id.toString()));
+        assert.isNotNull(await connect.get(samples[2].id.toString()));
 
         await ume.title.details(samples[samples.length - 1]);
-        assert.strictEqual(cache.length, 8);
+        assert.strictEqual(await connect.length(), 8);
 
-        assert.isNull(cache.get(samples[2].id.toString()));
-        assert.isNotNull(cache.get(samples[samples.length - 1].id.toString()));
+        assert.isNull(await connect.get(samples[2].id.toString()));
+        assert.isNotNull(
+          await connect.get(samples[samples.length - 1].id.toString())
+        );
 
-        cache.clear();
-        assert.strictEqual(cache.length, 0);
+        await connect.clear();
+        assert.strictEqual(await connect.length(), 0);
       },
     },
     details: {
@@ -412,96 +423,94 @@ async function main() {
         enola = (await ume.title.search({ query: "enola" }))[0];
       },
       async callback() {
-        assert.strictEqual(ume.continue_watching.length, 0);
+        assert.strictEqual(await ume.continue_watching.length(), 0);
 
         assert.isNull(
-          ume.continue_watching.time({
+          await ume.continue_watching.time({
             id: rick.id,
             season_number: 4,
             episode_number: 2,
           })
         );
 
-        ume.continue_watching.update({
+        await ume.continue_watching.update({
           id: rick.id,
           slug: rick.slug,
           season_number: 4,
           episode_number: 2,
           time: 10,
         });
-        assert.strictEqual(ume.continue_watching.length, 1);
+        assert.strictEqual(await ume.continue_watching.length(), 1);
 
-        let time = ume.continue_watching.time({
+        let time = await ume.continue_watching.time({
           id: rick.id,
           season_number: 4,
           episode_number: 2,
         });
-        assert.isNotNull(time);
         assert.strictEqual(time, 10);
 
         assert.isNull(
-          ume.continue_watching.time({
+          await ume.continue_watching.time({
             id: rick.id,
             season_number: 3,
             episode_number: 2,
           })
         );
 
-        ume.continue_watching.update({
+        await ume.continue_watching.update({
           id: rick.id,
           slug: rick.slug,
           season_number: 3,
           episode_number: 2,
           time: 145,
         });
-        assert.strictEqual(ume.continue_watching.length, 1);
+        assert.strictEqual(await ume.continue_watching.length(), 1);
 
-        time = ume.continue_watching.time({
+        time = await ume.continue_watching.time({
           id: rick.id,
           season_number: 3,
           episode_number: 2,
         });
-        assert.isNotNull(time);
         assert.strictEqual(time, 145);
 
-        ume.continue_watching.update({
+        await ume.continue_watching.update({
           id: enola.id,
           slug: enola.slug,
           time: 15,
         });
-        assert.strictEqual(ume.continue_watching.length, 2);
+        assert.strictEqual(await ume.continue_watching.length(), 2);
 
-        ume.continue_watching.rm(enola.id);
-        assert.strictEqual(ume.continue_watching.length, 1);
+        await ume.continue_watching.rm(enola.id);
+        assert.strictEqual(await ume.continue_watching.length(), 1);
 
         const titles = await ume.title.search({
           max_results: 30,
           query: "enola",
         });
-        titles.forEach((title) =>
-          ume.continue_watching.update({
+        for (const title of titles) {
+          await ume.continue_watching.update({
             id: title.id,
             slug: title.slug,
             time: 5,
-          })
-        );
+          });
+        }
         assert.strictEqual(titles.length, 30);
-        assert.strictEqual(ume.continue_watching.length, 31);
+        assert.strictEqual(await ume.continue_watching.length(), 31);
 
-        assert.strictEqual(ume.continue_watching.some(10).length, 10);
+        assert.strictEqual((await ume.continue_watching.some(10)).length, 10);
 
-        assert.strictEqual(ume.continue_watching.pages, 4);
+        assert.strictEqual(await ume.continue_watching.pages(), 4);
 
-        const page0 = ume.continue_watching.next(0);
+        const page0 = await ume.continue_watching.next(0);
         assert.strictEqual(page0.length, 10);
 
-        const page1 = ume.continue_watching.next(1);
+        const page1 = await ume.continue_watching.next(1);
         assert.strictEqual(page1.length, 10);
 
-        const page2 = ume.continue_watching.next(2);
+        const page2 = await ume.continue_watching.next(2);
         assert.strictEqual(page2.length, 10);
 
-        const page3 = ume.continue_watching.next(3);
+        const page3 = await ume.continue_watching.next(3);
         assert.strictEqual(page3.length, 1);
 
         assert.notEqual(page0[0].id, page1[0].id);
@@ -511,7 +520,9 @@ async function main() {
         assert.notEqual(page1[0].id, page3[0].id);
         assert.notEqual(page2[0].id, page3[0].id);
 
-        const result = ume.continue_watching.search({ query: "en lomes" });
+        const result = await ume.continue_watching.search({
+          query: "en lomes",
+        });
         assert.isAtLeast(result.length, 2);
         assert.isDefined(result.find((e) => e.slug == "enola-holmes"));
         assert.isDefined(result.find((e) => e.slug == "enola-holmes-2"));
@@ -523,55 +534,58 @@ async function main() {
         enola = (await ume.title.search({ query: "enola" }))[0];
       },
       async callback() {
-        assert.strictEqual(ume.mylist.length, 0);
+        const connect = new UStore();
+        await connect.init({ identifier: "mylist", kind: "indexeddb" });
+        await connect.clear();
+        assert.strictEqual(await ume.mylist.length(), 0);
 
-        ume.mylist.add({
+        await ume.mylist.add({
           id: rick.id,
           slug: rick.slug,
         });
-        assert.strictEqual(ume.mylist.length, 1);
+        assert.strictEqual(await ume.mylist.length(), 1);
 
-        ume.mylist.add({
+        await ume.mylist.add({
           id: enola.id,
           slug: enola.slug,
         });
-        assert.strictEqual(ume.mylist.length, 2);
+        assert.strictEqual(await ume.mylist.length(), 2);
 
-        ume.mylist.rm(rick.id);
-        assert.strictEqual(ume.mylist.length, 1);
+        await ume.mylist.rm(rick.id);
+        assert.strictEqual(await ume.mylist.length(), 1);
 
-        ume.mylist.rm(enola.id);
-        assert.strictEqual(ume.mylist.length, 0);
+        await ume.mylist.rm(enola.id);
+        assert.strictEqual(await ume.mylist.length(), 0);
 
         const titles = await ume.title.search({
           max_results: 30,
           query: "enola",
         });
-        titles.forEach((title) =>
-          ume.mylist.add({
+        for (const title of titles) {
+          await ume.mylist.add({
             id: title.id,
             slug: title.slug,
-          })
-        );
+          });
+        }
         assert.strictEqual(titles.length, 30);
 
-        ume.mylist.add(rick);
-        assert.strictEqual(ume.mylist.length, 31);
+        await ume.mylist.add(rick);
+        assert.strictEqual(await ume.mylist.length(), 31);
 
-        assert.strictEqual(ume.mylist.some(10).length, 10);
+        assert.strictEqual((await ume.mylist.some(10)).length, 10);
 
-        assert.strictEqual(ume.mylist.pages, 4);
+        assert.strictEqual(await ume.mylist.pages(), 4);
 
-        const page0 = ume.mylist.next(0);
+        const page0 = await ume.mylist.next(0);
         assert.strictEqual(page0.length, 10);
 
-        const page1 = ume.mylist.next(1);
+        const page1 = await ume.mylist.next(1);
         assert.strictEqual(page1.length, 10);
 
-        const page2 = ume.mylist.next(2);
+        const page2 = await ume.mylist.next(2);
         assert.strictEqual(page2.length, 10);
 
-        const page3 = ume.mylist.next(3);
+        const page3 = await ume.mylist.next(3);
         assert.strictEqual(page3.length, 1);
 
         assert.notEqual(page0[0].id, page1[0].id);
@@ -581,7 +595,7 @@ async function main() {
         assert.notEqual(page1[0].id, page3[0].id);
         assert.notEqual(page2[0].id, page3[0].id);
 
-        const result = ume.mylist.search({ query: "en lomes" });
+        const result = await ume.mylist.search({ query: "en lomes" });
         assert.isAtLeast(result.length, 2);
         assert.isDefined(result.find((e) => e.slug == "enola-holmes"));
         assert.isDefined(result.find((e) => e.slug == "enola-holmes-2"));
