@@ -117,7 +117,7 @@ async function main() {
       async callback() {
         const connect = new UStore<any>();
         await connect.init({
-          identifier: "details_cache",
+          identifier: "details",
           kind: "indexeddb",
         });
         await connect.clear();

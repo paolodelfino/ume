@@ -1,5 +1,4 @@
 import crypto from "node:crypto";
-import { UStore } from "pustore";
 import { MoviesGetDetailsResponse, TVGetDetailsResponse } from "tmdb-js-node";
 import { Ume } from ".";
 import {
@@ -14,6 +13,7 @@ import {
 import { Ume_Seasons } from "./ume_seasons";
 import { Ume_Sliders_Queue } from "./ume_sliders_queue";
 import {
+  Cache_Store,
   DATA_PAGE_GROUP_INDEX,
   DATA_PAGE_REGEX,
   get,
@@ -33,32 +33,29 @@ export class Ume_Title {
   sliders_queue;
 
   private _details;
+  // private _search_history;
 
   constructor({ ume }: { ume: Ume }) {
     this._ume = ume;
     this.sliders_queue = (sliders: Slider_Fetch[]) =>
       new Ume_Sliders_Queue({ ume: this._ume, sliders });
 
-    this._details = new UStore<{
-      key: string;
-      data: Title_Details;
-      interacts: number;
-    }>();
+    this._details = new Cache_Store<Title_Details>();
+    // this._search_history = new Cache_Store<string>();
   }
 
   async init() {
     await this._details.init({
-      identifier: "details_cache",
+      identifier: "details",
       kind: "indexeddb",
-      middlewares: {
-        async get(store, key) {
-          await store.update(key, {
-            interacts: ++(await store.get(key))!.interacts,
-          });
-          return key;
-        },
-      },
+      expiry_offset: 7 * 24 * 60 * 60 * 1000,
+      max_entries: 8,
     });
+    // await this._search_history.init({
+    //   identifier: "search_history",
+    //   kind: "indexeddb",
+    //   expiry_offset: 7 * 24 * 60 * 60 * 1000,
+    // });
   }
 
   async import_store(stores: Import_Export) {
@@ -117,7 +114,7 @@ export class Ume_Title {
   }): Promise<Title_Details> {
     const cache_key = `${id}`;
     if (await this._details.has(cache_key)) {
-      return (await this._details.get(cache_key))!.data;
+      return (await this._details.get(cache_key))!;
     }
 
     const data = JSON.parse(
@@ -259,20 +256,7 @@ export class Ume_Title {
       collection,
     } satisfies Title_Details;
 
-    if ((await this._details.length()) >= 8) {
-      const less = (await this._details.all()).sort(
-        (a, b) => a.interacts - b.interacts
-      )[0];
-      await this._details.rm(less.key);
-    }
-
-    await this._details.set(
-      cache_key,
-      { key: cache_key, data: title_details, interacts: 0 },
-      {
-        expiry: Date.now() + 7 * 24 * 60 * 60 * 1000,
-      }
-    );
+    await this._details.set(cache_key, title_details);
     return title_details;
   }
 
