@@ -1,7 +1,8 @@
 import crypto from "node:crypto";
-import { UStore } from "pustore";
 import { MoviesGetDetailsResponse, TVGetDetailsResponse } from "tmdb-js-node";
 import { Ume } from ".";
+import { Cache_Store } from "./cache_store";
+import { Search_Suggestion } from "./search_suggestion";
 import {
   Dl_Res,
   Movie_Collection,
@@ -24,58 +25,57 @@ import {
   take_match_groups,
 } from "./utils";
 
-type Import_Export = {
-  details: string;
-};
-
 export class Ume_Title {
-  private _ume;
-  sliders_queue;
+  private _ume!: Ume;
 
-  private _details;
+  private _details!: Cache_Store<Title_Details>;
+  private _search_history!: Cache_Store<string>;
 
-  constructor({ ume }: { ume: Ume }) {
+  sliders_queue!: (sliders: Slider_Fetch[]) => Ume_Sliders_Queue;
+  search_suggestion!: Search_Suggestion;
+
+  async init({ ume }: { ume: Ume }) {
     this._ume = ume;
+
+    this._details = new Cache_Store<Title_Details>();
+    await this._details.init({
+      identifier: "details",
+      kind: "indexeddb",
+      expiry_offset: 7 * 24 * 60 * 60 * 1000,
+      max_entries: 8,
+    });
+
+    this._search_history = new Cache_Store<string>();
+    await this._search_history.init({
+      identifier: "search_history",
+      kind: "indexeddb",
+      expiry_offset: 7 * 24 * 60 * 60 * 1000,
+      max_entries: 50,
+    });
+
     this.sliders_queue = (sliders: Slider_Fetch[]) =>
       new Ume_Sliders_Queue({ ume: this._ume, sliders });
-
-    this._details = new UStore<{
-      key: string;
-      data: Title_Details;
-      interacts: number;
-    }>();
+    this.search_suggestion = new Search_Suggestion(() =>
+      this._search_history.all()
+    );
   }
 
-  async init() {
-    await this._details.init({
-      identifier: "details_cache",
-      kind: "indexeddb",
-      middlewares: {
-        async get(store, key) {
-          await store.update(key, {
-            interacts: ++(await store.get(key))!.interacts,
-          });
-          return key;
-        },
-      },
-    });
-  }
-
-  async import_store(stores: Import_Export) {
+  async import_store(stores: Awaited<ReturnType<typeof this.export_store>>) {
     for (const key in stores) {
       // @ts-ignore
       await this[`_${key}`].import(stores[key]);
     }
   }
 
-  async export_store(): Promise<Import_Export> {
+  async export_store() {
     return {
       details: await this._details.export(),
+      search_history: await this._search_history.export(),
     };
   }
 
   /**
-   *
+   * @param query Limit 256 chars
    * @param max_results Defaults to 3
    */
   async search({
@@ -85,11 +85,19 @@ export class Ume_Title {
     query: string;
     max_results?: number;
   }): Promise<Title_Search[]> {
+    query = query.trim();
+    if (query.length > 256) {
+      throw new Error("query exceeds 256 chars limit");
+    }
+
     const res = JSON.parse(
       await get(`${this._ume.sc.url}/api/search?q=${query}`)
     ) as {
       data: any[];
     };
+
+    await this._search_history.set(query, query);
+
     return res.data.slice(0, max_results).map((entry) => {
       return {
         id: entry.id,
@@ -112,7 +120,7 @@ export class Ume_Title {
   }): Promise<Title_Details> {
     const cache_key = `${id}`;
     if (await this._details.has(cache_key)) {
-      return (await this._details.get(cache_key))!.data;
+      return (await this._details.get(cache_key))!;
     }
 
     const data = JSON.parse(
@@ -254,20 +262,7 @@ export class Ume_Title {
       collection,
     } satisfies Title_Details;
 
-    if ((await this._details.length()) >= 8) {
-      const less = (await this._details.all()).sort(
-        (a, b) => a.interacts - b.interacts
-      )[0];
-      await this._details.rm(less.key);
-    }
-
-    await this._details.set(
-      cache_key,
-      { key: cache_key, data: title_details, interacts: 0 },
-      {
-        expiry: Date.now() + 7 * 24 * 60 * 60 * 1000,
-      }
-    );
+    await this._details.set(cache_key, title_details);
     return title_details;
   }
 

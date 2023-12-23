@@ -11,6 +11,7 @@ import "./utils";
 type Tests =
   | "store"
   | "search"
+  | "search suggestion"
   | "details' caching system"
   | "details"
   | "preview"
@@ -91,17 +92,67 @@ async function main() {
     },
     search: {
       async callback() {
-        // testing query should be "rick" for series and "enola" for films
-        const movies = await ume.title.search({ query: "enola" });
+        // These queries shouldn't give any error, everywhere
+        const query_movie = "enola";
+        const query_series = "rick";
+        const query = query_movie;
+
+        const search_history = new UStore<any>();
+        await search_history.init({
+          identifier: "search_history",
+          kind: "indexeddb",
+        });
+        await search_history.clear();
+
+        assert.strictEqual(await search_history.length(), 0);
+
+        const movies = await ume.title.search({ query });
         assert.isAbove(movies.length, 0);
         movie = movies[0];
+
+        assert.strictEqual(await search_history.length(), 1);
+        assert.strictEqual((await search_history.all())[0].data, query);
+
+        await ume.title.search({ query: "he" });
+
+        assert.strictEqual(await search_history.length(), 2);
+
+        const history = await search_history.all();
+        assert.strictEqual(history[0].data, query);
+        assert.strictEqual(history[1].data, "he");
+
+        await ume.title
+          .search({
+            query:
+              "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          })
+          .then(() => assert(0, "Should not succeed"))
+          .catch((err) =>
+            assert.strictEqual(
+              err.message as string,
+              "query exceeds 256 chars limit"
+            )
+          );
+      },
+    },
+    "search suggestion": {
+      async before() {
+        await ume.title.search({ query: "rick" });
+        await ume.title.search({ query: "enola" });
+        await ume.title.search({ query: "e" });
+      },
+      async callback() {
+        const suggestions = await ume.title.search_suggestion.get({
+          query: "eo",
+        });
+        assert.include(suggestions, "enola");
       },
     },
     "details' caching system": {
       async callback() {
         const connect = new UStore<any>();
         await connect.init({
-          identifier: "details_cache",
+          identifier: "details",
           kind: "indexeddb",
         });
         await connect.clear();
