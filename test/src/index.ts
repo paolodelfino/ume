@@ -91,10 +91,26 @@ async function main() {
     },
     search: {
       async callback() {
-        // testing query should be "rick" for series and "enola" for films
-        const movies = await ume.title.search({ query: "enola" });
+        // These queries shouldn't give any error, everywhere
+        const query_movie = "enola";
+        const query_series = "rick";
+
+        const movies = await ume.title.search({ query: query_movie });
         assert.isAbove(movies.length, 0);
         movie = movies[0];
+
+        await ume.title
+          .search({
+            query:
+              "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          })
+          .then(() => assert(0, "Should not succeed"))
+          .catch((err) =>
+            assert.strictEqual(
+              err.message as string,
+              "query exceeds 256 chars limit"
+            )
+          );
       },
     },
     "details' caching system": {

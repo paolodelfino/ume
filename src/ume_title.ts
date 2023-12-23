@@ -75,7 +75,7 @@ export class Ume_Title {
   }
 
   /**
-   *
+   * @param query Limit 256 chars
    * @param max_results Defaults to 3
    */
   async search({
@@ -85,6 +85,11 @@ export class Ume_Title {
     query: string;
     max_results?: number;
   }): Promise<Title_Search[]> {
+    query = query.trim();
+    if (query.length > 256) {
+      throw new Error("query exceeds 256 chars limit");
+    }
+
     const res = JSON.parse(
       await get(`${this._ume.sc.url}/api/search?q=${query}`)
     ) as {
