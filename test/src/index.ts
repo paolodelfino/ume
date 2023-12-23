@@ -12,7 +12,7 @@ type Tests =
   | "store"
   | "search"
   | "search suggestion"
-  | "details' caching system"
+  | "caching system"
   | "details"
   | "preview"
   | "misc"
@@ -148,7 +148,7 @@ async function main() {
         assert.include(suggestions, "enola");
       },
     },
-    "details' caching system": {
+    "caching system": {
       async callback() {
         const connect = new UStore<any>();
         await connect.init({
