@@ -90,6 +90,7 @@ export class Ume_Title {
       details: await this._details.export(),
       search_history: await this._search_history.export(),
       search: await this._search.export(),
+      preview: await this._preview.export(),
     };
   }
 
