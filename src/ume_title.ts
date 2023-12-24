@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import { MoviesGetDetailsResponse, TVGetDetailsResponse } from "tmdb-js-node";
 import { Ume } from ".";
 import { Cache_Store } from "./cache_store";
+import { DETAILS_MAX, SEARCH_HISTORY_MAX } from "./constants";
 import { Search_Suggestion } from "./search_suggestion";
 import {
   Dl_Res,
@@ -42,7 +43,7 @@ export class Ume_Title {
       identifier: "details",
       kind: "indexeddb",
       expiry_offset: 7 * 24 * 60 * 60 * 1000,
-      max_entries: 8,
+      max_entries: DETAILS_MAX,
     });
 
     this._search_history = new Cache_Store<string>();
@@ -50,7 +51,7 @@ export class Ume_Title {
       identifier: "search_history",
       kind: "indexeddb",
       expiry_offset: 7 * 24 * 60 * 60 * 1000,
-      max_entries: 50,
+      max_entries: SEARCH_HISTORY_MAX,
     });
 
     this.sliders_queue = (sliders: Slider_Fetch[]) =>

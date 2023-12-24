@@ -95,7 +95,7 @@ async function main() {
         // These queries shouldn't give any error, everywhere
         const query_movie = "enola";
         const query_series = "rick";
-        const query = query_movie;
+        const query = query_series;
 
         const search_history = new UStore<any>();
         await search_history.init({
@@ -150,65 +150,66 @@ async function main() {
     },
     "caching system": {
       async callback() {
-        const connect = new UStore<any>();
-        await connect.init({
+        const details_cache = new UStore<any>();
+        await details_cache.init({
           identifier: "details",
           kind: "indexeddb",
         });
-        await connect.clear();
-        assert.strictEqual(await connect.length(), 0);
+        await details_cache.clear();
+        assert.strictEqual(await details_cache.length(), 0);
 
         const samples = [
-          { id: 739, slug: "escobar-il-fascino-del-male" }, // 1
-          { id: 1441, slug: "escape-plan-fuga-dallinferno", times: 3 }, // 3
-          { id: 1442, slug: "escape-plan-2-ritorno-allinferno", times: 0 }, // 0
-          { id: 1649, slug: "esp-fenomeni-paranormali", times: 0 }, // 0
-          { id: 1650, slug: "esp-fenomeni-paranormali", times: 2 }, // 2
-          { id: 1663, slug: "estate-di-morte", times: 3 }, // 3
-          { id: 2711, slug: "escape-room", times: 1 }, // 1
-          { id: 3192, slug: "estraneo-a-bordo", times: 2 }, // 2
-          { id: 3550, slug: "escape-room-2-gioco-mortale" },
+          { id: 739, slug: "escobar-il-fascino-del-male" },
+          { id: 1441, slug: "escape-plan-fuga-dallinferno", times: 3 },
+          { id: 1442, slug: "escape-plan-2-ritorno-allinferno", times: 0 },
+          { id: 1649, slug: "esp-fenomeni-paranormali", times: 0 },
+          { id: 1650, slug: "esp-fenomeni-paranormali", times: 2 },
+          { id: 1663, slug: "estate-di-morte", times: 3 },
+          { id: 2711, slug: "escape-room", times: 1 },
+          { id: 3192, slug: "estraneo-a-bordo", times: 2 },
+          { id: 3550, slug: "escape-room-2-gioco-mortale", times: 4 },
+          { id: 6241, slug: "aquaman-e-il-regno-perduto", times: 1 },
         ];
 
         await ume.title.details(samples[0]);
-        assert.strictEqual(await connect.length(), 1);
+        assert.strictEqual(await details_cache.length(), 1);
 
-        const only_8 = samples.slice(0, samples.length - 1);
-        assert.strictEqual(only_8.length, 8);
-        for (const sample of only_8) {
+        for (const sample of samples) {
           await ume.title.details(sample);
         }
-        assert.strictEqual(await connect.length(), 8);
+        assert.strictEqual(await details_cache.length(), 10);
 
         assert.strictEqual(
-          (await connect.get(samples[0].id.toString())).interacts,
+          (await details_cache.get(samples[0].id.toString())).interacts,
           1
         );
-        for (const sample of only_8.slice(1)) {
+        for (const sample of samples.slice(1)) {
           assert.strictEqual(
-            (await connect.get(sample.id.toString())).interacts,
+            (await details_cache.get(sample.id.toString())).interacts,
             0
           );
         }
 
-        for (const sample of only_8.slice(1)) {
+        for (const sample of samples) {
           for (let i = 0; i < sample.times!; ++i) {
             await ume.title.details(sample);
           }
         }
 
-        assert.isNotNull(await connect.get(samples[2].id.toString()));
+        assert.isNotNull(await details_cache.get(samples[2].id.toString()));
+        assert.isNull(await details_cache.get("2158"));
 
-        await ume.title.details(samples[samples.length - 1]);
-        assert.strictEqual(await connect.length(), 8);
+        await ume.title.details({
+          id: 2158,
+          slug: "halloween-4-il-ritorno-di-michael-myers",
+        });
+        assert.strictEqual(await details_cache.length(), 10);
 
-        assert.isNull(await connect.get(samples[2].id.toString()));
-        assert.isNotNull(
-          await connect.get(samples[samples.length - 1].id.toString())
-        );
+        assert.isNull(await details_cache.get(samples[2].id.toString()));
+        assert.isNotNull(await details_cache.get("2158"));
 
-        await connect.clear();
-        assert.strictEqual(await connect.length(), 0);
+        await details_cache.clear();
+        assert.strictEqual(await details_cache.length(), 0);
       },
     },
     details: {
