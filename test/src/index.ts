@@ -49,6 +49,7 @@ async function main() {
     exit(1);
   }
 
+  let query: string;
   let movie: Awaited<ReturnType<typeof ume.title.search>>[number];
   let details: Awaited<ReturnType<typeof ume.title.details>>;
   let master_playlist: string;
@@ -95,7 +96,7 @@ async function main() {
         // These queries shouldn't give any error, everywhere
         const query_movie = "enola";
         const query_series = "rick";
-        const query = query_series;
+        query = query_series;
 
         const search_history = new UStore<any>();
         await search_history.init({
@@ -133,6 +134,13 @@ async function main() {
               "query exceeds 256 chars limit"
             )
           );
+      },
+      async after() {
+        await tests.run("search (cached)", {
+          async callback() {
+            assert.isAbove((await ume.title.search({ query })).length, 0);
+          },
+        });
       },
     },
     "search suggestion": {

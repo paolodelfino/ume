@@ -2,7 +2,6 @@ import crypto from "node:crypto";
 import { MoviesGetDetailsResponse, TVGetDetailsResponse } from "tmdb-js-node";
 import { Ume } from ".";
 import { Cache_Store } from "./cache_store";
-import { DETAILS_MAX, SEARCH_HISTORY_MAX } from "./constants";
 import { Search_Suggestion } from "./search_suggestion";
 import {
   Dl_Res,
@@ -31,6 +30,7 @@ export class Ume_Title {
 
   private _details!: Cache_Store<Title_Details>;
   private _search_history!: Cache_Store<string>;
+  private _search!: Cache_Store<Title_Search[]>;
 
   sliders_queue!: (sliders: Slider_Fetch[]) => Ume_Sliders_Queue;
   search_suggestion!: Search_Suggestion;
@@ -38,20 +38,28 @@ export class Ume_Title {
   async init({ ume }: { ume: Ume }) {
     this._ume = ume;
 
-    this._details = new Cache_Store<Title_Details>();
+    this._details = new Cache_Store();
     await this._details.init({
       identifier: "details",
       kind: "indexeddb",
       expiry_offset: 7 * 24 * 60 * 60 * 1000,
-      max_entries: DETAILS_MAX,
+      max_entries: 5,
     });
 
-    this._search_history = new Cache_Store<string>();
+    this._search_history = new Cache_Store();
     await this._search_history.init({
       identifier: "search_history",
       kind: "indexeddb",
       expiry_offset: 7 * 24 * 60 * 60 * 1000,
-      max_entries: SEARCH_HISTORY_MAX,
+      max_entries: 50,
+    });
+
+    this._search = new Cache_Store();
+    await this._search.init({
+      identifier: "search",
+      kind: "indexeddb",
+      expiry_offset: 7 * 24 * 60 * 60 * 1000,
+      max_entries: 5,
     });
 
     this.sliders_queue = (sliders: Slider_Fetch[]) =>
@@ -72,6 +80,7 @@ export class Ume_Title {
     return {
       details: await this._details.export(),
       search_history: await this._search_history.export(),
+      search: await this._search.export(),
     };
   }
 
@@ -91,6 +100,10 @@ export class Ume_Title {
       throw new Error("query exceeds 256 chars limit");
     }
 
+    if (await this._search.has(query)) {
+      return (await this._search.get(query))!;
+    }
+
     const res = JSON.parse(
       await get(`${this._ume.sc.url}/api/search?q=${query}`)
     ) as {
@@ -99,7 +112,7 @@ export class Ume_Title {
 
     await this._search_history.set(query, query);
 
-    return res.data.slice(0, max_results).map((entry) => {
+    const search_results = res.data.slice(0, max_results).map((entry) => {
       return {
         id: entry.id,
         slug: entry.slug,
@@ -110,6 +123,9 @@ export class Ume_Title {
         type: entry.type,
       };
     });
+
+    await this._search.set(query, search_results);
+    return search_results;
   }
 
   async details({
