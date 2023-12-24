@@ -344,7 +344,7 @@ async function main() {
               movie.id
             );
           },
-          deps: ["search", "preview"],
+          deps: ["preview"],
         });
       },
       deps: ["search"],

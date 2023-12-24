@@ -31,6 +31,7 @@ export class Ume_Title {
   private _details!: Cache_Store<Title_Details>;
   private _search_history!: Cache_Store<string>;
   private _search!: Cache_Store<Title_Search[]>;
+  private _preview!: Cache_Store<Title_Preview>;
 
   sliders_queue!: (sliders: Slider_Fetch[]) => Ume_Sliders_Queue;
   search_suggestion!: Search_Suggestion;
@@ -60,6 +61,14 @@ export class Ume_Title {
       kind: "indexeddb",
       expiry_offset: 7 * 24 * 60 * 60 * 1000,
       max_entries: 5,
+    });
+
+    this._preview = new Cache_Store();
+    await this._preview.init({
+      identifier: "preview",
+      kind: "indexeddb",
+      expiry_offset: 4 * 24 * 60 * 60 * 1000,
+      max_entries: 15,
     });
 
     this.sliders_queue = (sliders: Slider_Fetch[]) =>
@@ -283,14 +292,10 @@ export class Ume_Title {
     return title_details;
   }
 
-  private _preview_cache: {
-    [id: string]: Title_Preview;
-  } = {};
-
   async preview({ id }: { id: number }): Promise<Title_Preview> {
     const cache_key = `${id}`;
-    if (this._preview_cache[cache_key]) {
-      return this._preview_cache[cache_key];
+    if (await this._preview.has(cache_key)) {
+      return (await this._preview.get(cache_key))!;
     }
 
     const res = JSON.parse(
@@ -307,8 +312,8 @@ export class Ume_Title {
       images: res.images,
       genres: res.genres,
     };
-    this._preview_cache[cache_key] = data;
 
+    await this._preview.set(cache_key, data);
     return data;
   }
 
