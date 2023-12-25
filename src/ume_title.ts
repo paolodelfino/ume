@@ -28,10 +28,10 @@ import {
 export class Ume_Title {
   private _ume!: Ume;
 
-  private _details!: Cache_Store<Title_Details>;
+  private _details!: Cache_Store<Awaited<ReturnType<typeof this.details>>>;
   private _search_history!: Cache_Store<string>;
-  private _search!: Cache_Store<Title_Search[]>;
-  private _preview!: Cache_Store<Title_Preview>;
+  private _search!: Cache_Store<Awaited<ReturnType<typeof this.search>>>;
+  private _preview!: Cache_Store<Awaited<ReturnType<typeof this.preview>>>;
 
   sliders_queue!: (sliders: Slider_Fetch[]) => Ume_Sliders_Queue;
   search_suggestion!: Search_Suggestion;
@@ -120,8 +120,6 @@ export class Ume_Title {
       data: any[];
     };
 
-    await this._search_history.set(query, query);
-
     const search_results = res.data.slice(0, max_results).map((entry) => {
       return {
         id: entry.id,
@@ -134,6 +132,7 @@ export class Ume_Title {
       };
     });
 
+    await this._search_history.set(query, query);
     await this._search.set(query, search_results);
     return search_results;
   }

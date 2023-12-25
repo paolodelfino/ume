@@ -19,6 +19,7 @@ export class Ume_Store {
       title: await this._ume.title.export_store(),
       mylist: await this._ume.mylist.export_store(),
       continue_watching: await this._ume.continue_watching.export_store(),
+      person: await this._ume.person.export_store(),
     };
   }
 }

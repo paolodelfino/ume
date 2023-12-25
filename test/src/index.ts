@@ -464,8 +464,28 @@ async function main() {
     },
     "person search": {
       async callback() {
+        const search_history = new UStore<any>();
+        await search_history.init({
+          identifier: "search_history",
+          kind: "indexeddb",
+        });
+        await search_history.clear();
+
+        assert.strictEqual(await search_history.length(), 0);
+
         const people = await ume.person.search({ query: "millie" });
         assert.isNotEmpty(people);
+
+        assert.strictEqual(await search_history.length(), 1);
+        assert.strictEqual((await search_history.all())[0].data, "millie");
+      },
+      async after() {
+        await tests.run("person search (cached)", {
+          async callback() {
+            const people = await ume.person.search({ query: "millie" });
+            assert.isNotEmpty(people);
+          },
+        });
       },
     },
     "person details": {
@@ -475,6 +495,19 @@ async function main() {
         Object.entries(tennant).forEach(([, value]) => assert.isDefined(value));
         assert.strictEqual(tennant.name, "David Tennant");
         assert.isNotEmpty(tennant.known_for_movies);
+      },
+      async after() {
+        await tests.run("person details (cached)", {
+          async callback() {
+            const tennant = (await ume.person.details(20049))!;
+            assert.isNotNull(tennant);
+            Object.entries(tennant).forEach(([, value]) =>
+              assert.isDefined(value)
+            );
+            assert.strictEqual(tennant.name, "David Tennant");
+            assert.isNotEmpty(tennant.known_for_movies);
+          },
+        });
       },
     },
     continue_watching: {

@@ -1,13 +1,70 @@
 import { Ume } from ".";
+import { Cache_Store } from "./cache_store";
+import { Search_Suggestion } from "./search_suggestion";
 import { Person_Details, Person_Search } from "./types";
 
 export class Ume_Person {
-  private _ume;
+  private _ume!: Ume;
 
-  constructor({ ume }: { ume: Ume }) {
+  private _details!: Cache_Store<
+    NonNullable<Awaited<ReturnType<typeof this.details>>>
+  >;
+  private _search_history!: Cache_Store<string>;
+  private _search!: Cache_Store<Awaited<ReturnType<typeof this.search>>>;
+
+  search_suggestion!: Search_Suggestion;
+
+  async init({ ume }: { ume: Ume }) {
     this._ume = ume;
+
+    this._details = new Cache_Store();
+    await this._details.init({
+      identifier: "details",
+      kind: "indexeddb",
+      expiry_offset: 7 * 24 * 60 * 60 * 1000,
+      max_entries: 5,
+    });
+
+    this._search_history = new Cache_Store();
+    await this._search_history.init({
+      identifier: "search_history",
+      kind: "indexeddb",
+      expiry_offset: 7 * 24 * 60 * 60 * 1000,
+      max_entries: 25,
+    });
+
+    this._search = new Cache_Store();
+    await this._search.init({
+      identifier: "search",
+      kind: "indexeddb",
+      expiry_offset: 7 * 24 * 60 * 60 * 1000,
+      max_entries: 5,
+    });
+
+    this.search_suggestion = new Search_Suggestion(() =>
+      this._search_history.all()
+    );
   }
 
+  async import_store(stores: Awaited<ReturnType<typeof this.export_store>>) {
+    for (const key in stores) {
+      // @ts-ignore
+      await this[`_${key}`].import(stores[key]);
+    }
+  }
+
+  async export_store() {
+    return {
+      details: await this._details.export(),
+      search_history: await this._search_history.export(),
+      search: await this._search.export(),
+    };
+  }
+
+  /**
+   * @param query Limit 256 chars
+   * @param max_results Defaults to 3
+   */
   async search({
     query,
     max_results = 3,
@@ -15,6 +72,15 @@ export class Ume_Person {
     query: string;
     max_results?: number;
   }): Promise<Person_Search[]> {
+    query = query.trim();
+    if (query.length > 256) {
+      throw new Error("query exceeds 256 chars limit");
+    }
+
+    if (await this._search.has(query)) {
+      return (await this._search.get(query))!;
+    }
+
     const data = await this._ume.tmdb.v3.search.searchPeople({
       query,
       include_adult: true,
@@ -37,10 +103,17 @@ export class Ume_Person {
       }
     }
 
+    await this._search_history.set(query, query);
+    await this._search.set(query, people);
     return people;
   }
 
   async details(id: number): Promise<Person_Details | null> {
+    const cache_key = id.toString();
+    if (await this._details.has(cache_key)) {
+      return (await this._details.get(cache_key))!;
+    }
+
     const data = await this._ume.tmdb.v3.people.getDetails(id, {
       append_to_response: ["combined_credits"],
     });
@@ -77,11 +150,14 @@ export class Ume_Person {
 
     movies.sort((a, b) => b.popularity - a.popularity);
 
-    return {
+    const person_details = {
       known_for_department: data.known_for_department,
       name: data.name,
       profile_path: data.profile_path,
       known_for_movies: movies,
-    };
+    } satisfies Person_Details;
+
+    await this._details.set(cache_key, person_details);
+    return person_details;
   }
 }

@@ -56,7 +56,8 @@ export class Ume {
 
     this.title = new Ume_Title();
     await this.title.init({ ume: this });
-    this.person = new Ume_Person({ ume: this });
+    this.person = new Ume_Person();
+    await this.person.init({ ume: this });
 
     this.mylist = new Ume_Mylist();
     await this.mylist.init();
