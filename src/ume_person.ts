@@ -1,6 +1,5 @@
 import { Ume } from ".";
 import { Cache_Store } from "./cache_store";
-import { Search_Suggestion } from "./search_suggestion";
 import { Person_Details, Person_Search } from "./types";
 
 export class Ume_Person {
@@ -9,10 +8,10 @@ export class Ume_Person {
   private _details!: Cache_Store<
     NonNullable<Awaited<ReturnType<typeof this.details>>>
   >;
-  private _search_history!: Cache_Store<string>;
-  private _search!: Cache_Store<Awaited<ReturnType<typeof this.search>>>;
-
-  search_suggestion!: Search_Suggestion;
+  private _search!: Cache_Store<{
+    data: Person_Search[];
+    max_results: number;
+  }>;
 
   async init({ ume }: { ume: Ume }) {
     this._ume = ume;
@@ -25,14 +24,6 @@ export class Ume_Person {
       max_entries: 5,
     });
 
-    this._search_history = new Cache_Store();
-    await this._search_history.init({
-      identifier: "search_history",
-      kind: "indexeddb",
-      expiry_offset: 7 * 24 * 60 * 60 * 1000,
-      max_entries: 25,
-    });
-
     this._search = new Cache_Store();
     await this._search.init({
       identifier: "search",
@@ -40,10 +31,6 @@ export class Ume_Person {
       expiry_offset: 7 * 24 * 60 * 60 * 1000,
       max_entries: 5,
     });
-
-    this.search_suggestion = new Search_Suggestion(() =>
-      this._search_history.all()
-    );
   }
 
   async import_store(stores: Awaited<ReturnType<typeof this.export_store>>) {
@@ -56,7 +43,6 @@ export class Ume_Person {
   async export_store() {
     return {
       details: await this._details.export(),
-      search_history: await this._search_history.export(),
       search: await this._search.export(),
     };
   }
@@ -77,8 +63,14 @@ export class Ume_Person {
       throw new Error("query exceeds 256 chars limit");
     }
 
-    if (await this._search.has(query)) {
-      return (await this._search.get(query))!;
+    await this._ume._search_history.set(query, query);
+
+    let cached: NonNullable<Awaited<ReturnType<typeof this._search.get>>>;
+    if (
+      (await this._search.has(query)) &&
+      (cached = (await this._search.get(query))!).max_results >= max_results
+    ) {
+      return cached.data.slice(0, max_results);
     }
 
     const data = await this._ume.tmdb.v3.search.searchPeople({
@@ -103,8 +95,10 @@ export class Ume_Person {
       }
     }
 
-    await this._search_history.set(query, query);
-    await this._search.set(query, people);
+    await this._search.set(query, {
+      data: people,
+      max_results,
+    });
     return people;
   }
 

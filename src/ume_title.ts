@@ -2,7 +2,6 @@ import crypto from "node:crypto";
 import { MoviesGetDetailsResponse, TVGetDetailsResponse } from "tmdb-js-node";
 import { Ume } from ".";
 import { Cache_Store } from "./cache_store";
-import { Search_Suggestion } from "./search_suggestion";
 import {
   Dl_Res,
   Movie_Collection,
@@ -29,12 +28,13 @@ export class Ume_Title {
   private _ume!: Ume;
 
   private _details!: Cache_Store<Awaited<ReturnType<typeof this.details>>>;
-  private _search_history!: Cache_Store<string>;
-  private _search!: Cache_Store<Awaited<ReturnType<typeof this.search>>>;
+  private _search!: Cache_Store<{
+    data: Title_Search[];
+    max_results: number;
+  }>;
   private _preview!: Cache_Store<Awaited<ReturnType<typeof this.preview>>>;
 
   sliders_queue!: (sliders: Slider_Fetch[]) => Ume_Sliders_Queue;
-  search_suggestion!: Search_Suggestion;
 
   async init({ ume }: { ume: Ume }) {
     this._ume = ume;
@@ -45,14 +45,6 @@ export class Ume_Title {
       kind: "indexeddb",
       expiry_offset: 7 * 24 * 60 * 60 * 1000,
       max_entries: 5,
-    });
-
-    this._search_history = new Cache_Store();
-    await this._search_history.init({
-      identifier: "search_history",
-      kind: "indexeddb",
-      expiry_offset: 7 * 24 * 60 * 60 * 1000,
-      max_entries: 50,
     });
 
     this._search = new Cache_Store();
@@ -73,9 +65,6 @@ export class Ume_Title {
 
     this.sliders_queue = (sliders: Slider_Fetch[]) =>
       new Ume_Sliders_Queue({ ume: this._ume, sliders });
-    this.search_suggestion = new Search_Suggestion(() =>
-      this._search_history.all()
-    );
   }
 
   async import_store(stores: Awaited<ReturnType<typeof this.export_store>>) {
@@ -88,7 +77,6 @@ export class Ume_Title {
   async export_store() {
     return {
       details: await this._details.export(),
-      search_history: await this._search_history.export(),
       search: await this._search.export(),
       preview: await this._preview.export(),
     };
@@ -110,8 +98,14 @@ export class Ume_Title {
       throw new Error("query exceeds 256 chars limit");
     }
 
-    if (await this._search.has(query)) {
-      return (await this._search.get(query))!;
+    await this._ume._search_history.set(query, query);
+
+    let cached: NonNullable<Awaited<ReturnType<typeof this._search.get>>>;
+    if (
+      (await this._search.has(query)) &&
+      (cached = (await this._search.get(query))!).max_results >= max_results
+    ) {
+      return cached.data.slice(0, max_results);
     }
 
     const res = JSON.parse(
@@ -132,8 +126,10 @@ export class Ume_Title {
       };
     });
 
-    await this._search_history.set(query, query);
-    await this._search.set(query, search_results);
+    await this._search.set(query, {
+      data: search_results,
+      max_results,
+    });
     return search_results;
   }
 

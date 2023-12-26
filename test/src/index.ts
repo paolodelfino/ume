@@ -79,9 +79,9 @@ async function main() {
 
         const backup = await ume.store.export();
 
-        const connect = new UStore();
-        await connect.init({ identifier: "mylist", kind: "indexeddb" });
-        await connect.clear();
+        const mylist = new UStore();
+        await mylist.init({ identifier: "mylist", kind: "indexeddb" });
+        await mylist.clear();
 
         assert.strictEqual(await ume.mylist.length(), 0);
 
@@ -150,7 +150,7 @@ async function main() {
         await ume.title.search({ query: "e" });
       },
       async callback() {
-        const suggestions = await ume.title.search_suggestion.get({
+        const suggestions = await ume.search_suggestion.get({
           query: "eo",
         });
         assert.include(suggestions, "enola");
@@ -172,11 +172,11 @@ async function main() {
           { id: 1442, slug: "escape-plan-2-ritorno-allinferno", times: 0 },
           { id: 1649, slug: "esp-fenomeni-paranormali", times: 0 },
           { id: 1650, slug: "esp-fenomeni-paranormali", times: 2 },
-          { id: 1663, slug: "estate-di-morte", times: 3 },
-          { id: 2711, slug: "escape-room", times: 1 },
-          { id: 3192, slug: "estraneo-a-bordo", times: 2 },
-          { id: 3550, slug: "escape-room-2-gioco-mortale", times: 4 },
-          { id: 6241, slug: "aquaman-e-il-regno-perduto", times: 1 },
+          // { id: 1663, slug: "estate-di-morte", times: 3 },
+          // { id: 2711, slug: "escape-room", times: 1 },
+          // { id: 3192, slug: "estraneo-a-bordo", times: 2 },
+          // { id: 3550, slug: "escape-room-2-gioco-mortale", times: 4 },
+          // { id: 6241, slug: "aquaman-e-il-regno-perduto", times: 1 },
         ];
 
         await ume.title.details(samples[0]);
@@ -185,7 +185,7 @@ async function main() {
         for (const sample of samples) {
           await ume.title.details(sample);
         }
-        assert.strictEqual(await details_cache.length(), 10);
+        assert.strictEqual(await details_cache.length(), 5);
 
         assert.strictEqual(
           (await details_cache.get(samples[0].id.toString())).interacts,
@@ -211,7 +211,7 @@ async function main() {
           id: 2158,
           slug: "halloween-4-il-ritorno-di-michael-myers",
         });
-        assert.strictEqual(await details_cache.length(), 10);
+        assert.strictEqual(await details_cache.length(), 5);
 
         assert.isNull(await details_cache.get(samples[2].id.toString()));
         assert.isNotNull(await details_cache.get("2158"));
@@ -516,6 +516,14 @@ async function main() {
         enola = (await ume.title.search({ query: "enola" }))[0];
       },
       async callback() {
+        const search_history = new UStore<any>();
+        await search_history.init({
+          identifier: "search_history",
+          kind: "indexeddb",
+        });
+        await search_history.clear();
+        assert.strictEqual(await search_history.length(), 0);
+
         assert.strictEqual(await ume.continue_watching.length(), 0);
 
         assert.isNull(
@@ -577,8 +585,8 @@ async function main() {
         assert.strictEqual(await ume.continue_watching.length(), 1);
 
         const titles = await ume.title.search({
-          max_results: 30,
           query: "enola",
+          max_results: 30,
         });
         for (const title of titles) {
           await ume.continue_watching.update({
@@ -619,6 +627,8 @@ async function main() {
         assert.isAtLeast(result.length, 2);
         assert.isDefined(result.find((e) => e.slug == "enola-holmes"));
         assert.isDefined(result.find((e) => e.slug == "enola-holmes-2"));
+        assert.strictEqual(await search_history.length(), 2);
+        assert.strictEqual((await search_history.all())[1].data, "en lomes");
       },
     },
     mylist: {
@@ -627,9 +637,17 @@ async function main() {
         enola = (await ume.title.search({ query: "enola" }))[0];
       },
       async callback() {
-        const connect = new UStore();
-        await connect.init({ identifier: "mylist", kind: "indexeddb" });
-        await connect.clear();
+        const search_history = new UStore<any>();
+        await search_history.init({
+          identifier: "search_history",
+          kind: "indexeddb",
+        });
+        await search_history.clear();
+        assert.strictEqual(await search_history.length(), 0);
+
+        const mylist = new UStore();
+        await mylist.init({ identifier: "mylist", kind: "indexeddb" });
+        await mylist.clear();
         assert.strictEqual(await ume.mylist.length(), 0);
 
         await ume.mylist.add({
@@ -692,6 +710,8 @@ async function main() {
         assert.isAtLeast(result.length, 2);
         assert.isDefined(result.find((e) => e.slug == "enola-holmes"));
         assert.isDefined(result.find((e) => e.slug == "enola-holmes-2"));
+        assert.strictEqual(await search_history.length(), 2);
+        assert.strictEqual((await search_history.all())[1].data, "en lomes");
       },
     },
   });

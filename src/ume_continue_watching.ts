@@ -1,5 +1,6 @@
 import { UStore } from "pustore";
 import str_compare from "string-comparison";
+import { Ume } from ".";
 import { Title_Continue_Watching } from "./types";
 
 type Import_Export = {
@@ -7,6 +8,8 @@ type Import_Export = {
 };
 
 export class Ume_Continue_Watching {
+  private _ume!: Ume;
+
   private _store;
   private __cache_all: Title_Continue_Watching[] = [];
   private _need_recache = false;
@@ -15,7 +18,9 @@ export class Ume_Continue_Watching {
     this._store = new UStore<Title_Continue_Watching>();
   }
 
-  async init() {
+  async init({ ume }: { ume: Ume }) {
+    this._ume = ume;
+
     await this._store.init({
       identifier: "continue_watching",
       kind: "indexeddb",
@@ -94,6 +99,10 @@ export class Ume_Continue_Watching {
     return (await this._cache_all()).slice(page * 10, ++page * 10);
   }
 
+  /**
+   * @param query Limit 256 chars
+   * @param max_results Defaults to 10
+   */
   async search({
     query,
     max_results = 10,
@@ -101,6 +110,13 @@ export class Ume_Continue_Watching {
     query: string;
     max_results?: number;
   }): Promise<Title_Continue_Watching[]> {
+    query = query.trim();
+    if (query.length > 256) {
+      throw new Error("query exceeds 256 chars limit");
+    }
+
+    await this._ume._search_history.set(query, query);
+
     const all = await this._cache_all();
     return str_compare.levenshtein
       .sortMatch(
