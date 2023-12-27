@@ -9,6 +9,7 @@ export class Ume_Person {
     NonNullable<Awaited<ReturnType<typeof this.details>>>
   >;
   private _search!: Cache_Store<{
+    query: string;
     data: Person_Search[];
     max_results: number;
   }>;
@@ -16,20 +17,35 @@ export class Ume_Person {
   async init({ ume }: { ume: Ume }) {
     this._ume = ume;
 
+    const person_details = this.details;
     this._details = new Cache_Store();
     await this._details.init({
       identifier: "details",
       kind: "indexeddb",
       expiry_offset: 7 * 24 * 60 * 60 * 1000,
       max_entries: 5,
+      async refresh(entry) {
+        return (await person_details(entry.id))!;
+      },
     });
 
+    const person_search = this.search;
     this._search = new Cache_Store();
     await this._search.init({
       identifier: "search",
       kind: "indexeddb",
-      expiry_offset: 7 * 24 * 60 * 60 * 1000,
+      expiry_offset: 2 * 7 * 24 * 60 * 60 * 1000,
       max_entries: 5,
+      async refresh(entry) {
+        return {
+          data: await person_search({
+            query: entry.query,
+            max_results: entry.max_results,
+          }),
+          query: entry.query,
+          max_results: entry.max_results,
+        };
+      },
     });
   }
 
@@ -66,11 +82,15 @@ export class Ume_Person {
     await this._ume._search_history.set(query, query);
 
     let cached: NonNullable<Awaited<ReturnType<typeof this._search.get>>>;
-    if (
-      (await this._search.has(query)) &&
-      (cached = (await this._search.get(query))!).max_results >= max_results
-    ) {
-      return cached.data.slice(0, max_results);
+    try {
+      if (
+        (await this._search.has(query)) &&
+        (cached = (await this._search.get(query))!).max_results >= max_results
+      ) {
+        return cached.data.slice(0, max_results);
+      }
+    } catch (error) {
+      console.log(error);
     }
 
     const data = await this._ume.tmdb.v3.search.searchPeople({
@@ -96,8 +116,9 @@ export class Ume_Person {
     }
 
     await this._search.set(query, {
-      data: people,
+      query,
       max_results,
+      data: people,
     });
     return people;
   }
@@ -105,7 +126,11 @@ export class Ume_Person {
   async details(id: number): Promise<Person_Details | null> {
     const cache_key = id.toString();
     if (await this._details.has(cache_key)) {
-      return (await this._details.get(cache_key))!;
+      try {
+        return (await this._details.get(cache_key))!;
+      } catch (error) {
+        console.log(error);
+      }
     }
 
     const data = await this._ume.tmdb.v3.people.getDetails(id, {
@@ -145,6 +170,7 @@ export class Ume_Person {
     movies.sort((a, b) => b.popularity - a.popularity);
 
     const person_details = {
+      id,
       known_for_department: data.known_for_department,
       name: data.name,
       profile_path: data.profile_path,

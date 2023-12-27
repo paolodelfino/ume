@@ -29,6 +29,7 @@ export class Ume_Title {
 
   private _details!: Cache_Store<Awaited<ReturnType<typeof this.details>>>;
   private _search!: Cache_Store<{
+    query: string;
     data: Title_Search[];
     max_results: number;
   }>;
@@ -45,14 +46,27 @@ export class Ume_Title {
       kind: "indexeddb",
       expiry_offset: 7 * 24 * 60 * 60 * 1000,
       max_entries: 5,
+      async refresh(entry) {
+        return await ume.title.details({ id: entry.id, slug: entry.slug });
+      },
     });
 
     this._search = new Cache_Store();
     await this._search.init({
       identifier: "search",
       kind: "indexeddb",
-      expiry_offset: 7 * 24 * 60 * 60 * 1000,
+      expiry_offset: 2 * 7 * 24 * 60 * 60 * 1000,
       max_entries: 5,
+      async refresh(entry) {
+        return {
+          data: await ume.title.search({
+            query: entry.query,
+            max_results: entry.max_results,
+          }),
+          query: entry.query,
+          max_results: entry.max_results,
+        };
+      },
     });
 
     this._preview = new Cache_Store();
@@ -61,6 +75,9 @@ export class Ume_Title {
       kind: "indexeddb",
       expiry_offset: 4 * 24 * 60 * 60 * 1000,
       max_entries: 15,
+      async refresh(entry) {
+        return await ume.title.preview({ id: entry.id });
+      },
     });
 
     this.sliders_queue = (sliders: Slider_Fetch[]) =>
@@ -101,11 +118,15 @@ export class Ume_Title {
     await this._ume._search_history.set(query, query);
 
     let cached: NonNullable<Awaited<ReturnType<typeof this._search.get>>>;
-    if (
-      (await this._search.has(query)) &&
-      (cached = (await this._search.get(query))!).max_results >= max_results
-    ) {
-      return cached.data.slice(0, max_results);
+    try {
+      if (
+        (await this._search.has(query)) &&
+        (cached = (await this._search.get(query))!).max_results >= max_results
+      ) {
+        return cached.data.slice(0, max_results);
+      }
+    } catch (error) {
+      console.log(error);
     }
 
     const res = JSON.parse(
@@ -127,8 +148,9 @@ export class Ume_Title {
     });
 
     await this._search.set(query, {
-      data: search_results,
+      query,
       max_results,
+      data: search_results,
     });
     return search_results;
   }
@@ -142,7 +164,12 @@ export class Ume_Title {
   }): Promise<Title_Details> {
     const cache_key = `${id}`;
     if (await this._details.has(cache_key)) {
-      return (await this._details.get(cache_key))!;
+      // Because it may expire exactly after .has call
+      try {
+        return (await this._details.get(cache_key))!;
+      } catch (error) {
+        console.log(error);
+      }
     }
 
     const data = JSON.parse(
@@ -291,7 +318,11 @@ export class Ume_Title {
   async preview({ id }: { id: number }): Promise<Title_Preview> {
     const cache_key = `${id}`;
     if (await this._preview.has(cache_key)) {
-      return (await this._preview.get(cache_key))!;
+      try {
+        return (await this._preview.get(cache_key))!;
+      } catch (error) {
+        console.log(error);
+      }
     }
 
     const res = JSON.parse(

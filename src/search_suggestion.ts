@@ -2,9 +2,17 @@ import str_compare from "string-comparison";
 
 export class Search_Suggestion {
   private _queries;
+  private _renew;
 
-  constructor(all_queries: () => Promise<string[]>) {
-    this._queries = all_queries;
+  constructor({
+    get_queries,
+    renew_query,
+  }: {
+    get_queries: () => Promise<string[]>;
+    renew_query: (query: string) => Promise<void>;
+  }) {
+    this._queries = get_queries;
+    this._renew = renew_query;
   }
 
   /**
@@ -24,5 +32,10 @@ export class Search_Suggestion {
       .reverse()
       .map(({ member }) => member)
       .slice(0, max_results);
+  }
+
+  // Hope it's a temporary solution to renew used queries
+  async consume(query: string) {
+    await this._renew(query);
   }
 }

@@ -163,6 +163,7 @@ export interface Person_Search {
 }
 
 export interface Person_Details {
+  id: number;
   name: string;
   profile_path: string;
   known_for_movies: {

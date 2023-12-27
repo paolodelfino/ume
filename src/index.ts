@@ -66,9 +66,10 @@ export class Ume {
       expiry_offset: 2 * 7 * 24 * 60 * 60 * 1000,
       max_entries: 75,
     });
-    this.search_suggestion = new Search_Suggestion(() =>
-      this._search_history.all()
-    );
+    this.search_suggestion = new Search_Suggestion({
+      get_queries: () => this._search_history.all(),
+      renew_query: (key) => this._search_history.renew(key),
+    });
 
     this.mylist = new Ume_Mylist();
     await this.mylist.init({ ume: this });
