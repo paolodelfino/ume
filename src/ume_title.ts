@@ -126,7 +126,7 @@ export class Ume_Title {
         return cached.data.slice(0, max_results);
       }
     } catch (error) {
-      console.log(error);
+      console.error(error);
     }
 
     const res = JSON.parse(
@@ -168,7 +168,7 @@ export class Ume_Title {
       try {
         return (await this._details.get(cache_key))!;
       } catch (error) {
-        console.log(error);
+        console.error(error);
       }
     }
 
@@ -321,7 +321,7 @@ export class Ume_Title {
       try {
         return (await this._preview.get(cache_key))!;
       } catch (error) {
-        console.log(error);
+        console.error(error);
       }
     }
 

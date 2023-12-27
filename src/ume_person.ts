@@ -90,7 +90,7 @@ export class Ume_Person {
         return cached.data.slice(0, max_results);
       }
     } catch (error) {
-      console.log(error);
+      console.error(error);
     }
 
     const data = await this._ume.tmdb.v3.search.searchPeople({
@@ -129,7 +129,7 @@ export class Ume_Person {
       try {
         return (await this._details.get(cache_key))!;
       } catch (error) {
-        console.log(error);
+        console.error(error);
       }
     }
 

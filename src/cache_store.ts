@@ -32,22 +32,26 @@ export class Cache_Store<T> {
       kind,
       middlewares: {
         async get(store, key) {
-          (async () => {
-            if (refresh) {
-              await store.update(key, {
-                value: {
-                  data: await refresh((await store.get(key))!.data),
-                },
-              });
-            }
-          })();
+          try {
+            (async () => {
+              if (refresh) {
+                await store.update(key, {
+                  value: {
+                    data: await refresh((await store.get(key))!.data),
+                  },
+                });
+              }
+            })();
 
-          await store.update(key, {
-            value: {
-              interacts: ++(await store.get(key))!.interacts,
-            },
-            expiry: Date.now() + expiry_offset,
-          });
+            await store.update(key, {
+              value: {
+                interacts: ++(await store.get(key))!.interacts,
+              },
+              expiry: Date.now() + expiry_offset,
+            });
+          } catch (error) {
+            console.error(error);
+          }
 
           return key;
         },
