@@ -77,10 +77,13 @@ export class Ume_Title {
       new Ume_Sliders_Queue({ ume: this._ume, sliders });
   }
 
-  async import_store(stores: Awaited<ReturnType<typeof this.export_store>>) {
+  async import_store(
+    stores: Awaited<ReturnType<typeof this.export_store>>,
+    merge?: boolean
+  ) {
     for (const key in stores) {
       // @ts-ignore
-      await this[`_${key}`].import(stores[key]);
+      await this[`_${key}`].import(stores[key], merge);
     }
   }
 
