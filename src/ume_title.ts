@@ -77,8 +77,8 @@ export class Ume_Title {
       new Ume_Sliders_Queue({ ume: this._ume, sliders });
   }
 
-  async import_store(
-    stores: Awaited<ReturnType<typeof this.export_store>>,
+  async import(
+    stores: Awaited<ReturnType<typeof this.export>>,
     merge?: boolean
   ) {
     for (const key in stores) {
@@ -87,7 +87,7 @@ export class Ume_Title {
     }
   }
 
-  async export_store() {
+  async export() {
     return {
       details: await this._details.export(),
       search: await this._search.export(),

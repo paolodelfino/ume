@@ -43,8 +43,8 @@ export class Ume_Person {
     });
   }
 
-  async import_store(
-    stores: Awaited<ReturnType<typeof this.export_store>>,
+  async import(
+    stores: Awaited<ReturnType<typeof this.export>>,
     merge?: boolean
   ) {
     for (const key in stores) {
@@ -53,7 +53,7 @@ export class Ume_Person {
     }
   }
 
-  async export_store() {
+  async export() {
     return {
       details: await this._details.export(),
       search: await this._search.export(),

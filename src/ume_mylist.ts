@@ -18,14 +18,17 @@ export class Ume_Mylist {
     await this._store.init("mylist");
   }
 
-  async import_store(stores: Awaited<ReturnType<typeof this.export_store>>) {
+  async import(
+    stores: Awaited<ReturnType<typeof this.export>>,
+    merge?: boolean
+  ) {
     for (const key in stores) {
       // @ts-ignore
-      await this[`_${key}`].import(stores[key]);
+      await this[`_${key}`].import(stores[key], merge);
     }
   }
 
-  async export_store(){
+  async export() {
     return {
       store: await this._store.export(),
     };
