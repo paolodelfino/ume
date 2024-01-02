@@ -71,10 +71,8 @@ export class Ume_Seasons {
 
   async get(number: number) {
     const cache_key = `${number}`;
-    if (await this._cache.has(cache_key)) {
-      const cached = await this._cache.get(cache_key);
-      if (cached) return cached.episodes;
-    }
+    const cached = await this._cache.get(cache_key);
+    if (cached) return cached.episodes;
 
     const episodes = await this._fetch_season(this._season_url(this, number));
 

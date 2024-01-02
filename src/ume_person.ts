@@ -75,11 +75,9 @@ export class Ume_Person {
 
     await this._ume._search_history.set(query, query);
 
-    if (await this._search.has(query)) {
-      const cached = await this._search.get(query);
-      if (cached && cached.max_results >= max_results) {
-        return cached.data.slice(0, max_results);
-      }
+    const cached = await this._search.get(query);
+    if (cached && cached.max_results >= max_results) {
+      return cached.data.slice(0, max_results);
     }
 
     const data = await this._ume.tmdb.v3.search.searchPeople({
@@ -114,10 +112,8 @@ export class Ume_Person {
 
   async details(id: number): Promise<Person_Details | null> {
     const cache_key = id.toString();
-    if (await this._details.has(cache_key)) {
-      const cached = await this._details.get(cache_key);
-      if (cached) return cached;
-    }
+    const cached = await this._details.get(cache_key);
+    if (cached) return cached;
 
     const data = await this._ume.tmdb.v3.people.getDetails(id, {
       append_to_response: ["combined_credits"],

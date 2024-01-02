@@ -110,11 +110,9 @@ export class Ume_Title {
 
     await this._ume._search_history.set(query, query);
 
-    if (await this._search.has(query)) {
-      const cached = await this._search.get(query);
-      if (cached && cached.max_results >= max_results) {
-        return cached.data.slice(0, max_results);
-      }
+    const cached = await this._search.get(query);
+    if (cached && cached.max_results >= max_results) {
+      return cached.data.slice(0, max_results);
     }
 
     const res = JSON.parse(
@@ -151,10 +149,8 @@ export class Ume_Title {
     slug: string;
   }): Promise<Title_Details> {
     const cache_key = `${id}`;
-    if (await this._details.has(cache_key)) {
-      const cached = await this._details.get(cache_key);
-      if (cached) return cached;
-    }
+    const cached = await this._details.get(cache_key);
+    if (cached) return cached;
 
     const data = JSON.parse(
       await take_match_groups(
@@ -297,10 +293,8 @@ export class Ume_Title {
 
   async preview({ id }: { id: number }): Promise<Title_Preview> {
     const cache_key = `${id}`;
-    if (await this._preview.has(cache_key)) {
-      const cached = await this._preview.get(cache_key);
-      if (cached) return cached;
-    }
+    const cached = await this._preview.get(cache_key);
+    if (cached) return cached;
 
     const res = JSON.parse(
       await post(`${this._ume.sc.url}/api/titles/preview/${id}`, {})
