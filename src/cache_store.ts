@@ -94,8 +94,17 @@ export class Cache_Store<T> {
   }
 
   async renew(key: string) {
-    await this._store.update(key, undefined, {
-      expiry: Date.now() + this._expiry_offset,
-    });
+    const entry = await this._store.get(key);
+    if (entry) {
+      await this._store.update(
+        key,
+        {
+          interacts: ++entry.interacts,
+        },
+        {
+          expiry: Date.now() + this._expiry_offset,
+        }
+      );
+    }
   }
 }
