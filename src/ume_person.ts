@@ -49,14 +49,14 @@ export class Ume_Person {
   ) {
     for (const key in stores) {
       // @ts-ignore
-      await this[`_${key}`].import(stores[key], merge);
+      await this[key].import(stores[key], merge);
     }
   }
 
   async export() {
     return {
-      details: await this._details.export(),
-      search: await this._search.export(),
+      _details: await this._details.export(),
+      _search: await this._search.export(),
     };
   }
 

@@ -5,7 +5,7 @@ import { exit } from "process";
 import { ustore } from "pustore";
 import { Test_Set } from "putesting";
 import { parseArgs } from "util";
-import { Ume, Ume_Seasons } from "../../dist/index.mjs";
+import { Ume } from "../../dist/index.mjs";
 import "./utils";
 
 type Tests =
@@ -52,7 +52,6 @@ async function main() {
   let query: string;
   let movie: Awaited<ReturnType<typeof ume.title.search>>[number];
   let details: Awaited<ReturnType<typeof ume.title.details>>;
-  let seasons: Ume_Seasons;
   let master_playlist: string;
   let download_objs: Awaited<
     ReturnType<typeof ume.title.parse_master_playlist>
@@ -221,14 +220,6 @@ async function main() {
       },
       deps: ["search"],
       async after() {
-        seasons = new Ume_Seasons();
-        await seasons.init({
-          ume,
-          seasons: details.seasons,
-          slug: details.slug,
-          title_id: details.id,
-        });
-
         await tests.run("details (cached)", {
           async callback() {
             assert.strictEqual(
@@ -251,9 +242,12 @@ async function main() {
         } else {
           await tests.run("seasons", {
             async callback() {
-              assert.isAtLeast(seasons.all.length, 6);
+              assert.isAtLeast(details.seasons.filter(Boolean).length, 6);
 
-              const episodes = await seasons.get(4);
+              const episodes = await ume.seasons.get(4, {
+                slug: details.slug,
+                id: details.id,
+              });
               assert.isDefined(episodes);
               assert.isAbove(episodes!.length, 0);
             },
@@ -262,7 +256,10 @@ async function main() {
 
           await tests.run("seasons (cache)", {
             async callback() {
-              const episodes = await seasons.get(4);
+              const episodes = await ume.seasons.get(4, {
+                slug: details.slug,
+                id: details.id,
+              });
               assert.isDefined(episodes);
               assert.isAbove(episodes!.length, 0);
             },
@@ -271,10 +268,13 @@ async function main() {
 
           await tests.run("episode seek bounds", {
             async callback() {
-              const [prev, next] = await seasons.seek_bounds_episode({
-                season_number: 6,
-                episode_index: 4,
-              });
+              const [prev, next] = await ume.seasons.seek_bounds_episode(
+                {
+                  season_number: 6,
+                  episode_index: 4,
+                },
+                { id: details.id, seasons: details.seasons, slug: details.slug }
+              );
               assert.isNotNull(prev);
               assert.isNotNull(next);
               assert.strictEqual(prev!.data.number, 4);
@@ -285,10 +285,13 @@ async function main() {
 
           await tests.run("episode seek bounds (next not available)", {
             async callback() {
-              const [prev, next] = await seasons.seek_bounds_episode({
-                season_number: 6,
-                episode_index: 9,
-              });
+              const [prev, next] = await ume.seasons.seek_bounds_episode(
+                {
+                  season_number: 6,
+                  episode_index: 9,
+                },
+                { id: details.id, seasons: details.seasons, slug: details.slug }
+              );
               assert.isNotNull(prev);
               assert.isNull(next);
               assert.strictEqual(prev!.data.number, 9);
@@ -298,10 +301,13 @@ async function main() {
 
           await tests.run("episode seek bounds (prev not available)", {
             async callback() {
-              const [prev, next] = await seasons.seek_bounds_episode({
-                season_number: 1,
-                episode_index: 0,
-              });
+              const [prev, next] = await ume.seasons.seek_bounds_episode(
+                {
+                  season_number: 1,
+                  episode_index: 0,
+                },
+                { id: details.id, seasons: details.seasons, slug: details.slug }
+              );
               assert.isNull(prev);
               assert.isNotNull(next);
               assert.strictEqual(next!.data.number, 2);
@@ -311,19 +317,25 @@ async function main() {
 
           await tests.run("double episode seek bounds", {
             async callback() {
-              const [prev, next] = await seasons.seek_bounds_episode({
-                season_number: 4,
-                episode_index: 3,
-              });
+              const [prev, next] = await ume.seasons.seek_bounds_episode(
+                {
+                  season_number: 4,
+                  episode_index: 3,
+                },
+                { id: details.id, seasons: details.seasons, slug: details.slug }
+              );
               assert.isNotNull(prev);
               assert.isNotNull(next);
               assert.strictEqual(prev!.data.number, 3);
               assert.strictEqual(next!.data.number, 5);
 
-              const [prev2, next2] = await seasons.seek_bounds_episode({
-                episode_index: next!.episode_index,
-                season_number: next!.season_number,
-              });
+              const [prev2, next2] = await ume.seasons.seek_bounds_episode(
+                {
+                  episode_index: next!.episode_index,
+                  season_number: next!.season_number,
+                },
+                { id: details.id, seasons: details.seasons, slug: details.slug }
+              );
               assert.isNotNull(prev2);
               assert.isNotNull(next2);
               assert.strictEqual(prev2!.data.number, 4);
@@ -379,7 +391,12 @@ async function main() {
         master_playlist = await ume.title.master_playlist({
           title_id: details.id,
           episode_id:
-            details.type == "tv" ? (await seasons.get(2))![5].id : undefined,
+            details.type == "tv"
+              ? (await ume.seasons.get(2, {
+                  id: details.id,
+                  slug: details.slug,
+                }))![5].id
+              : undefined,
         });
         console.log(master_playlist);
       },

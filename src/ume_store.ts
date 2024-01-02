@@ -7,7 +7,10 @@ export class Ume_Store {
     this._ume = ume;
   }
 
-  async import(stores: Awaited<ReturnType<typeof this.export>>) {
+  async import(
+    stores: Awaited<ReturnType<typeof this.export>>,
+    merge?: boolean
+  ) {
     for (const category in stores) {
       // @ts-ignore
       await this._ume[category].import(stores[category], merge);

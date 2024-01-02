@@ -25,11 +25,12 @@ export class Ume {
   _search_history!: Cache_Store<string>;
   search_suggestion!: Search_Suggestion;
 
-  mylist!: Ume_Mylist;
-  continue_watching!: Ume_Continue_Watching;
-
   title!: Ume_Title;
   person!: Ume_Person;
+  seasons!: Ume_Seasons;
+
+  mylist!: Ume_Mylist;
+  continue_watching!: Ume_Continue_Watching;
 
   async init({
     tmdb_api_key,
@@ -70,15 +71,17 @@ export class Ume {
       renew_query: (key) => this._search_history.renew(key),
     });
 
-    this.mylist = new Ume_Mylist();
-    await this.mylist.init({ ume: this });
-    this.continue_watching = new Ume_Continue_Watching();
-    await this.continue_watching.init({ ume: this });
-
     this.title = new Ume_Title();
     await this.title.init({ ume: this });
     this.person = new Ume_Person();
     await this.person.init({ ume: this });
+    this.seasons = new Ume_Seasons();
+    await this.seasons.init({ ume: this });
+
+    this.mylist = new Ume_Mylist();
+    await this.mylist.init({ ume: this });
+    this.continue_watching = new Ume_Continue_Watching();
+    await this.continue_watching.init({ ume: this });
   }
 }
 

@@ -24,13 +24,13 @@ export class Ume_Continue_Watching {
   ) {
     for (const key in stores) {
       // @ts-ignore
-      await this[`_${key}`].import(stores[key], merge);
+      await this[key].import(stores[key], merge);
     }
   }
 
   async export() {
     return {
-      store: await this._store.export(),
+      _store: await this._store.export(),
     };
   }
 
