@@ -17,28 +17,22 @@ export class Ume_Person {
   async init({ ume }: { ume: Ume }) {
     this._ume = ume;
 
-    const person_details = this.details;
     this._details = new Cache_Store();
-    await this._details.init({
-      identifier: "details",
-      kind: "indexeddb",
+    await this._details.init("person_details", {
       expiry_offset: 7 * 24 * 60 * 60 * 1000,
       max_entries: 5,
-      async refresh(entry) {
-        return (await person_details(entry.id))!;
+      refresh: async (entry) => {
+        return (await this.details(entry.id))!;
       },
     });
 
-    const person_search = this.search;
     this._search = new Cache_Store();
-    await this._search.init({
-      identifier: "search",
-      kind: "indexeddb",
+    await this._search.init("person_search", {
       expiry_offset: 2 * 7 * 24 * 60 * 60 * 1000,
       max_entries: 5,
-      async refresh(entry) {
+      refresh: async (entry) => {
         return {
-          data: await person_search({
+          data: await this.search({
             query: entry.query,
             max_results: entry.max_results,
           }),
@@ -81,16 +75,11 @@ export class Ume_Person {
 
     await this._ume._search_history.set(query, query);
 
-    let cached: NonNullable<Awaited<ReturnType<typeof this._search.get>>>;
-    try {
-      if (
-        (await this._search.has(query)) &&
-        (cached = (await this._search.get(query))!).max_results >= max_results
-      ) {
+    if (await this._search.has(query)) {
+      const cached = await this._search.get(query);
+      if (cached && cached.max_results >= max_results) {
         return cached.data.slice(0, max_results);
       }
-    } catch (error) {
-      console.error(error);
     }
 
     const data = await this._ume.tmdb.v3.search.searchPeople({
@@ -126,11 +115,8 @@ export class Ume_Person {
   async details(id: number): Promise<Person_Details | null> {
     const cache_key = id.toString();
     if (await this._details.has(cache_key)) {
-      try {
-        return (await this._details.get(cache_key))!;
-      } catch (error) {
-        console.error(error);
-      }
+      const cached = await this._details.get(cache_key);
+      if (cached) return cached;
     }
 
     const data = await this._ume.tmdb.v3.people.getDetails(id, {

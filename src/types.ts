@@ -1,5 +1,4 @@
 import { MoviesGetCreditsCast, TVGetCreditsCast } from "tmdb-js-node";
-import { Ume_Seasons } from "./ume_seasons";
 
 export interface Title_Image {
   // imageable_type: "title" | "episode";
@@ -78,9 +77,7 @@ export interface Title_Data_Page {
     status: "Canceled" | "Post Production" | "Returning Series" | "Released";
     seasons_count: number;
     seasons: {
-      id: number;
-      number: 1;
-      title_id: number;
+      number: number;
       episodes_count: number;
     }[];
     trailers: {
@@ -109,15 +106,14 @@ export type Movie_Collection = {
 
 export type Title_Details = Omit<
   Title_Data_Page["title"],
-  "seasons" | "trailers"
+  "trailers" | "seasons_count"
 > & {
   videos: Title_Data_Page["title"]["trailers"];
   slug: string;
-  seasons: Ume_Seasons;
-  cast: Promise<(MoviesGetCreditsCast | TVGetCreditsCast)[]> | null;
-  related: Title_Search[] | null;
+  cast?: (MoviesGetCreditsCast | TVGetCreditsCast)[];
+  related?: Title_Search[];
   id: number;
-  collection: (() => Promise<Movie_Collection | null>) | null;
+  collection?: Movie_Collection;
 };
 
 export interface Seek_Episode {

@@ -2,10 +2,10 @@ import { assert } from "chai";
 import fs from "fs";
 import path from "path";
 import { exit } from "process";
-import { UStore } from "pustore";
+import { ustore } from "pustore";
 import { Test_Set } from "putesting";
 import { parseArgs } from "util";
-import { Ume } from "../../dist/index.mjs";
+import { Ume, Ume_Seasons } from "../../dist/index.mjs";
 import "./utils";
 
 type Tests =
@@ -52,6 +52,7 @@ async function main() {
   let query: string;
   let movie: Awaited<ReturnType<typeof ume.title.search>>[number];
   let details: Awaited<ReturnType<typeof ume.title.details>>;
+  let seasons: Ume_Seasons;
   let master_playlist: string;
   let download_objs: Awaited<
     ReturnType<typeof ume.title.parse_master_playlist>
@@ -79,8 +80,8 @@ async function main() {
 
         const backup = await ume.store.export();
 
-        const mylist = new UStore();
-        await mylist.init({ identifier: "mylist", kind: "indexeddb" });
+        const mylist = new ustore.Async();
+        await mylist.init("mylist");
         await mylist.clear();
 
         assert.strictEqual(await ume.mylist.length(), 0);
@@ -98,11 +99,8 @@ async function main() {
         const query_series = "rick";
         query = query_series;
 
-        const search_history = new UStore<any>();
-        await search_history.init({
-          identifier: "search_history",
-          kind: "indexeddb",
-        });
+        const search_history = new ustore.Async<any>();
+        await search_history.init("search_history");
         await search_history.clear();
 
         assert.strictEqual(await search_history.length(), 0);
@@ -112,15 +110,15 @@ async function main() {
         movie = movies[0];
 
         assert.strictEqual(await search_history.length(), 1);
-        assert.strictEqual((await search_history.all())[0].data, query);
+        assert.strictEqual((await search_history.values())[0].data, query);
 
         await ume.title.search({ query: "he" });
 
         assert.strictEqual(await search_history.length(), 2);
 
-        const history = await search_history.all();
-        assert.strictEqual(history[0].data, query);
-        assert.strictEqual(history[1].data, "he");
+        const history = await search_history.values();
+        assert.isDefined(history.find((q) => q.data == query));
+        assert.isDefined(history.find((q) => q.data == "he"));
 
         await ume.title
           .search({
@@ -158,11 +156,8 @@ async function main() {
     },
     "caching system": {
       async callback() {
-        const details_cache = new UStore<any>();
-        await details_cache.init({
-          identifier: "details",
-          kind: "indexeddb",
-        });
+        const details_cache = new ustore.Async<any>();
+        await details_cache.init("details");
         await details_cache.clear();
         assert.strictEqual(await details_cache.length(), 0);
 
@@ -204,8 +199,8 @@ async function main() {
           }
         }
 
-        assert.isNotNull(await details_cache.get(samples[2].id.toString()));
-        assert.isNull(await details_cache.get("2158"));
+        assert.isDefined(await details_cache.get(samples[2].id.toString()));
+        assert.isUndefined(await details_cache.get("2158"));
 
         await ume.title.details({
           id: 2158,
@@ -213,8 +208,8 @@ async function main() {
         });
         assert.strictEqual(await details_cache.length(), 5);
 
-        assert.isNull(await details_cache.get(samples[2].id.toString()));
-        assert.isNotNull(await details_cache.get("2158"));
+        assert.isUndefined(await details_cache.get(samples[2].id.toString()));
+        assert.isDefined(await details_cache.get("2158"));
 
         await details_cache.clear();
         assert.strictEqual(await details_cache.length(), 0);
@@ -226,6 +221,14 @@ async function main() {
       },
       deps: ["search"],
       async after() {
+        seasons = new Ume_Seasons();
+        await seasons.init({
+          ume,
+          seasons: details.seasons,
+          slug: details.slug,
+          title_id: details.id,
+        });
+
         await tests.run("details (cached)", {
           async callback() {
             assert.strictEqual(
@@ -241,14 +244,16 @@ async function main() {
           await tests.run("movie collection", {
             async callback() {
               assert.isNotNull(details.collection);
-              console.log((await details.collection!())?.length);
+              console.log(details.collection!.length);
             },
             deps: ["details"],
           });
         } else {
           await tests.run("seasons", {
             async callback() {
-              const episodes = await details.seasons.get(4);
+              assert.isAtLeast(seasons.all.length, 6);
+
+              const episodes = await seasons.get(4);
               assert.isDefined(episodes);
               assert.isAbove(episodes!.length, 0);
             },
@@ -257,7 +262,7 @@ async function main() {
 
           await tests.run("seasons (cache)", {
             async callback() {
-              const episodes = await details.seasons.get(4);
+              const episodes = await seasons.get(4);
               assert.isDefined(episodes);
               assert.isAbove(episodes!.length, 0);
             },
@@ -266,7 +271,7 @@ async function main() {
 
           await tests.run("episode seek bounds", {
             async callback() {
-              const [prev, next] = await details.seasons.seek_bounds_episode({
+              const [prev, next] = await seasons.seek_bounds_episode({
                 season_number: 6,
                 episode_index: 4,
               });
@@ -280,7 +285,7 @@ async function main() {
 
           await tests.run("episode seek bounds (next not available)", {
             async callback() {
-              const [prev, next] = await details.seasons.seek_bounds_episode({
+              const [prev, next] = await seasons.seek_bounds_episode({
                 season_number: 6,
                 episode_index: 9,
               });
@@ -293,7 +298,7 @@ async function main() {
 
           await tests.run("episode seek bounds (prev not available)", {
             async callback() {
-              const [prev, next] = await details.seasons.seek_bounds_episode({
+              const [prev, next] = await seasons.seek_bounds_episode({
                 season_number: 1,
                 episode_index: 0,
               });
@@ -306,7 +311,7 @@ async function main() {
 
           await tests.run("double episode seek bounds", {
             async callback() {
-              const [prev, next] = await details.seasons.seek_bounds_episode({
+              const [prev, next] = await seasons.seek_bounds_episode({
                 season_number: 4,
                 episode_index: 3,
               });
@@ -315,7 +320,7 @@ async function main() {
               assert.strictEqual(prev!.data.number, 3);
               assert.strictEqual(next!.data.number, 5);
 
-              const [prev2, next2] = await details.seasons.seek_bounds_episode({
+              const [prev2, next2] = await seasons.seek_bounds_episode({
                 episode_index: next!.episode_index,
                 season_number: next!.season_number,
               });
@@ -374,9 +379,7 @@ async function main() {
         master_playlist = await ume.title.master_playlist({
           title_id: details.id,
           episode_id:
-            details.type == "tv"
-              ? (await details.seasons.get(2))![5].id
-              : undefined,
+            details.type == "tv" ? (await seasons.get(2))![5].id : undefined,
         });
         console.log(master_playlist);
       },
@@ -464,11 +467,8 @@ async function main() {
     },
     "person search": {
       async callback() {
-        const search_history = new UStore<any>();
-        await search_history.init({
-          identifier: "search_history",
-          kind: "indexeddb",
-        });
+        const search_history = new ustore.Async<any>();
+        await search_history.init("search_history");
         await search_history.clear();
 
         assert.strictEqual(await search_history.length(), 0);
@@ -477,7 +477,7 @@ async function main() {
         assert.isNotEmpty(people);
 
         assert.strictEqual(await search_history.length(), 1);
-        assert.strictEqual((await search_history.all())[0].data, "millie");
+        assert.strictEqual((await search_history.values())[0].data, "millie");
       },
       async after() {
         await tests.run("person search (cached)", {
@@ -516,11 +516,8 @@ async function main() {
         enola = (await ume.title.search({ query: "enola" }))[0];
       },
       async callback() {
-        const search_history = new UStore<any>();
-        await search_history.init({
-          identifier: "search_history",
-          kind: "indexeddb",
-        });
+        const search_history = new ustore.Async<any>();
+        await search_history.init("search_history");
         await search_history.clear();
         assert.strictEqual(await search_history.length(), 0);
 
@@ -628,7 +625,11 @@ async function main() {
         assert.isDefined(result.find((e) => e.slug == "enola-holmes"));
         assert.isDefined(result.find((e) => e.slug == "enola-holmes-2"));
         assert.strictEqual(await search_history.length(), 2);
-        assert.strictEqual((await search_history.all())[1].data, "en lomes");
+        assert.isDefined(
+          (await search_history.values()).find(
+            (query) => query.data == "en lomes"
+          )
+        );
       },
     },
     mylist: {
@@ -637,16 +638,13 @@ async function main() {
         enola = (await ume.title.search({ query: "enola" }))[0];
       },
       async callback() {
-        const search_history = new UStore<any>();
-        await search_history.init({
-          identifier: "search_history",
-          kind: "indexeddb",
-        });
+        const search_history = new ustore.Async<any>();
+        await search_history.init("search_history");
         await search_history.clear();
         assert.strictEqual(await search_history.length(), 0);
 
-        const mylist = new UStore();
-        await mylist.init({ identifier: "mylist", kind: "indexeddb" });
+        const mylist = new ustore.Async();
+        await mylist.init("mylist");
         await mylist.clear();
         assert.strictEqual(await ume.mylist.length(), 0);
 
@@ -711,7 +709,11 @@ async function main() {
         assert.isDefined(result.find((e) => e.slug == "enola-holmes"));
         assert.isDefined(result.find((e) => e.slug == "enola-holmes-2"));
         assert.strictEqual(await search_history.length(), 2);
-        assert.strictEqual((await search_history.all())[1].data, "en lomes");
+        assert.isDefined(
+          (await search_history.values()).find(
+            (query) => query.data == "en lomes"
+          )
+        );
       },
     },
   });
@@ -746,4 +748,4 @@ async function main() {
   }
 }
 
-main();
+main().then(() => exit(0));

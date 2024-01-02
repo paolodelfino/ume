@@ -5,3 +5,4 @@ pnpm-lock.yaml
 test/output.mp4
 test/output.vtt
 a.txt
+_tmp_*

@@ -11,7 +11,6 @@ import {
   Title_Preview,
   Title_Search,
 } from "./types";
-import { Ume_Seasons } from "./ume_seasons";
 import { Ume_Sliders_Queue } from "./ume_sliders_queue";
 import {
   DATA_PAGE_GROUP_INDEX,
@@ -41,9 +40,7 @@ export class Ume_Title {
     this._ume = ume;
 
     this._details = new Cache_Store();
-    await this._details.init({
-      identifier: "details",
-      kind: "indexeddb",
+    await this._details.init("details", {
       expiry_offset: 7 * 24 * 60 * 60 * 1000,
       max_entries: 5,
       async refresh(entry) {
@@ -52,9 +49,7 @@ export class Ume_Title {
     });
 
     this._search = new Cache_Store();
-    await this._search.init({
-      identifier: "search",
-      kind: "indexeddb",
+    await this._search.init("search", {
       expiry_offset: 2 * 7 * 24 * 60 * 60 * 1000,
       max_entries: 5,
       async refresh(entry) {
@@ -70,9 +65,7 @@ export class Ume_Title {
     });
 
     this._preview = new Cache_Store();
-    await this._preview.init({
-      identifier: "preview",
-      kind: "indexeddb",
+    await this._preview.init("preview", {
       expiry_offset: 4 * 24 * 60 * 60 * 1000,
       max_entries: 15,
       async refresh(entry) {
@@ -117,16 +110,11 @@ export class Ume_Title {
 
     await this._ume._search_history.set(query, query);
 
-    let cached: NonNullable<Awaited<ReturnType<typeof this._search.get>>>;
-    try {
-      if (
-        (await this._search.has(query)) &&
-        (cached = (await this._search.get(query))!).max_results >= max_results
-      ) {
+    if (await this._search.has(query)) {
+      const cached = await this._search.get(query);
+      if (cached && cached.max_results >= max_results) {
         return cached.data.slice(0, max_results);
       }
-    } catch (error) {
-      console.error(error);
     }
 
     const res = JSON.parse(
@@ -164,12 +152,8 @@ export class Ume_Title {
   }): Promise<Title_Details> {
     const cache_key = `${id}`;
     if (await this._details.has(cache_key)) {
-      // Because it may expire exactly after .has call
-      try {
-        return (await this._details.get(cache_key))!;
-      } catch (error) {
-        console.error(error);
-      }
+      const cached = await this._details.get(cache_key);
+      if (cached) return cached;
     }
 
     const data = JSON.parse(
@@ -188,8 +172,6 @@ export class Ume_Title {
       type,
       release_date,
       status,
-      seasons_count,
-      seasons,
       runtime,
       score,
     } = data.title;
@@ -211,22 +193,24 @@ export class Ume_Title {
           name: genre.name,
         } satisfies Title_Details["genres"][number])
     );
-    const related =
-      data.sliders.find((slider) => slider.name == "related")?.titles ?? null;
+    const related = data.sliders.find(
+      (slider) => slider.name == "related"
+    )?.titles;
 
-    const seasons_handler = new Ume_Seasons({
-      seasons: seasons.map((season) => ({
+    const seasons = data.title.seasons.reduce((acc, season) => {
+      acc[season.number] = {
         number: season.number,
-        episodesUrl: `${this._ume.sc.url}/titles/${season.title_id}-${slug}/stagione-${season.number}`,
-      })),
-    });
+        episodes_count: season.episodes_count,
+      };
+      return acc;
+    }, [] as Title_Data_Page["title"]["seasons"]);
 
     let fromTmdb:
       | (
           | Promise<MoviesGetDetailsResponse<("credits" | "videos")[]>>
           | Promise<TVGetDetailsResponse<("credits" | "videos")[]>>
         )
-      | null = null;
+      | undefined;
     if (tmdb_id) {
       if (type == "movie") {
         fromTmdb = this._ume.tmdb.v3.movies.getDetails(tmdb_id, {
@@ -259,35 +243,32 @@ export class Ume_Title {
       }
     }
 
-    const collection =
-      type == "tv"
-        ? null
-        : async () => {
-            const tmdb_details = await (fromTmdb as Promise<
-              MoviesGetDetailsResponse<[]>
-            >);
-            if (tmdb_details.belongs_to_collection) {
-              const collection = await this._ume.tmdb.v3.collections.getDetails(
-                tmdb_details.belongs_to_collection.id,
-                { language: "it-IT" }
-              );
+    let collection = undefined;
+    if (type == "movie") {
+      const tmdb_details = await (fromTmdb as Promise<
+        MoviesGetDetailsResponse<[]>
+      >);
+      if (tmdb_details.belongs_to_collection) {
+        const tmdb_collection = await this._ume.tmdb.v3.collections.getDetails(
+          tmdb_details.belongs_to_collection.id,
+          { language: "it-IT" }
+        );
 
-              const filtered_parts: Movie_Collection = [];
-              for (const part of collection.parts) {
-                if (part.poster_path) {
-                  filtered_parts.push({
-                    name: part.title,
-                    poster_path: part.poster_path,
-                  });
-                }
-              }
+        const filtered_parts: Movie_Collection = [];
+        for (const part of tmdb_collection.parts) {
+          if (part.poster_path) {
+            filtered_parts.push({
+              name: part.title,
+              poster_path: part.poster_path,
+            });
+          }
+        }
 
-              if (filtered_parts.length > 1) {
-                return filtered_parts;
-              }
-            }
-            return null;
-          };
+        if (filtered_parts.length > 1) {
+          collection = filtered_parts;
+        }
+      }
+    }
 
     const title_details = {
       score,
@@ -301,11 +282,10 @@ export class Ume_Title {
       type,
       release_date,
       status,
-      seasons_count: seasons_count,
-      seasons: seasons_handler,
+      seasons,
       videos,
       images,
-      cast: fromTmdb?.then((tmdb_details) => tmdb_details.credits.cast) ?? null,
+      cast: fromTmdb ? (await fromTmdb).credits.cast : undefined,
       genres,
       related,
       collection,
@@ -318,11 +298,8 @@ export class Ume_Title {
   async preview({ id }: { id: number }): Promise<Title_Preview> {
     const cache_key = `${id}`;
     if (await this._preview.has(cache_key)) {
-      try {
-        return (await this._preview.get(cache_key))!;
-      } catch (error) {
-        console.error(error);
-      }
+      const cached = await this._preview.get(cache_key);
+      if (cached) return cached;
     }
 
     const res = JSON.parse(

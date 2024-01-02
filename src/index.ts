@@ -7,6 +7,7 @@ import { Ume_Continue_Watching } from "./ume_continue_watching";
 import { Ume_Mylist } from "./ume_mylist";
 import { Ume_Person } from "./ume_person";
 import { Ume_Report } from "./ume_report";
+import { Ume_Seasons } from "./ume_seasons";
 import { Ume_Store } from "./ume_store";
 import { Ume_Title } from "./ume_title";
 
@@ -60,14 +61,12 @@ export class Ume {
     await this.sc.init();
 
     this._search_history = new Cache_Store();
-    await this._search_history.init({
-      identifier: "search_history",
-      kind: "indexeddb",
+    await this._search_history.init("search_history", {
       expiry_offset: 2 * 7 * 24 * 60 * 60 * 1000,
       max_entries: 75,
     });
     this.search_suggestion = new Search_Suggestion({
-      get_queries: () => this._search_history.all(),
+      get_queries: () => this._search_history.values(),
       renew_query: (key) => this._search_history.renew(key),
     });
 
@@ -82,3 +81,5 @@ export class Ume {
     await this.person.init({ ume: this });
   }
 }
+
+export { Ume_Seasons };
