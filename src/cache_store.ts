@@ -9,6 +9,7 @@ export class Cache_Store<T> {
 
   private _expiry_offset!: number;
   private _max_entries!: number;
+  private _refresh?: (entry: T) => Promise<T>;
 
   async init(
     identifier: string,
@@ -24,27 +25,13 @@ export class Cache_Store<T> {
   ) {
     this._expiry_offset = expiry_offset;
     this._max_entries = max_entries;
+    this._refresh = refresh;
 
     this._store = new ustore.Async();
     await this._store.init(identifier, {
       middlewares: {
-        async get(store, key) {
-          const entry = await store.get(key);
-          if (entry) {
-            await store.update(
-              key,
-              {
-                interacts: ++entry.interacts,
-              },
-              {
-                expiry: Date.now() + expiry_offset,
-              }
-            );
-
-            if (refresh) {
-              // TODO
-            }
-          }
+        get: async (store, key) => {
+          await this.renew(key, false);
 
           return key;
         },
@@ -89,7 +76,7 @@ export class Cache_Store<T> {
     return (await this._store.values()).map((e) => e.data);
   }
 
-  async renew(key: string) {
+  async renew(key: string, data: boolean = true) {
     const entry = await this._store.get(key);
     if (entry) {
       await this._store.update(
@@ -101,6 +88,12 @@ export class Cache_Store<T> {
           expiry: Date.now() + this._expiry_offset,
         }
       );
+
+      if (data && this._refresh) {
+        await this._store.update(key, {
+          data: await this._refresh(entry.data),
+        });
+      }
     }
   }
 }
