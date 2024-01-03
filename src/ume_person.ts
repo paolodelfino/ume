@@ -19,7 +19,7 @@ export class Ume_Person {
 
     this._details = new Cache_Store();
     await this._details.init("person_details", {
-      expiry_offset: 7 * 24 * 60 * 60 * 1000,
+      expiry_offset: 2 * 7 * 24 * 60 * 60 * 1000,
       max_entries: 5,
       refresh: async (entry) => {
         return (await this.details(entry.id))!;

@@ -25,7 +25,7 @@ export class Ume_Seasons {
 
     this._store = new Cache_Store();
     await this._store.init(`seasons`, {
-      expiry_offset: 7 * 24 * 60 * 60 * 1000,
+      expiry_offset: 2 * 7 * 24 * 60 * 60 * 1000,
       max_entries: 6,
       refresh: async (entry) => {
         return {

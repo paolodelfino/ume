@@ -41,7 +41,7 @@ export class Ume_Title {
 
     this._details = new Cache_Store();
     await this._details.init("details", {
-      expiry_offset: 7 * 24 * 60 * 60 * 1000,
+      expiry_offset: 2 * 7 * 24 * 60 * 60 * 1000,
       max_entries: 5,
       async refresh(entry) {
         return await ume.title.details({ id: entry.id, slug: entry.slug });
@@ -66,7 +66,7 @@ export class Ume_Title {
 
     this._preview = new Cache_Store();
     await this._preview.init("preview", {
-      expiry_offset: 4 * 24 * 60 * 60 * 1000,
+      expiry_offset: 2 * 7 * 24 * 60 * 60 * 1000,
       max_entries: 15,
       async refresh(entry) {
         return await ume.title.preview({ id: entry.id });
