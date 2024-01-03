@@ -5,7 +5,7 @@ import { exit } from "process";
 import { ustore } from "pustore";
 import { Test_Set } from "putesting";
 import { parseArgs } from "util";
-import { Ume } from "../../dist/index.mjs";
+import { Ume, Ume_Sliders_Queue } from "../../dist/index.mjs";
 import "./utils";
 
 type Tests =
@@ -444,26 +444,40 @@ async function main() {
     sliders: {
       async callback() {
         {
-          const queue = ume.title.sliders_queue([
-            { genre: "Action & Adventure", name: "genre" },
-            { genre: "Animazione", name: "genre" },
-            { genre: "Commedia", name: "genre" },
-            { genre: "Crime", name: "genre" },
-            { name: "latest" },
-            { name: "top10" },
-            { name: "trending" },
-          ]);
+          const queue = new Ume_Sliders_Queue({
+            ume,
+            groups_size: 6,
+            sliders: [
+              {
+                fetch: { genre: "Action & Adventure", name: "genre" },
+                label: "Action & Adventure",
+              },
+              {
+                fetch: { genre: "Animazione", name: "genre" },
+                label: "Animazione",
+              },
+              {
+                fetch: { genre: "Commedia", name: "genre" },
+                label: "Commedia",
+              },
+              { fetch: { genre: "Crime", name: "genre" }, label: "Crime" },
+              { fetch: { name: "latest" }, label: "Latest" },
+              { fetch: { name: "top10" }, label: "Top 10" },
+              { fetch: { name: "trending" }, label: "Trending" },
+            ],
+          });
           assert.strictEqual(queue.data.length, 0);
-          assert.isTrue((await queue.next()).has_next);
+          assert.isTrue(queue.next().has_next);
           assert.strictEqual(queue.data.length, 6);
-          assert.isFalse((await queue.next()).has_next);
+          assert.isFalse(queue.next().has_next);
           assert.strictEqual(queue.data.length, 7);
         }
 
         {
-          console.log(
-            `upcoming (${(await ume.title.upcoming())?.titles.length})`
-          );
+          const upcoming = ume.title.upcoming();
+          assert.strictEqual(upcoming.titles.length, 0);
+          await upcoming.next();
+          console.log(`upcoming (${upcoming.titles.length})`);
         }
       },
     },

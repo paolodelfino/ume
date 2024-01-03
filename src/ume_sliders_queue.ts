@@ -1,35 +1,58 @@
 import { Ume } from ".";
-import { Slider_Fetch, Title_Slider } from "./types";
-import { post } from "./utils";
+import { Slider_Fetch } from "./types";
+import { Ume_Slider } from "./ume_slider";
 
 export class Ume_Sliders_Queue {
-  private _ume;
-  private _batches: (() => Promise<Title_Slider[]>)[] = [];
-  data: Title_Slider[] = [];
+  private readonly _ume;
 
-  constructor({ ume, sliders }: { ume: Ume; sliders: Slider_Fetch[] }) {
+  private readonly _sz;
+  private readonly _count;
+  private _cur = 0;
+  private readonly _sliders;
+
+  data: Ume_Slider[] = [];
+
+  constructor({
+    ume,
+    sliders,
+    groups_size,
+  }: {
+    ume: Ume;
+    sliders: {
+      label: string;
+      fetch: Slider_Fetch;
+    }[];
+    groups_size?: number;
+  }) {
     this._ume = ume;
 
-    const batch_sz = 6;
-    let batch_count = Math.ceil(sliders.length / batch_sz);
-    for (let i = 0; i < batch_count; i++) {
-      this._batches.push(
-        async () =>
-          JSON.parse(
-            await post(`${this._ume.sc.url}/api/sliders/fetch`, {
-              sliders: sliders.slice(batch_sz * i, batch_sz * ++i),
-            })
-          ) as Title_Slider[]
-      );
-    }
+    this._sz = groups_size
+      ? groups_size
+      : sliders.length < 3
+      ? sliders.length
+      : 3;
+    this._count = Math.ceil(sliders.length / this._sz);
+    this._sliders = sliders;
   }
 
-  async next() {
-    const fetch_next = this._batches.shift();
-    if (fetch_next) {
-      this.data.push(...(await fetch_next()));
+  next() {
+    const next_cur = this._cur + 1;
+
+    for (
+      let i = this._sz * this._cur;
+      i < this._sz * next_cur && i < this._sliders.length;
+      ++i
+    ) {
+      this.data.push(
+        new Ume_Slider({
+          ...this._sliders[i],
+          ume: this._ume,
+        })
+      );
     }
 
-    return { has_next: this._batches.length >= 1 };
+    return {
+      has_next: ++this._cur < this._count,
+    };
   }
 }

@@ -1,18 +1,16 @@
 import crypto from "node:crypto";
 import { MoviesGetDetailsResponse, TVGetDetailsResponse } from "tmdb-js-node";
-import { Ume } from ".";
+import { Ume, Ume_Sliders_Queue } from ".";
 import { Cache_Store } from "./cache_store";
 import {
   Dl_Res,
   Movie_Collection,
-  Slider_Fetch,
   Title_Data_Page,
   Title_Details,
   Title_Preview,
   Title_Search,
-  Title_Slider,
 } from "./types";
-import { Ume_Sliders_Queue } from "./ume_sliders_queue";
+import { Ume_Slider } from "./ume_slider";
 import {
   DATA_PAGE_GROUP_INDEX,
   DATA_PAGE_REGEX,
@@ -34,8 +32,6 @@ export class Ume_Title {
     max_results: number;
   }>;
   private _preview!: Cache_Store<Awaited<ReturnType<typeof this.preview>>>;
-
-  sliders_queue!: (sliders: Slider_Fetch[]) => Ume_Sliders_Queue;
 
   async init({ ume }: { ume: Ume }) {
     this._ume = ume;
@@ -73,9 +69,6 @@ export class Ume_Title {
         return await ume.title.preview({ id: entry.id });
       },
     });
-
-    this.sliders_queue = (sliders: Slider_Fetch[]) =>
-      new Ume_Sliders_Queue({ ume: this._ume, sliders });
   }
 
   async import(
@@ -363,14 +356,21 @@ export class Ume_Title {
     );
   }
 
-  async upcoming(): Promise<Title_Slider | undefined> {
-    const queue = this.sliders_queue([
-      {
-        name: "upcoming",
-      },
-    ]);
+  upcoming(): Ume_Slider {
+    const queue = new Ume_Sliders_Queue({
+      ume: this._ume,
+      groups_size: 1,
+      sliders: [
+        {
+          label: "Upcoming",
+          fetch: {
+            name: "upcoming",
+          },
+        },
+      ],
+    });
 
-    await queue.next();
+    queue.next();
     return queue.data[0];
   }
 
@@ -430,11 +430,8 @@ export class Ume_Title {
     for (let i = 0; i < batch_count; i++) {
       const batch: Batch = [];
 
-      for (
-        let j = batch_sz * i;
-        j < batch_sz * (i + 1) && j < segments_urls.length;
-        j++
-      ) {
+      const c = batch_sz * (i + 1);
+      for (let j = batch_sz * i; j < c && j < segments_urls.length; j++) {
         batch.push(
           async () =>
             await new Promise(async (resolve) => {

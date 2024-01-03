@@ -8,6 +8,7 @@ import { Ume_Mylist } from "./ume_mylist";
 import { Ume_Person } from "./ume_person";
 import { Ume_Report } from "./ume_report";
 import { Ume_Seasons } from "./ume_seasons";
+import { Ume_Sliders_Queue } from "./ume_sliders_queue";
 import { Ume_Store } from "./ume_store";
 import { Ume_Title } from "./ume_title";
 
@@ -85,4 +86,4 @@ export class Ume {
   }
 }
 
-export { Ume_Seasons };
+export { Ume_Seasons, Ume_Sliders_Queue };

@@ -20,6 +20,7 @@ export interface Slider_Fetch {
   name: "top10" | "trending" | "latest" | "upcoming" | "genre";
   title_type?: "movie" | "tv" | null;
   genre?: Title_Genre["name"] | null;
+  // offset?: number | null;
 }
 
 export interface Title_Slider {
