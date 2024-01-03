@@ -7,11 +7,9 @@ export class SC {
   private _ume;
   private _url!: string;
   image_endpoint!: string;
-  trailer_endpoint;
 
   constructor({ ume }: { ume: Ume }) {
     this._ume = ume;
-    this.trailer_endpoint = "https://www.youtube-nocookie.com/embed";
   }
 
   async init() {

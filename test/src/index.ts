@@ -372,17 +372,6 @@ async function main() {
           filename: details.images[0].filename,
         });
         console.log(image);
-        if (details.videos[0]) {
-          const video = ume.title.video_url({
-            key: details.videos[0].key,
-          });
-          const iframe = ume.title.video_iframe({
-            url: video,
-            className: "w-full h-full",
-          });
-          console.log(video);
-          console.log(iframe);
-        }
       },
       deps: ["details"],
     },

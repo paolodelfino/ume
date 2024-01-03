@@ -346,22 +346,6 @@ export class Ume_Title {
     return `${this._ume.sc.image_endpoint}/${filename}`;
   }
 
-  video_url({ key }: { key: string }) {
-    return `${this._ume.sc.trailer_endpoint}/${key}`;
-  }
-
-  video_iframe({ url, className }: { url: string; className: string }) {
-    return `
-<iframe
-  className="${className}"
-  src="${url}"
-  title="YouTube video player"
-  frameborder="0"
-  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-  allowfullscreen
-></iframe>`;
-  }
-
   is_available({
     release_date,
     status,
