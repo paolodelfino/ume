@@ -56,11 +56,15 @@ export class Cache_Store<T> {
   }
 
   async set(key: string, value: T) {
-    if ((await this._store.length()) >= this._max_entries) {
-      const less = (await this._store.values()).sort(
+    const store_len = await this._store.length();
+    if (store_len >= this._max_entries) {
+      const byLess = (await this._store.values()).sort(
         (a, b) => a.interacts - b.interacts
-      )[0];
-      await this._store.rm(less.key);
+      );
+
+      for (let i = 0; i < store_len - this._max_entries + 1; ++i) {
+        await this._store.rm(byLess[i].key);
+      }
     }
 
     return this._store.set(
