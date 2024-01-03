@@ -2,7 +2,7 @@ import { assert } from "chai";
 import fs from "fs";
 import path from "path";
 import { exit } from "process";
-import { UStore } from "pustore";
+import { ustore } from "pustore";
 import { Test_Set } from "putesting";
 import { parseArgs } from "util";
 import { Ume } from "../../dist/index.mjs";
@@ -49,6 +49,7 @@ async function main() {
     exit(1);
   }
 
+  let query: string;
   let movie: Awaited<ReturnType<typeof ume.title.search>>[number];
   let details: Awaited<ReturnType<typeof ume.title.details>>;
   let master_playlist: string;
@@ -78,9 +79,9 @@ async function main() {
 
         const backup = await ume.store.export();
 
-        const connect = new UStore();
-        await connect.init({ identifier: "mylist", kind: "indexeddb" });
-        await connect.clear();
+        const mylist = new ustore.Async();
+        await mylist.init("mylist");
+        await mylist.clear();
 
         assert.strictEqual(await ume.mylist.length(), 0);
 
@@ -95,13 +96,10 @@ async function main() {
         // These queries shouldn't give any error, everywhere
         const query_movie = "enola";
         const query_series = "rick";
-        const query = query_movie;
+        query = query_series;
 
-        const search_history = new UStore<any>();
-        await search_history.init({
-          identifier: "search_history",
-          kind: "indexeddb",
-        });
+        const search_history = new ustore.Async<any>();
+        await search_history.init("search_history");
         await search_history.clear();
 
         assert.strictEqual(await search_history.length(), 0);
@@ -111,15 +109,15 @@ async function main() {
         movie = movies[0];
 
         assert.strictEqual(await search_history.length(), 1);
-        assert.strictEqual((await search_history.all())[0].data, query);
+        assert.strictEqual((await search_history.values())[0].data, query);
 
         await ume.title.search({ query: "he" });
 
         assert.strictEqual(await search_history.length(), 2);
 
-        const history = await search_history.all();
-        assert.strictEqual(history[0].data, query);
-        assert.strictEqual(history[1].data, "he");
+        const history = await search_history.values();
+        assert.isDefined(history.find((q) => q.data == query));
+        assert.isDefined(history.find((q) => q.data == "he"));
 
         await ume.title
           .search({
@@ -134,6 +132,13 @@ async function main() {
             )
           );
       },
+      async after() {
+        await tests.run("search (cached)", {
+          async callback() {
+            assert.isAbove((await ume.title.search({ query })).length, 0);
+          },
+        });
+      },
     },
     "search suggestion": {
       async before() {
@@ -142,7 +147,7 @@ async function main() {
         await ume.title.search({ query: "e" });
       },
       async callback() {
-        const suggestions = await ume.title.search_suggestion.get({
+        const suggestions = await ume.search_suggestion.get({
           query: "eo",
         });
         assert.include(suggestions, "enola");
@@ -150,65 +155,63 @@ async function main() {
     },
     "caching system": {
       async callback() {
-        const connect = new UStore<any>();
-        await connect.init({
-          identifier: "details",
-          kind: "indexeddb",
-        });
-        await connect.clear();
-        assert.strictEqual(await connect.length(), 0);
+        const details_cache = new ustore.Async<any>();
+        await details_cache.init("details");
+        await details_cache.clear();
+        assert.strictEqual(await details_cache.length(), 0);
 
         const samples = [
-          { id: 739, slug: "escobar-il-fascino-del-male" }, // 1
-          { id: 1441, slug: "escape-plan-fuga-dallinferno", times: 3 }, // 3
-          { id: 1442, slug: "escape-plan-2-ritorno-allinferno", times: 0 }, // 0
-          { id: 1649, slug: "esp-fenomeni-paranormali", times: 0 }, // 0
-          { id: 1650, slug: "esp-fenomeni-paranormali", times: 2 }, // 2
-          { id: 1663, slug: "estate-di-morte", times: 3 }, // 3
-          { id: 2711, slug: "escape-room", times: 1 }, // 1
-          { id: 3192, slug: "estraneo-a-bordo", times: 2 }, // 2
-          { id: 3550, slug: "escape-room-2-gioco-mortale" },
+          { id: 739, slug: "escobar-il-fascino-del-male" },
+          { id: 1441, slug: "escape-plan-fuga-dallinferno", times: 3 },
+          { id: 1442, slug: "escape-plan-2-ritorno-allinferno", times: 0 },
+          { id: 1649, slug: "esp-fenomeni-paranormali", times: 0 },
+          { id: 1650, slug: "esp-fenomeni-paranormali", times: 2 },
+          // { id: 1663, slug: "estate-di-morte", times: 3 },
+          // { id: 2711, slug: "escape-room", times: 1 },
+          // { id: 3192, slug: "estraneo-a-bordo", times: 2 },
+          // { id: 3550, slug: "escape-room-2-gioco-mortale", times: 4 },
+          // { id: 6241, slug: "aquaman-e-il-regno-perduto", times: 1 },
         ];
 
         await ume.title.details(samples[0]);
-        assert.strictEqual(await connect.length(), 1);
+        assert.strictEqual(await details_cache.length(), 1);
 
-        const only_8 = samples.slice(0, samples.length - 1);
-        assert.strictEqual(only_8.length, 8);
-        for (const sample of only_8) {
+        for (const sample of samples) {
           await ume.title.details(sample);
         }
-        assert.strictEqual(await connect.length(), 8);
+        assert.strictEqual(await details_cache.length(), 5);
 
         assert.strictEqual(
-          (await connect.get(samples[0].id.toString())).interacts,
+          (await details_cache.get(samples[0].id.toString())).interacts,
           1
         );
-        for (const sample of only_8.slice(1)) {
+        for (const sample of samples.slice(1)) {
           assert.strictEqual(
-            (await connect.get(sample.id.toString())).interacts,
+            (await details_cache.get(sample.id.toString())).interacts,
             0
           );
         }
 
-        for (const sample of only_8.slice(1)) {
+        for (const sample of samples) {
           for (let i = 0; i < sample.times!; ++i) {
             await ume.title.details(sample);
           }
         }
 
-        assert.isNotNull(await connect.get(samples[2].id.toString()));
+        assert.isDefined(await details_cache.get(samples[2].id.toString()));
+        assert.isUndefined(await details_cache.get("2158"));
 
-        await ume.title.details(samples[samples.length - 1]);
-        assert.strictEqual(await connect.length(), 8);
+        await ume.title.details({
+          id: 2158,
+          slug: "halloween-4-il-ritorno-di-michael-myers",
+        });
+        assert.strictEqual(await details_cache.length(), 5);
 
-        assert.isNull(await connect.get(samples[2].id.toString()));
-        assert.isNotNull(
-          await connect.get(samples[samples.length - 1].id.toString())
-        );
+        assert.isUndefined(await details_cache.get(samples[2].id.toString()));
+        assert.isDefined(await details_cache.get("2158"));
 
-        await connect.clear();
-        assert.strictEqual(await connect.length(), 0);
+        await details_cache.clear();
+        assert.strictEqual(await details_cache.length(), 0);
       },
     },
     details: {
@@ -232,14 +235,19 @@ async function main() {
           await tests.run("movie collection", {
             async callback() {
               assert.isNotNull(details.collection);
-              console.log((await details.collection!())?.length);
+              console.log(details.collection!.length);
             },
             deps: ["details"],
           });
         } else {
           await tests.run("seasons", {
             async callback() {
-              const episodes = await details.seasons.get(4);
+              assert.isAtLeast(details.seasons.filter(Boolean).length, 6);
+
+              const episodes = await ume.seasons.get(4, {
+                slug: details.slug,
+                id: details.id,
+              });
               assert.isDefined(episodes);
               assert.isAbove(episodes!.length, 0);
             },
@@ -248,7 +256,10 @@ async function main() {
 
           await tests.run("seasons (cache)", {
             async callback() {
-              const episodes = await details.seasons.get(4);
+              const episodes = await ume.seasons.get(4, {
+                slug: details.slug,
+                id: details.id,
+              });
               assert.isDefined(episodes);
               assert.isAbove(episodes!.length, 0);
             },
@@ -257,10 +268,13 @@ async function main() {
 
           await tests.run("episode seek bounds", {
             async callback() {
-              const [prev, next] = await details.seasons.seek_bounds_episode({
-                season_number: 6,
-                episode_index: 4,
-              });
+              const [prev, next] = await ume.seasons.seek_bounds_episode(
+                {
+                  season_number: 6,
+                  episode_index: 4,
+                },
+                { id: details.id, seasons: details.seasons, slug: details.slug }
+              );
               assert.isNotNull(prev);
               assert.isNotNull(next);
               assert.strictEqual(prev!.data.number, 4);
@@ -271,10 +285,13 @@ async function main() {
 
           await tests.run("episode seek bounds (next not available)", {
             async callback() {
-              const [prev, next] = await details.seasons.seek_bounds_episode({
-                season_number: 6,
-                episode_index: 9,
-              });
+              const [prev, next] = await ume.seasons.seek_bounds_episode(
+                {
+                  season_number: 6,
+                  episode_index: 9,
+                },
+                { id: details.id, seasons: details.seasons, slug: details.slug }
+              );
               assert.isNotNull(prev);
               assert.isNull(next);
               assert.strictEqual(prev!.data.number, 9);
@@ -284,10 +301,13 @@ async function main() {
 
           await tests.run("episode seek bounds (prev not available)", {
             async callback() {
-              const [prev, next] = await details.seasons.seek_bounds_episode({
-                season_number: 1,
-                episode_index: 0,
-              });
+              const [prev, next] = await ume.seasons.seek_bounds_episode(
+                {
+                  season_number: 1,
+                  episode_index: 0,
+                },
+                { id: details.id, seasons: details.seasons, slug: details.slug }
+              );
               assert.isNull(prev);
               assert.isNotNull(next);
               assert.strictEqual(next!.data.number, 2);
@@ -297,19 +317,25 @@ async function main() {
 
           await tests.run("double episode seek bounds", {
             async callback() {
-              const [prev, next] = await details.seasons.seek_bounds_episode({
-                season_number: 4,
-                episode_index: 3,
-              });
+              const [prev, next] = await ume.seasons.seek_bounds_episode(
+                {
+                  season_number: 4,
+                  episode_index: 3,
+                },
+                { id: details.id, seasons: details.seasons, slug: details.slug }
+              );
               assert.isNotNull(prev);
               assert.isNotNull(next);
               assert.strictEqual(prev!.data.number, 3);
               assert.strictEqual(next!.data.number, 5);
 
-              const [prev2, next2] = await details.seasons.seek_bounds_episode({
-                episode_index: next!.episode_index,
-                season_number: next!.season_number,
-              });
+              const [prev2, next2] = await ume.seasons.seek_bounds_episode(
+                {
+                  episode_index: next!.episode_index,
+                  season_number: next!.season_number,
+                },
+                { id: details.id, seasons: details.seasons, slug: details.slug }
+              );
               assert.isNotNull(prev2);
               assert.isNotNull(next2);
               assert.strictEqual(prev2!.data.number, 4);
@@ -335,7 +361,7 @@ async function main() {
               movie.id
             );
           },
-          deps: ["search", "preview"],
+          deps: ["preview"],
         });
       },
       deps: ["search"],
@@ -366,7 +392,10 @@ async function main() {
           title_id: details.id,
           episode_id:
             details.type == "tv"
-              ? (await details.seasons.get(2))![5].id
+              ? (await ume.seasons.get(2, {
+                  id: details.id,
+                  slug: details.slug,
+                }))![5].id
               : undefined,
         });
         console.log(master_playlist);
@@ -455,8 +484,25 @@ async function main() {
     },
     "person search": {
       async callback() {
+        const search_history = new ustore.Async<any>();
+        await search_history.init("search_history");
+        await search_history.clear();
+
+        assert.strictEqual(await search_history.length(), 0);
+
         const people = await ume.person.search({ query: "millie" });
         assert.isNotEmpty(people);
+
+        assert.strictEqual(await search_history.length(), 1);
+        assert.strictEqual((await search_history.values())[0].data, "millie");
+      },
+      async after() {
+        await tests.run("person search (cached)", {
+          async callback() {
+            const people = await ume.person.search({ query: "millie" });
+            assert.isNotEmpty(people);
+          },
+        });
       },
     },
     "person details": {
@@ -467,6 +513,19 @@ async function main() {
         assert.strictEqual(tennant.name, "David Tennant");
         assert.isNotEmpty(tennant.known_for_movies);
       },
+      async after() {
+        await tests.run("person details (cached)", {
+          async callback() {
+            const tennant = (await ume.person.details(20049))!;
+            assert.isNotNull(tennant);
+            Object.entries(tennant).forEach(([, value]) =>
+              assert.isDefined(value)
+            );
+            assert.strictEqual(tennant.name, "David Tennant");
+            assert.isNotEmpty(tennant.known_for_movies);
+          },
+        });
+      },
     },
     continue_watching: {
       async before() {
@@ -474,6 +533,11 @@ async function main() {
         enola = (await ume.title.search({ query: "enola" }))[0];
       },
       async callback() {
+        const search_history = new ustore.Async<any>();
+        await search_history.init("search_history");
+        await search_history.clear();
+        assert.strictEqual(await search_history.length(), 0);
+
         assert.strictEqual(await ume.continue_watching.length(), 0);
 
         assert.isNull(
@@ -535,8 +599,8 @@ async function main() {
         assert.strictEqual(await ume.continue_watching.length(), 1);
 
         const titles = await ume.title.search({
-          max_results: 30,
           query: "enola",
+          max_results: 30,
         });
         for (const title of titles) {
           await ume.continue_watching.update({
@@ -577,6 +641,12 @@ async function main() {
         assert.isAtLeast(result.length, 2);
         assert.isDefined(result.find((e) => e.slug == "enola-holmes"));
         assert.isDefined(result.find((e) => e.slug == "enola-holmes-2"));
+        assert.strictEqual(await search_history.length(), 2);
+        assert.isDefined(
+          (await search_history.values()).find(
+            (query) => query.data == "en lomes"
+          )
+        );
       },
     },
     mylist: {
@@ -585,9 +655,14 @@ async function main() {
         enola = (await ume.title.search({ query: "enola" }))[0];
       },
       async callback() {
-        const connect = new UStore();
-        await connect.init({ identifier: "mylist", kind: "indexeddb" });
-        await connect.clear();
+        const search_history = new ustore.Async<any>();
+        await search_history.init("search_history");
+        await search_history.clear();
+        assert.strictEqual(await search_history.length(), 0);
+
+        const mylist = new ustore.Async();
+        await mylist.init("mylist");
+        await mylist.clear();
         assert.strictEqual(await ume.mylist.length(), 0);
 
         await ume.mylist.add({
@@ -650,6 +725,12 @@ async function main() {
         assert.isAtLeast(result.length, 2);
         assert.isDefined(result.find((e) => e.slug == "enola-holmes"));
         assert.isDefined(result.find((e) => e.slug == "enola-holmes-2"));
+        assert.strictEqual(await search_history.length(), 2);
+        assert.isDefined(
+          (await search_history.values()).find(
+            (query) => query.data == "en lomes"
+          )
+        );
       },
     },
   });
@@ -684,4 +765,4 @@ async function main() {
   }
 }
 
-main();
+main().then(() => exit(0));

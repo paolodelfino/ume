@@ -2,7 +2,6 @@ import crypto from "node:crypto";
 import { MoviesGetDetailsResponse, TVGetDetailsResponse } from "tmdb-js-node";
 import { Ume } from ".";
 import { Cache_Store } from "./cache_store";
-import { Search_Suggestion } from "./search_suggestion";
 import {
   Dl_Res,
   Movie_Collection,
@@ -12,7 +11,6 @@ import {
   Title_Preview,
   Title_Search,
 } from "./types";
-import { Ume_Seasons } from "./ume_seasons";
 import { Ume_Sliders_Queue } from "./ume_sliders_queue";
 import {
   DATA_PAGE_GROUP_INDEX,
@@ -28,49 +26,72 @@ import {
 export class Ume_Title {
   private _ume!: Ume;
 
-  private _details!: Cache_Store<Title_Details>;
-  private _search_history!: Cache_Store<string>;
+  private _details!: Cache_Store<Awaited<ReturnType<typeof this.details>>>;
+  private _search!: Cache_Store<{
+    query: string;
+    data: Title_Search[];
+    max_results: number;
+  }>;
+  private _preview!: Cache_Store<Awaited<ReturnType<typeof this.preview>>>;
 
   sliders_queue!: (sliders: Slider_Fetch[]) => Ume_Sliders_Queue;
-  search_suggestion!: Search_Suggestion;
 
   async init({ ume }: { ume: Ume }) {
     this._ume = ume;
 
-    this._details = new Cache_Store<Title_Details>();
-    await this._details.init({
-      identifier: "details",
-      kind: "indexeddb",
+    this._details = new Cache_Store();
+    await this._details.init("details", {
       expiry_offset: 7 * 24 * 60 * 60 * 1000,
-      max_entries: 8,
+      max_entries: 5,
+      async refresh(entry) {
+        return await ume.title.details({ id: entry.id, slug: entry.slug });
+      },
     });
 
-    this._search_history = new Cache_Store<string>();
-    await this._search_history.init({
-      identifier: "search_history",
-      kind: "indexeddb",
-      expiry_offset: 7 * 24 * 60 * 60 * 1000,
-      max_entries: 50,
+    this._search = new Cache_Store();
+    await this._search.init("search", {
+      expiry_offset: 2 * 7 * 24 * 60 * 60 * 1000,
+      max_entries: 5,
+      async refresh(entry) {
+        return {
+          data: await ume.title.search({
+            query: entry.query,
+            max_results: entry.max_results,
+          }),
+          query: entry.query,
+          max_results: entry.max_results,
+        };
+      },
+    });
+
+    this._preview = new Cache_Store();
+    await this._preview.init("preview", {
+      expiry_offset: 4 * 24 * 60 * 60 * 1000,
+      max_entries: 15,
+      async refresh(entry) {
+        return await ume.title.preview({ id: entry.id });
+      },
     });
 
     this.sliders_queue = (sliders: Slider_Fetch[]) =>
       new Ume_Sliders_Queue({ ume: this._ume, sliders });
-    this.search_suggestion = new Search_Suggestion(() =>
-      this._search_history.all()
-    );
   }
 
-  async import_store(stores: Awaited<ReturnType<typeof this.export_store>>) {
+  async import(
+    stores: Awaited<ReturnType<typeof this.export>>,
+    merge?: boolean
+  ) {
     for (const key in stores) {
       // @ts-ignore
-      await this[`_${key}`].import(stores[key]);
+      await this[key].import(stores[key], merge);
     }
   }
 
-  async export_store() {
+  async export() {
     return {
-      details: await this._details.export(),
-      search_history: await this._search_history.export(),
+      _details: await this._details.export(),
+      _search: await this._search.export(),
+      _preview: await this._preview.export(),
     };
   }
 
@@ -90,15 +111,20 @@ export class Ume_Title {
       throw new Error("query exceeds 256 chars limit");
     }
 
+    await this._ume._search_history.set(query, query);
+
+    const cached = await this._search.get(query);
+    if (cached && cached.max_results >= max_results) {
+      return cached.data.slice(0, max_results);
+    }
+
     const res = JSON.parse(
       await get(`${this._ume.sc.url}/api/search?q=${query}`)
     ) as {
       data: any[];
     };
 
-    await this._search_history.set(query, query);
-
-    return res.data.slice(0, max_results).map((entry) => {
+    const search_results = res.data.slice(0, max_results).map((entry) => {
       return {
         id: entry.id,
         slug: entry.slug,
@@ -109,6 +135,13 @@ export class Ume_Title {
         type: entry.type,
       };
     });
+
+    await this._search.set(query, {
+      query,
+      max_results,
+      data: search_results,
+    });
+    return search_results;
   }
 
   async details({
@@ -119,9 +152,8 @@ export class Ume_Title {
     slug: string;
   }): Promise<Title_Details> {
     const cache_key = `${id}`;
-    if (await this._details.has(cache_key)) {
-      return (await this._details.get(cache_key))!;
-    }
+    const cached = await this._details.get(cache_key);
+    if (cached) return cached;
 
     const data = JSON.parse(
       await take_match_groups(
@@ -139,8 +171,6 @@ export class Ume_Title {
       type,
       release_date,
       status,
-      seasons_count,
-      seasons,
       runtime,
       score,
     } = data.title;
@@ -162,22 +192,24 @@ export class Ume_Title {
           name: genre.name,
         } satisfies Title_Details["genres"][number])
     );
-    const related =
-      data.sliders.find((slider) => slider.name == "related")?.titles ?? null;
+    const related = data.sliders.find(
+      (slider) => slider.name == "related"
+    )?.titles;
 
-    const seasons_handler = new Ume_Seasons({
-      seasons: seasons.map((season) => ({
+    const seasons = data.title.seasons.reduce((acc, season) => {
+      acc[season.number] = {
         number: season.number,
-        episodesUrl: `${this._ume.sc.url}/titles/${season.title_id}-${slug}/stagione-${season.number}`,
-      })),
-    });
+        episodes_count: season.episodes_count,
+      };
+      return acc;
+    }, [] as Title_Data_Page["title"]["seasons"]);
 
     let fromTmdb:
       | (
           | Promise<MoviesGetDetailsResponse<("credits" | "videos")[]>>
           | Promise<TVGetDetailsResponse<("credits" | "videos")[]>>
         )
-      | null = null;
+      | undefined;
     if (tmdb_id) {
       if (type == "movie") {
         fromTmdb = this._ume.tmdb.v3.movies.getDetails(tmdb_id, {
@@ -210,35 +242,32 @@ export class Ume_Title {
       }
     }
 
-    const collection =
-      type == "tv"
-        ? null
-        : async () => {
-            const tmdb_details = await (fromTmdb as Promise<
-              MoviesGetDetailsResponse<[]>
-            >);
-            if (tmdb_details.belongs_to_collection) {
-              const collection = await this._ume.tmdb.v3.collections.getDetails(
-                tmdb_details.belongs_to_collection.id,
-                { language: "it-IT" }
-              );
+    let collection = undefined;
+    if (type == "movie") {
+      const tmdb_details = await (fromTmdb as Promise<
+        MoviesGetDetailsResponse<[]>
+      >);
+      if (tmdb_details.belongs_to_collection) {
+        const tmdb_collection = await this._ume.tmdb.v3.collections.getDetails(
+          tmdb_details.belongs_to_collection.id,
+          { language: "it-IT" }
+        );
 
-              const filtered_parts: Movie_Collection = [];
-              for (const part of collection.parts) {
-                if (part.poster_path) {
-                  filtered_parts.push({
-                    name: part.title,
-                    poster_path: part.poster_path,
-                  });
-                }
-              }
+        const filtered_parts: Movie_Collection = [];
+        for (const part of tmdb_collection.parts) {
+          if (part.poster_path) {
+            filtered_parts.push({
+              name: part.title,
+              poster_path: part.poster_path,
+            });
+          }
+        }
 
-              if (filtered_parts.length > 1) {
-                return filtered_parts;
-              }
-            }
-            return null;
-          };
+        if (filtered_parts.length > 1) {
+          collection = filtered_parts;
+        }
+      }
+    }
 
     const title_details = {
       score,
@@ -252,11 +281,10 @@ export class Ume_Title {
       type,
       release_date,
       status,
-      seasons_count: seasons_count,
-      seasons: seasons_handler,
+      seasons,
       videos,
       images,
-      cast: fromTmdb?.then((tmdb_details) => tmdb_details.credits.cast) ?? null,
+      cast: fromTmdb ? (await fromTmdb).credits.cast : undefined,
       genres,
       related,
       collection,
@@ -266,15 +294,10 @@ export class Ume_Title {
     return title_details;
   }
 
-  private _preview_cache: {
-    [id: string]: Title_Preview;
-  } = {};
-
   async preview({ id }: { id: number }): Promise<Title_Preview> {
     const cache_key = `${id}`;
-    if (this._preview_cache[cache_key]) {
-      return this._preview_cache[cache_key];
-    }
+    const cached = await this._preview.get(cache_key);
+    if (cached) return cached;
 
     const res = JSON.parse(
       await post(`${this._ume.sc.url}/api/titles/preview/${id}`, {})
@@ -290,8 +313,8 @@ export class Ume_Title {
       images: res.images,
       genres: res.genres,
     };
-    this._preview_cache[cache_key] = data;
 
+    await this._preview.set(cache_key, data);
     return data;
   }
 

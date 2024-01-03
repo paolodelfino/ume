@@ -1,37 +1,36 @@
-import { UStore } from "pustore";
+import { ustore } from "pustore";
 import str_compare from "string-comparison";
+import { Ume } from ".";
 import { Title_Continue_Watching } from "./types";
 
-type Import_Export = {
-  store: string;
-};
-
 export class Ume_Continue_Watching {
-  private _store;
+  private _ume!: Ume;
+
+  private _store!: ustore.Async<Title_Continue_Watching>;
+
   private __cache_all: Title_Continue_Watching[] = [];
   private _need_recache = false;
 
-  constructor() {
-    this._store = new UStore<Title_Continue_Watching>();
+  async init({ ume }: { ume: Ume }) {
+    this._ume = ume;
+
+    this._store = new ustore.Async();
+    await this._store.init("continue_watching");
   }
 
-  async init() {
-    await this._store.init({
-      identifier: "continue_watching",
-      kind: "indexeddb",
-    });
-  }
-
-  async import_store(stores: Import_Export) {
+  async import(
+    stores: Awaited<ReturnType<typeof this.export>>,
+    merge?: boolean
+  ) {
     for (const key in stores) {
       // @ts-ignore
-      await this[`_${key}`].import(stores[key]);
+      await this[key].import(stores[key], merge);
     }
   }
 
-  async export_store(): Promise<Import_Export> {
+  async export() {
     return {
-      store: await this._store.export(),
+      _store: await this._store.export(),
     };
   }
 
@@ -39,10 +38,10 @@ export class Ume_Continue_Watching {
     return await this._store.length();
   }
 
-  private async _cache_all() {
+  private async _cached_values() {
     if (this._need_recache) {
       this._need_recache = false;
-      this.__cache_all = await this._store.all();
+      this.__cache_all = await this._store.values();
     }
     return this.__cache_all;
   }
@@ -83,7 +82,7 @@ export class Ume_Continue_Watching {
   }
 
   async some(quantity: number) {
-    return (await this._cache_all()).slice(0, quantity);
+    return (await this._cached_values()).slice(0, quantity);
   }
 
   async pages() {
@@ -91,9 +90,13 @@ export class Ume_Continue_Watching {
   }
 
   async next(page: number) {
-    return (await this._cache_all()).slice(page * 10, ++page * 10);
+    return (await this._cached_values()).slice(page * 10, ++page * 10);
   }
 
+  /**
+   * @param query Limit 256 chars
+   * @param max_results Defaults to 10
+   */
   async search({
     query,
     max_results = 10,
@@ -101,7 +104,14 @@ export class Ume_Continue_Watching {
     query: string;
     max_results?: number;
   }): Promise<Title_Continue_Watching[]> {
-    const all = await this._cache_all();
+    query = query.trim();
+    if (query.length > 256) {
+      throw new Error("query exceeds 256 chars limit");
+    }
+
+    await this._ume._search_history.set(query, query);
+
+    const all = await this._cached_values();
     return str_compare.levenshtein
       .sortMatch(
         query,
