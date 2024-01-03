@@ -42,11 +42,7 @@ export class Cache_Store<T> {
             );
 
             if (refresh) {
-              // store.queue(async () => {
-              //   await store.update(key, {
-              //     data: await refresh(entry.data),
-              //   });
-              // });
+              // TODO
             }
           }
 
