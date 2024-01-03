@@ -87,6 +87,7 @@ export interface Title_Data_Page {
     }[];
     images: Title_Image[];
     genres: Title_Genre[];
+    scws_id: number;
   };
   sliders: Title_Slider[];
 }
@@ -98,6 +99,7 @@ export interface Episode {
   plot: string;
   duration: number;
   images: Title_Image[];
+  scws_id: number | null;
 }
 
 export type Movie_Collection = {
@@ -115,6 +117,7 @@ export type Title_Details = Omit<
   related?: Title_Search[];
   id: number;
   collection?: Movie_Collection;
+  scws_id: number | null;
 };
 
 export interface Seek_Episode {

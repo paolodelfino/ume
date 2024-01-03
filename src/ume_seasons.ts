@@ -164,15 +164,17 @@ export class Ume_Seasons {
       DATA_PAGE_GROUP_INDEX
     );
     return (JSON.parse(data).props.loadedSeason.episodes as any[]).map(
-      ({ id, number, name, plot, duration, images }) =>
-        ({
+      ({ id, number, name, plot, duration, images, scws_id }) => {
+        return {
           id,
           number,
           name,
           plot,
           duration,
           images,
-        } satisfies Episode)
+          scws_id,
+        } satisfies Episode;
+      }
     );
   }
 

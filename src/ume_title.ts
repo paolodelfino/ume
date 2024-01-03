@@ -4,6 +4,7 @@ import { Ume, Ume_Sliders_Queue } from ".";
 import { Cache_Store } from "./cache_store";
 import {
   Dl_Res,
+  Episode,
   Movie_Collection,
   Title_Data_Page,
   Title_Details,
@@ -167,6 +168,7 @@ export class Ume_Title {
       status,
       runtime,
       score,
+      scws_id,
     } = data.title;
 
     const videos = data.title.trailers.map((video: any) => ({
@@ -282,6 +284,7 @@ export class Ume_Title {
       genres,
       related,
       collection,
+      scws_id,
     } satisfies Title_Details;
 
     await this._details.set(cache_key, title_details);
@@ -340,20 +343,23 @@ export class Ume_Title {
     return `${this._ume.sc.image_endpoint}/${filename}`;
   }
 
-  is_available({
-    release_date,
-    status,
-    episodes_count,
-  }: {
-    release_date: Title_Details["release_date"];
-    status?: Title_Details["status"];
-    episodes_count?: number;
-  }) {
-    return (
-      new Date(release_date).getTime() <= Date.now() &&
-      (!status || status != "Post Production") &&
-      (!episodes_count || episodes_count > 0)
-    );
+  // is_available({
+  //   release_date,
+  //   status,
+  //   episodes_count,
+  // }: {
+  //   release_date: Title_Details["release_date"];
+  //   status?: Title_Details["status"];
+  //   episodes_count?: number;
+  // }) {
+  //   return (
+  //     new Date(release_date).getTime() <= Date.now() &&
+  //     (!status || status != "Post Production") &&
+  //     (!episodes_count || episodes_count > 0)
+  //   );
+  // }
+  is_available(scws_id: Title_Details["scws_id"] | Episode["scws_id"]) {
+    return !!scws_id;
   }
 
   upcoming(): Ume_Slider {
