@@ -461,13 +461,9 @@ async function main() {
         }
 
         {
-          const queue = ume.title.sliders_queue([
-            {
-              name: "upcoming",
-            },
-          ]);
-          await queue.next();
-          console.log(`upcoming (${queue.data.length})`);
+          console.log(
+            `upcoming (${(await ume.title.upcoming())?.titles.length})`
+          );
         }
       },
     },

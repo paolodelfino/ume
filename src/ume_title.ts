@@ -10,6 +10,7 @@ import {
   Title_Details,
   Title_Preview,
   Title_Search,
+  Title_Slider,
 } from "./types";
 import { Ume_Sliders_Queue } from "./ume_sliders_queue";
 import {
@@ -360,6 +361,17 @@ export class Ume_Title {
       (!status || status != "Post Production") &&
       (!episodes_count || episodes_count > 0)
     );
+  }
+
+  async upcoming(): Promise<Title_Slider | undefined> {
+    const queue = this.sliders_queue([
+      {
+        name: "upcoming",
+      },
+    ]);
+
+    await queue.next();
+    return queue.data[0];
   }
 
   async parse_master_playlist(master_url: string): Promise<Dl_Res[]> {
