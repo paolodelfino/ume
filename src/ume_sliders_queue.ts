@@ -21,6 +21,7 @@ export class Ume_Sliders_Queue {
     sliders: {
       label: string;
       fetch: Slider_Fetch;
+      max_offset?: number;
     }[];
     groups_size?: number;
   }) {

@@ -374,6 +374,25 @@ export class Ume_Title {
     return queue.data[0];
   }
 
+  new_episodes(): Ume_Slider {
+    const queue = new Ume_Sliders_Queue({
+      ume: this._ume,
+      groups_size: 1,
+      sliders: [
+        {
+          label: "New Episodes",
+          fetch: {
+            name: "new_episodes",
+          },
+          max_offset: 150,
+        },
+      ],
+    });
+
+    queue.next();
+    return queue.data[0];
+  }
+
   async parse_master_playlist(master_url: string): Promise<Dl_Res[]> {
     const dl_resources: Dl_Res[] = [];
 

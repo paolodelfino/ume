@@ -17,7 +17,7 @@ export type Title_Search = {
 };
 
 export interface Slider_Fetch {
-  name: "top10" | "trending" | "latest" | "upcoming" | "genre";
+  name: "top10" | "trending" | "latest" | "upcoming" | "genre" | "new_episodes";
   title_type?: "movie" | "tv" | null;
   genre?: Title_Genre["name"] | null;
   // offset?: number | null;

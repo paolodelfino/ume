@@ -11,17 +11,20 @@ export class Ume_Slider {
 
   private readonly _fetch;
   private _offset = 0;
+  private _max_offset;
 
   constructor({
     ume,
     fetch,
     label,
+    max_offset,
   }: ConstructorParameters<typeof Ume_Sliders_Queue>["0"]["sliders"][number] & {
     ume: Ume;
   }) {
     this._ume = ume;
     this.label = label;
     this._fetch = fetch;
+    this._max_offset = max_offset;
   }
 
   async next() {
@@ -38,10 +41,13 @@ export class Ume_Slider {
       ) as Title_Slider[]
     )[0]?.titles;
 
-    this._offset += 30;
-
     this.titles.push(...titles);
 
-    return { has_next: !!titles };
+    this._offset += 30;
+
+    return {
+      has_next:
+        (this._max_offset && this._offset < this._max_offset) || !!titles,
+    };
   }
 }
