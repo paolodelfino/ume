@@ -24,7 +24,8 @@ type Tests =
   | "mylist"
   | "continue_watching"
   | "person search"
-  | "person details";
+  | "person details"
+  | "following";
 
 async function main() {
   assert.isDefined(process.env.TMDB_API_KEY);
@@ -49,6 +50,8 @@ async function main() {
     exit(1);
   }
 
+  let enola_details: Awaited<ReturnType<typeof ume.title.details>>;
+  let rick_details: Awaited<ReturnType<typeof ume.title.details>>;
   let query: string;
   let movie: Awaited<ReturnType<typeof ume.title.search>>[number];
   let details: Awaited<ReturnType<typeof ume.title.details>>;
@@ -730,6 +733,71 @@ async function main() {
             (query) => query.data == "en lomes"
           )
         );
+      },
+    },
+    following: {
+      async callback() {
+        await tests.run("following (movie)", {
+          async before() {
+            enola_details = await ume.title.details({
+              id: 5777,
+              slug: "enola-holmes-2",
+            });
+
+            await ume.following.add_movie({
+              ...enola_details,
+              collection: [],
+            });
+          },
+          async callback() {
+            const updates = await ume.following.something_new_movies();
+            assert.strictEqual(updates.length, 1);
+
+            assert.strictEqual(updates[0].new_titles.length, 2);
+            assert.strictEqual(updates[0].new_titles[0], 0);
+            assert.strictEqual(updates[0].new_titles[1], 1);
+          },
+        });
+
+        await tests.run("following (tv)", {
+          async before() {
+            rick_details = await ume.title.details({
+              id: 115,
+              slug: "rick-and-morty",
+            });
+
+            await ume.following.add_tv({
+              ...rick_details,
+              seasons: [{ number: 1, episodes_count: 4 }],
+            });
+          },
+          async callback() {
+            const updates = await ume.following.something_new_tvs();
+            assert.strictEqual(updates.length, 1);
+
+            assert.strictEqual(updates[0].new_episodes.length, 6);
+            assert.isFalse(updates[0].new_episodes[0].is_new_season);
+            assert.strictEqual(
+              updates[0].new_episodes[0].new_episodes_count,
+              7
+            );
+            assert.isTrue(
+              updates[0].new_episodes.find((i) => i.i == 1)?.is_new_season
+            );
+            assert.isTrue(
+              updates[0].new_episodes.find((i) => i.i == 2)?.is_new_season
+            );
+            assert.isTrue(
+              updates[0].new_episodes.find((i) => i.i == 3)?.is_new_season
+            );
+            assert.isTrue(
+              updates[0].new_episodes.find((i) => i.i == 4)?.is_new_season
+            );
+            assert.isTrue(
+              updates[0].new_episodes.find((i) => i.i == 5)?.is_new_season
+            );
+          },
+        });
       },
     },
   });

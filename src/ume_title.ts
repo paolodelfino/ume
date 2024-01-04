@@ -142,13 +142,18 @@ export class Ume_Title {
   async details({
     id,
     slug,
+    cache = true,
   }: {
     id: number;
     slug: string;
+    cache?: boolean;
   }): Promise<Title_Details> {
-    const cache_key = `${id}`;
-    const cached = await this._details.get(cache_key);
-    if (cached) return cached;
+    let cache_key: string;
+    if (cache) {
+      cache_key = `${id}`;
+      const cached = await this._details.get(cache_key);
+      if (cached) return cached;
+    }
 
     const data = JSON.parse(
       await take_match_groups(
@@ -287,7 +292,9 @@ export class Ume_Title {
       scws_id,
     } satisfies Title_Details;
 
-    await this._details.set(cache_key, title_details);
+    if (cache) {
+      await this._details.set(cache_key!, title_details);
+    }
     return title_details;
   }
 

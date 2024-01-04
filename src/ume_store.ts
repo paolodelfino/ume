@@ -20,10 +20,11 @@ export class Ume_Store {
   async export() {
     return {
       title: await this._ume.title.export(),
-      mylist: await this._ume.mylist.export(),
-      continue_watching: await this._ume.continue_watching.export(),
       person: await this._ume.person.export(),
       _search_history: await this._ume._search_history.export(),
+      mylist: await this._ume.mylist.export(),
+      continue_watching: await this._ume.continue_watching.export(),
+      following: await this._ume.following.export(),
     };
   }
 }
