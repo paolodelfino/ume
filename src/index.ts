@@ -4,6 +4,7 @@ import { Cache_Store } from "./cache_store";
 import { SC } from "./sc";
 import { Search_Suggestion } from "./search_suggestion";
 import { Ume_Continue_Watching } from "./ume_continue_watching";
+import { Ume_Following } from "./ume_following";
 import { Ume_Mylist } from "./ume_mylist";
 import { Ume_Person } from "./ume_person";
 import { Ume_Report } from "./ume_report";
@@ -32,6 +33,7 @@ export class Ume {
 
   mylist!: Ume_Mylist;
   continue_watching!: Ume_Continue_Watching;
+  following!: Ume_Following;
 
   async init({
     tmdb_api_key,
@@ -83,6 +85,8 @@ export class Ume {
     await this.mylist.init({ ume: this });
     this.continue_watching = new Ume_Continue_Watching();
     await this.continue_watching.init({ ume: this });
+    this.following = new Ume_Following();
+    await this.following.init({ ume: this });
   }
 }
 

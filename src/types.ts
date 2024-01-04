@@ -173,3 +173,19 @@ export interface Person_Details {
   }[];
   known_for_department: string;
 }
+
+export type Person_Following_Update = Person_Details & {
+  new_titles: number[];
+};
+
+export type Movie_Following_Update = Title_Details & {
+  new_titles: number[];
+};
+
+export type Tv_Following_Update = Title_Details & {
+  new_episodes: {
+    i: number;
+    new_episodes_count: number;
+    is_new_season: boolean;
+  }[];
+};
