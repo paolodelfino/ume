@@ -113,10 +113,16 @@ export class Ume_Person {
     return people;
   }
 
-  async details(id: number): Promise<Person_Details | null> {
-    const cache_key = id.toString();
-    const cached = await this._details.get(cache_key);
-    if (cached) return cached;
+  async details(
+    id: number,
+    cache: boolean = true
+  ): Promise<Person_Details | null> {
+    let cache_key: string;
+    if (cache) {
+      cache_key = id.toString();
+      const cached = await this._details.get(cache_key);
+      if (cached) return cached;
+    }
 
     const data = await this._ume.tmdb.v3.people.getDetails(id, {
       append_to_response: ["combined_credits"],
@@ -162,7 +168,9 @@ export class Ume_Person {
       known_for_movies: movies,
     } satisfies Person_Details;
 
-    await this._details.set(cache_key, person_details);
+    if (cache) {
+      await this._details.set(cache_key!, person_details);
+    }
     return person_details;
   }
 }

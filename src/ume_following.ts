@@ -32,7 +32,7 @@ export class Ume_Following {
     const updates: Person_Following_Update[] = [];
 
     for (const older of await this._people.values()) {
-      const newer = await this._ume.person.details(older.id);
+      const newer = await this._ume.person.details(older.id, false);
       if (
         !newer ||
         !(newer.known_for_movies.length > older.known_for_movies.length)
@@ -73,6 +73,7 @@ export class Ume_Following {
       const newer = await this._ume.title.details({
         id: older.id,
         slug: older.slug,
+        cache: false,
       });
       if (
         !newer.collection ||
@@ -103,14 +104,16 @@ export class Ume_Following {
     return updates;
   }
 
-  async something_new_series() {
+  async something_new_tvs() {
     const updates: Tv_Following_Update[] = [];
 
     for (const older of await this._tvs.values()) {
       const newer = await this._ume.title.details({
         id: older.id,
         slug: older.slug,
+        cache: false,
       });
+      newer.seasons = newer.seasons.filter(Boolean);
 
       const update: Tv_Following_Update = {
         ...newer,
@@ -163,6 +166,7 @@ export class Ume_Following {
   }
 
   add_tv(tv: Title_Details) {
+    tv.seasons = tv.seasons.filter(Boolean);
     return this._tvs.set(`${tv.id}`, tv);
   }
 
