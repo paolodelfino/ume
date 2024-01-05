@@ -14,6 +14,9 @@ export class Ume_Report {
    * @param description Max 2000
    */
   async send({ title, description }: { title: string; description: string }) {
+    title = title.trim();
+    description = description.trim();
+
     if (title.length > 100) {
       throw new Error("Exceeded title max length of 100 chars");
     }
