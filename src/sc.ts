@@ -1,4 +1,4 @@
-import { Publicity } from "pastebin-api";
+import { assert } from "chai";
 import { Ume } from ".";
 import { conn_exists } from "./utils";
 
@@ -13,18 +13,13 @@ export class SC {
   }
 
   async init() {
-    const paste_tld = (
-      await this._ume.pastebin.getPastesByUser({
-        userKey: this._ume.pastebin_token,
-        limit: 1,
-      })
-    )[0];
-    console.assert(paste_tld.paste_title == "sc_tld");
+    const paste_tld = (await this._ume.pastebin.get("sc_tld"))!;
+    assert.isDefined(
+      paste_tld,
+      "For some reason, we haven't been able to retrieve the paste 'sc_tld'"
+    );
 
-    this.url = await this._ume.pastebin.getRawPasteByKey({
-      pasteKey: paste_tld.paste_key,
-      userKey: this._ume.pastebin_token,
-    });
+    this.url = paste_tld;
   }
 
   get url() {
@@ -44,24 +39,11 @@ export class SC {
   }
 
   async update_url(tld: string) {
-    const paste_tld = (
-      await this._ume.pastebin.getPastesByUser({
-        userKey: this._ume.pastebin_token,
-        limit: 1,
-      })
-    )[0];
-    console.assert(paste_tld.paste_title == "sc_tld");
+    await this._ume.pastebin.delete("sc_tld");
 
-    this._ume.pastebin.deletePasteByKey({
-      pasteKey: paste_tld.paste_key,
-      userKey: this._ume.pastebin_token,
-    });
-
-    this._ume.pastebin.createPaste({
+    this._ume.pastebin.create({
       name: "sc_tld",
-      publicity: Publicity.Private,
-      apiUserKey: this._ume.pastebin_token,
-      code: tld,
+      content: tld,
     });
 
     this.url = tld;

@@ -36,7 +36,6 @@
   "devDependencies": {
     "@types/chai": "^4.3.11",
     "@types/node": "^20.10.4",
-    "chai": "^4.3.10",
     "dotenv": "^16.3.1",
     "fake-indexeddb": "^5.0.1",
     "putesting": "^1.4.1",
@@ -44,6 +43,7 @@
     "typescript": "^5.3.3"
   },
   "dependencies": {
+    "chai": "^5.0.0",
     "discord.js": "^14.14.1",
     "pastebin-api": "^7.0.0",
     "pustore": "^8.1.1",

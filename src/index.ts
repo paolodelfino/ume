@@ -1,4 +1,3 @@
-import PasteClient from "pastebin-api";
 import { TMDBNodeApi } from "tmdb-js-node";
 import { Cache_Store } from "./cache_store";
 import { SC } from "./sc";
@@ -6,6 +5,7 @@ import { Search_Suggestion } from "./search_suggestion";
 import { Ume_Continue_Watching } from "./ume_continue_watching";
 import { Ume_Following } from "./ume_following";
 import { Ume_Mylist } from "./ume_mylist";
+import { Ume_Pastebin } from "./ume_pastebin";
 import { Ume_Person } from "./ume_person";
 import { Ume_Report } from "./ume_report";
 import { Ume_Seasons } from "./ume_seasons";
@@ -19,8 +19,7 @@ export class Ume {
 
   report!: Ume_Report;
 
-  pastebin!: PasteClient;
-  pastebin_token!: string;
+  pastebin!: Ume_Pastebin;
 
   sc!: SC;
 
@@ -55,10 +54,11 @@ export class Ume {
       webhook_url: discord_webhook_url,
     });
 
-    this.pastebin = new PasteClient(pastebin_api_key);
-    this.pastebin_token = await this.pastebin.login({
-      name: pastebin_name,
-      password: pastebin_password,
+    this.pastebin = new Ume_Pastebin();
+    await this.pastebin.init({
+      pastebin_api_key,
+      pastebin_name,
+      pastebin_password,
     });
 
     this.sc = new SC({ ume: this });
