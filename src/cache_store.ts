@@ -17,7 +17,12 @@ export class Cache_Store<T> {
       expiry_offset,
       max_entries,
       refresh,
-    }: Omit<Parameters<typeof this._store.init>["1"], "middlewares"> & {
+      migrate,
+      version,
+    }: Omit<
+      NonNullable<Parameters<typeof this._store.init>["1"]>,
+      "middlewares"
+    > & {
       expiry_offset: number;
       max_entries: number;
       refresh?: (entry: T) => Promise<T>;
@@ -36,6 +41,8 @@ export class Cache_Store<T> {
           return key;
         },
       },
+      migrate,
+      version,
     });
   }
 
