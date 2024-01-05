@@ -9,7 +9,18 @@ export class Ume_Report {
     });
   }
 
+  /**
+   * @param title Max 100
+   * @param description Max 2000
+   */
   async send({ title, description }: { title: string; description: string }) {
+    if (title.length > 100) {
+      throw new Error("Exceeded title max length of 100 chars");
+    }
+    if (description.length > 2000) {
+      throw new Error("Exceeded title max length of 2000 chars");
+    }
+
     const options: WebhookMessageCreateOptions = {
       username: "Ume",
       content: `## ${title}
