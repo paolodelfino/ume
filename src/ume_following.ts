@@ -36,10 +36,17 @@ export class Ume_Following {
     await this._tvs.init("following_series");
   }
 
-  async something_new_people() {
+  async something_new_people(ids: number[]): Promise<Person_Following_Update[]>;
+  async something_new_people(): Promise<Person_Following_Update[]>;
+  async something_new_people(ids?: number[]) {
     const updates: Person_Following_Update[] = [];
 
-    const people = await this._people.values();
+    let people: Person_Details[];
+    if (Array.isArray(ids)) {
+      people = await this._people.get_some(ids.map((id) => `${id}`));
+    } else {
+      people = await this._people.values();
+    }
 
     const pages = Math.ceil(people.length / Ume_Following._batch_sz);
 
@@ -109,11 +116,17 @@ export class Ume_Following {
     return updates;
   }
 
-  async something_new_movies() {
+  async something_new_movies(ids: number[]): Promise<Movie_Following_Update[]>;
+  async something_new_movies(): Promise<Movie_Following_Update[]>;
+  async something_new_movies(ids?: number[]) {
     const updates: Movie_Following_Update[] = [];
 
-    const movies = await this._movies.values();
-
+    let movies: Title_Details[];
+    if (Array.isArray(ids)) {
+      movies = await this._movies.get_some(ids.map((id) => `${id}`));
+    } else {
+      movies = await this._movies.values();
+    }
     const pages = Math.ceil(movies.length / Ume_Following._batch_sz);
 
     loop: for (let i = 0; i < pages; ++i) {
@@ -186,10 +199,17 @@ export class Ume_Following {
     return updates;
   }
 
-  async something_new_tvs() {
+  async something_new_tvs(ids: number[]): Promise<Tv_Following_Update[]>;
+  async something_new_tvs(): Promise<Tv_Following_Update[]>;
+  async something_new_tvs(ids?: number[]) {
     const updates: Tv_Following_Update[] = [];
 
-    const tvs = await this._tvs.values();
+    let tvs: Title_Details[];
+    if (Array.isArray(ids)) {
+      tvs = await this._tvs.get_some(ids.map((id) => `${id}`));
+    } else {
+      tvs = await this._tvs.values();
+    }
 
     const pages = Math.ceil(tvs.length / Ume_Following._batch_sz);
 
@@ -238,16 +258,24 @@ export class Ume_Following {
                   continue;
                 }
 
+                if (
+                  newer.seasons[i].episodes_count == older_eq.episodes_count
+                ) {
+                  continue;
+                }
+
                 update.new_episodes.push({
                   i,
-                  is_new_season: false,
+                  is_new_season: older_eq.episodes_count == 0,
                   new_episodes_count:
                     newer.seasons[i].episodes_count - older_eq.episodes_count,
                 });
               }
 
-              updates.push(update);
-              await this._tvs.update(`${older.id}`, newer);
+              if (update.new_episodes.length > 0) {
+                updates.push(update);
+                await this._tvs.set(`${older.id}`, newer);
+              }
             })
           );
 
@@ -287,6 +315,18 @@ export class Ume_Following {
 
   people_length() {
     return this._people.length();
+  }
+
+  movies_all() {
+    return this._movies.values();
+  }
+
+  tvs_all() {
+    return this._tvs.values();
+  }
+
+  people_all() {
+    return this._people.values();
   }
 
   /**
