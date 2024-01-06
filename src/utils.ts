@@ -164,3 +164,6 @@ export async function parse_subtitle_playlist(url: string): Promise<string> {
     .split("\n")
     .find((line) => line.indexOf(".vtt") != -1)!;
 }
+
+export const time = (ms: number) =>
+  new Promise((resolve) => setTimeout(resolve, ms));

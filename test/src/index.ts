@@ -50,8 +50,6 @@ async function main() {
     exit(1);
   }
 
-  let enola_details: Awaited<ReturnType<typeof ume.title.details>>;
-  let rick_details: Awaited<ReturnType<typeof ume.title.details>>;
   let query: string;
   let movie: Awaited<ReturnType<typeof ume.title.search>>[number];
   let details: Awaited<ReturnType<typeof ume.title.details>>;
@@ -739,13 +737,11 @@ async function main() {
       async callback() {
         await tests.run("following (movie)", {
           async before() {
-            enola_details = await ume.title.details({
-              id: 5777,
-              slug: "enola-holmes-2",
-            });
-
             await ume.following.add_movie({
-              ...enola_details,
+              ...(await ume.title.details({
+                id: 5777,
+                slug: "enola-holmes-2",
+              })),
               collection: [],
             });
           },
@@ -761,13 +757,11 @@ async function main() {
 
         await tests.run("following (tv)", {
           async before() {
-            rick_details = await ume.title.details({
-              id: 115,
-              slug: "rick-and-morty",
-            });
-
             await ume.following.add_tv({
-              ...rick_details,
+              ...(await ume.title.details({
+                id: 115,
+                slug: "rick-and-morty",
+              })),
               seasons: [{ number: 1, episodes_count: 4 }],
             });
           },
@@ -796,6 +790,23 @@ async function main() {
             assert.isTrue(
               updates[0].new_episodes.find((i) => i.i == 5)?.is_new_season
             );
+          },
+        });
+
+        await tests.run("following (person)", {
+          async before() {
+            await ume.following.add_person({
+              ...(await ume.person.details(1356210))!,
+              known_for_movies: [
+                { name: "Stranger Things", popularity: 0, poster_path: "" },
+              ],
+            });
+          },
+          async callback() {
+            const updates = await ume.following.something_new_people();
+            assert.strictEqual(updates.length, 1);
+
+            assert.strictEqual(updates[0].new_titles.length, 21);
           },
         });
       },

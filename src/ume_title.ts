@@ -429,6 +429,8 @@ export class Ume_Title {
     return dl_resources;
   }
 
+  private static _dw_video_batch_sz = 100;
+
   private async _download_video(url: string): Promise<string | Buffer> {
     let subtle: SubtleCrypto | crypto.webcrypto.SubtleCrypto;
 
@@ -456,14 +458,19 @@ export class Ume_Title {
 
     type Batch = (() => Promise<void>)[];
     const batches: Batch[] = [];
-    const batch_sz = 100;
-    const batch_count = Math.ceil(segments_urls.length / batch_sz);
+    const batch_count = Math.ceil(
+      segments_urls.length / Ume_Title._dw_video_batch_sz
+    );
 
     for (let i = 0; i < batch_count; i++) {
       const batch: Batch = [];
 
-      const c = batch_sz * (i + 1);
-      for (let j = batch_sz * i; j < c && j < segments_urls.length; j++) {
+      const c = Ume_Title._dw_video_batch_sz * (i + 1);
+      for (
+        let j = Ume_Title._dw_video_batch_sz * i;
+        j < c && j < segments_urls.length;
+        j++
+      ) {
         batch.push(
           async () =>
             await new Promise(async (resolve) => {

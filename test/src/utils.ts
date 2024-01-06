@@ -35,9 +35,3 @@ globalThis.localStorage = new Memory_Storage();
 
 export const time = (ms: number) =>
   new Promise((resolve) => setTimeout(resolve, ms));
-export const stopwatch = async (label: string, fn: any) => {
-  console.log(`${label}:`);
-  console.time(label);
-  await fn();
-  console.timeEnd(label);
-};
