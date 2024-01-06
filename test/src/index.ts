@@ -754,7 +754,10 @@ async function main() {
         });
       },
       async callback() {
+        assert.isUndefined(await ume.following.last_checked_movies());
+
         const updates = await ume.following.something_new_movies();
+        assert.isAbove((await ume.following.last_checked_movies())!, 0);
         assert.strictEqual(updates.length, 2);
 
         assert.strictEqual(updates[0].new_titles.length, 8);
@@ -817,7 +820,10 @@ async function main() {
         });
       },
       async callback() {
+        assert.isUndefined(await ume.following.last_checked_tvs());
+
         const updates = await ume.following.something_new_tvs();
+        assert.isAbove((await ume.following.last_checked_movies())!, 0);
         assert.strictEqual(updates.length, 2);
 
         assert.strictEqual(updates[0].new_episodes.length, 6);
@@ -902,7 +908,10 @@ async function main() {
         });
       },
       async callback() {
+        assert.isUndefined(await ume.following.last_checked_people());
+
         const updates = await ume.following.something_new_people();
+        assert.isAbove((await ume.following.last_checked_movies())!, 0);
         assert.strictEqual(updates.length, 2);
 
         assert.strictEqual(updates[0].new_titles.length, 21);

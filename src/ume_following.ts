@@ -13,6 +13,7 @@ import { time } from "./utils";
 export class Ume_Following {
   private _ume!: Ume;
 
+  private _store!: ustore.Async<{ last_checked: number }>;
   private _people!: ustore.Async<Person_Details>;
   private _movies!: ustore.Async<Title_Details>;
   private _tvs!: ustore.Async<Title_Details>;
@@ -26,6 +27,9 @@ export class Ume_Following {
   async init({ ume }: { ume: Ume }) {
     this._ume = ume;
 
+    this._store = new ustore.Async();
+    await this._store.init("following_store");
+
     this._people = new ustore.Async();
     await this._people.init("following_people");
 
@@ -34,6 +38,18 @@ export class Ume_Following {
 
     this._tvs = new ustore.Async();
     await this._tvs.init("following_series");
+  }
+
+  async last_checked_people() {
+    return (await this._store.get("people"))?.last_checked;
+  }
+
+  async last_checked_movies() {
+    return (await this._store.get("movies"))?.last_checked;
+  }
+
+  async last_checked_tvs() {
+    return (await this._store.get("tvs"))?.last_checked;
   }
 
   async something_new_people(ids: number[]): Promise<Person_Following_Update[]>;
@@ -113,6 +129,7 @@ export class Ume_Following {
       }
     }
 
+    await this._store.set("people", { last_checked: Date.now() });
     return updates;
   }
 
@@ -196,6 +213,7 @@ export class Ume_Following {
       }
     }
 
+    await this._store.set("movies", { last_checked: Date.now() });
     return updates;
   }
 
@@ -290,6 +308,7 @@ export class Ume_Following {
       }
     }
 
+    await this._store.set("tvs", { last_checked: Date.now() });
     return updates;
   }
 
@@ -372,6 +391,7 @@ export class Ume_Following {
       _people: await this._people.export(),
       _movies: await this._movies.export(),
       _tvs: await this._tvs.export(),
+      _store: await this._store.export(),
     };
   }
 }
