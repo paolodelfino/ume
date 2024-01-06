@@ -1,3 +1,4 @@
+import { assert } from "chai";
 import { ustore } from "pustore";
 import { Ume } from ".";
 import {
@@ -276,16 +277,43 @@ export class Ume_Following {
     return this._people.rm(`${id}`);
   }
 
-  add_movie(movie: Title_Details) {
+  movies_length() {
+    return this._movies.length();
+  }
+
+  tvs_length() {
+    return this._tvs.length();
+  }
+
+  people_length() {
+    return this._people.length();
+  }
+
+  /**
+   * @description Max 500 entries
+   */
+  async add_movie(movie: Title_Details) {
+    assert.isAtMost(await this._movies.length(), 500);
+
     return this._movies.set(`${movie.id}`, movie);
   }
 
-  add_tv(tv: Title_Details) {
+  /**
+   * @description Max 500 entries
+   */
+  async add_tv(tv: Title_Details) {
+    assert.isAtMost(await this._tvs.length(), 500);
+
     tv.seasons = tv.seasons.filter(Boolean);
     return this._tvs.set(`${tv.id}`, tv);
   }
 
-  add_person(person: Person_Details) {
+  /**
+   * @description Max 500 entries
+   */
+  async add_person(person: Person_Details) {
+    assert.isAtMost(await this._people.length(), 500);
+
     return this._people.set(`${person.id}`, person);
   }
 
