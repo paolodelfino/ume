@@ -240,38 +240,37 @@ export class Ume_Following {
                 slug: older.slug,
                 cache: false,
               });
-              newer.seasons = newer.seasons.filter(Boolean);
 
               const update: Tv_Following_Update = {
                 ...newer,
                 new_episodes: [],
               };
 
-              for (let i = 0; i < newer.seasons.length; ++i) {
-                const older_eq = older.seasons.find(
-                  (older) => older.number == newer.seasons[i].number
-                );
+              for (const season in newer.seasons) {
+                const older_eq = older.seasons[season];
 
                 if (!older_eq) {
                   update.new_episodes.push({
-                    i,
+                    number: season,
                     is_new_season: true,
-                    new_episodes_count: newer.seasons[i].episodes_count,
+                    new_episodes_count: newer.seasons[season].episodes_count,
                   });
                   continue;
                 }
 
                 if (
-                  newer.seasons[i].episodes_count == older_eq.episodes_count
+                  newer.seasons[season].episodes_count ==
+                  older_eq.episodes_count
                 ) {
                   continue;
                 }
 
                 update.new_episodes.push({
-                  i,
+                  number: season,
                   is_new_season: older_eq.episodes_count == 0,
                   new_episodes_count:
-                    newer.seasons[i].episodes_count - older_eq.episodes_count,
+                    newer.seasons[season].episodes_count -
+                    older_eq.episodes_count,
                 });
               }
 
@@ -348,7 +347,6 @@ export class Ume_Following {
   async add_tv(tv: Title_Details) {
     assert.isAtMost(await this._tvs.length(), 500);
 
-    tv.seasons = tv.seasons.filter(Boolean);
     return this._tvs.set(`${tv.id}`, tv);
   }
 

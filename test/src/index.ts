@@ -245,7 +245,7 @@ async function main() {
         } else {
           await tests.run("seasons", {
             async callback() {
-              assert.isAtLeast(details.seasons.filter(Boolean).length, 6);
+              assert.isAtLeast(details.seasons_count, 6);
 
               const episodes = await ume.seasons.get(4, {
                 slug: details.slug,
@@ -852,7 +852,7 @@ async function main() {
             id: 115,
             slug: "rick-and-morty",
           })),
-          seasons: [{ number: 1, episodes_count: 4 }],
+          seasons: { 1: { episodes_count: 4 } },
         });
 
         await ume.following.add_tv({
@@ -860,7 +860,7 @@ async function main() {
             id: 2098,
             slug: "doctor-who",
           })),
-          seasons: [{ number: 3, episodes_count: 0 }],
+          seasons: { 3: { episodes_count: 0 } },
         });
       },
       async callback() {
@@ -870,46 +870,43 @@ async function main() {
         assert.isAbove((await ume.following.last_checked_tvs())!, 0);
         assert.strictEqual(updates.length, 2);
 
-        assert.strictEqual(
-          updates.find((e) => e.id == 115)!.new_episodes.length,
-          6
-        );
+        const rick = updates.find((e) => e.id == 115)!;
+        assert.strictEqual(rick.new_episodes.length, 6);
         assert.isFalse(
-          updates.find((e) => e.id == 115)!.new_episodes.find((i) => i.i == 0)
+          rick.new_episodes.find((season) => season.number == "1")
             ?.is_new_season
         );
         assert.strictEqual(
-          updates.find((e) => e.id == 115)!.new_episodes.find((i) => i.i == 0)
+          rick.new_episodes.find((season) => season.number == "1")
             ?.new_episodes_count,
           7
         );
-        [1, 2, 3, 4, 5].map((i) =>
+        ["2", "3", "4", "5", "6"].map((n) =>
           assert.isTrue(
-            updates
-              .find((e) => e.id == 115)!
-              .new_episodes.find((_i) => _i.i == i)?.is_new_season
+            rick.new_episodes.find((season) => season.number == n)
+              ?.is_new_season
           )
         );
 
-        assert.strictEqual(
-          updates.find((e) => e.id == 2098)!.new_episodes.length,
-          13
-        );
+        const doctor = updates.find((e) => e.id == 2098)!;
+        assert.strictEqual(doctor.new_episodes.length, 13);
         assert.isTrue(
-          updates.find((e) => e.id == 2098)!.new_episodes.find((i) => i.i == 2)
+          doctor.new_episodes.find((season) => season.number == "3")
             ?.is_new_season
         );
         assert.strictEqual(
-          updates.find((e) => e.id == 2098)!.new_episodes.find((i) => i.i == 2)
+          doctor.new_episodes.find((season) => season.number == "3")
             ?.new_episodes_count,
           14
         );
-        [0, 1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((i) =>
-          assert.isTrue(
-            updates
-              .find((e) => e.id == 2098)!
-              .new_episodes.find((_i) => _i.i == i)?.is_new_season
-          )
+        ["1", "2", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13"].map(
+          (n) =>
+            assert.isTrue(
+              updates
+                .find((e) => e.id == 2098)!
+                .new_episodes.find((season) => season.number == n)
+                ?.is_new_season
+            )
         );
       },
       async after() {
@@ -925,33 +922,33 @@ async function main() {
                 id: 2098,
                 slug: "doctor-who",
               })),
-              seasons: [{ number: 3, episodes_count: 0 }],
+              seasons: { 20: { episodes_count: 0 } },
             });
           },
           async callback() {
             const updates = await ume.following.something_new_tvs([2098]);
             assert.strictEqual(updates.length, 1);
 
-            assert.strictEqual(
-              updates.find((e) => e.id == 2098)!.new_episodes.length,
-              13
-            );
-            assert.isTrue(
-              updates
-                .find((e) => e.id == 2098)!
-                .new_episodes.find((i) => i.i == 2)?.is_new_season
-            );
-            assert.strictEqual(
-              updates
-                .find((e) => e.id == 2098)!
-                .new_episodes.find((i) => i.i == 2)?.new_episodes_count,
-              14
-            );
-            [0, 1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((i) =>
+            const doctor = updates.find((e) => e.id == 2098)!;
+            assert.strictEqual(doctor.new_episodes.length, 13);
+            [
+              "1",
+              "2",
+              "3",
+              "4",
+              "5",
+              "6",
+              "7",
+              "8",
+              "9",
+              "10",
+              "11",
+              "12",
+              "13",
+            ].map((n) =>
               assert.isTrue(
-                updates
-                  .find((e) => e.id == 2098)!
-                  .new_episodes.find((_i) => _i.i == i)?.is_new_season
+                doctor.new_episodes.find((season) => season.number == n)
+                  ?.is_new_season
               )
             );
           },

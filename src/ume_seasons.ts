@@ -1,6 +1,6 @@
 import { Ume } from ".";
 import { Cache_Store } from "./cache_store";
-import { Episode, Seek_Episode, Title_Data_Page } from "./types";
+import { Episode, Seek_Episode, Title_Data_Page, Title_Details } from "./types";
 import {
   DATA_PAGE_GROUP_INDEX,
   DATA_PAGE_REGEX,
@@ -93,7 +93,7 @@ export class Ume_Seasons {
     title: {
       id: number;
       slug: string;
-      seasons: (Title_Data_Page["title"]["seasons"][number] | undefined)[];
+      seasons: Title_Details["seasons"];
     }
   ): Promise<[prev: Seek_Episode | null, next: Seek_Episode | null]> {
     let prev: Seek_Episode | null = null;

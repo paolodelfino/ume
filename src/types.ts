@@ -104,8 +104,12 @@ export interface Episode {
 
 export type Title_Details = Omit<
   Title_Data_Page["title"],
-  "trailers" | "seasons_count"
+  "trailers" | "seasons"
 > & {
+  seasons: Record<
+    number,
+    Omit<Title_Data_Page["title"]["seasons"][number], "number">
+  >;
   videos: Title_Data_Page["title"]["trailers"];
   slug: string;
   cast?: (MoviesGetCreditsCast | TVGetCreditsCast)[];
@@ -187,7 +191,7 @@ export type Movie_Following_Update = Title_Details & {
 
 export type Tv_Following_Update = Title_Details & {
   new_episodes: {
-    i: number;
+    number: string;
     new_episodes_count: number;
     is_new_season: boolean;
   }[];

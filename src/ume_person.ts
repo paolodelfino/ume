@@ -175,8 +175,8 @@ export class Ume_Person {
       }
 
       movies_raw.sort((a, b) => b.popularity - a.popularity);
-      for (const movie of movies_raw) {
-        movies[movie.name] = movie.data;
+      for (const { name, data } of movies_raw) {
+        movies[name] = data;
       }
     }
 

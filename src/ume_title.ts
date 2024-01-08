@@ -173,6 +173,7 @@ export class Ume_Title {
       runtime,
       score,
       scws_id,
+      seasons_count,
     } = data.title;
 
     const videos = data.title.trailers.map((video: any) => ({
@@ -196,13 +197,14 @@ export class Ume_Title {
       (slider) => slider.name == "related"
     )?.titles;
 
-    const seasons = data.title.seasons.reduce((acc, season) => {
-      acc[season.number] = {
-        number: season.number,
-        episodes_count: season.episodes_count,
-      };
-      return acc;
-    }, [] as Title_Data_Page["title"]["seasons"]);
+    const seasons: Title_Details["seasons"] = {};
+    {
+      for (const { number, episodes_count } of data.title.seasons) {
+        seasons[number] = {
+          episodes_count: episodes_count,
+        };
+      }
+    }
 
     let fromTmdb:
       | (
@@ -279,8 +281,8 @@ export class Ume_Title {
             }
 
             parts_raw.sort((a, b) => a.release_date - b.release_date);
-            for (const part of parts_raw) {
-              filtered_parts[part.name] = part.data;
+            for (const { name, data } of parts_raw) {
+              filtered_parts[name] = data;
             }
           }
 
@@ -305,6 +307,7 @@ export class Ume_Title {
       release_date,
       status,
       seasons,
+      seasons_count,
       videos,
       images,
       cast: fromTmdb ? (await fromTmdb).credits.cast : undefined,
