@@ -122,7 +122,9 @@ export class Ume_Following {
       }
     }
 
-    await this._store.set("people", { last_checked: Date.now() });
+    if (!Array.isArray(ids)) {
+      await this._store.set("people", { last_checked: Date.now() });
+    }
     return updates;
   }
 
@@ -198,7 +200,9 @@ export class Ume_Following {
       }
     }
 
-    await this._store.set("movies", { last_checked: Date.now() });
+    if (!Array.isArray(ids)) {
+      await this._store.set("movies", { last_checked: Date.now() });
+    }
     return updates;
   }
 
@@ -292,7 +296,9 @@ export class Ume_Following {
       }
     }
 
-    await this._store.set("tvs", { last_checked: Date.now() });
+    if (!Array.isArray(ids)) {
+      await this._store.set("tvs", { last_checked: Date.now() });
+    }
     return updates;
   }
 
