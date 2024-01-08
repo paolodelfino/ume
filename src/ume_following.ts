@@ -86,9 +86,10 @@ export class Ume_Following {
           await Promise.all(
             people.slice(start, end).map(async (older) => {
               const newer = await this._ume.person.details(older.id, false);
+
               if (
                 !newer ||
-                !(newer.known_for_movies.length > older.known_for_movies.length)
+                newer.known_for_movies_count <= older.known_for_movies_count
               )
                 return;
 
@@ -97,19 +98,10 @@ export class Ume_Following {
                 new_titles: [],
               };
 
-              let diff =
-                newer.known_for_movies.length - older.known_for_movies.length;
-              for (
-                let i = 0;
-                diff > 0 && i < newer.known_for_movies.length;
-                --diff, ++i
-              ) {
-                if (
-                  !older.known_for_movies.find(
-                    (older) => older.name == newer.known_for_movies[i].name
-                  )
-                ) {
-                  update.new_titles.push(i);
+              for (const key in newer.known_for_movies) {
+                console.log(`${newer.name}: ${key} against ${older.known_for_movies[key]}`)
+                if (!older.known_for_movies[key]) {
+                  update.new_titles.push(key);
                 }
               }
 
@@ -172,7 +164,7 @@ export class Ume_Following {
               });
               if (
                 !newer.collection ||
-                !(newer.collection.length > (older.collection?.length ?? 0))
+                newer.collection.length <= (older.collection?.length ?? 0)
               )
                 return;
 

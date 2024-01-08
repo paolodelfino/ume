@@ -166,16 +166,19 @@ export interface Person_Details {
   id: number;
   name: string;
   profile_path: string;
-  known_for_movies: {
-    name: string;
-    poster_path: string;
-    popularity: number;
-  }[];
+  known_for_movies: Record<
+    string,
+    {
+      poster_path: string;
+      popularity: number;
+    }
+  >;
+  known_for_movies_count: number;
   known_for_department: string;
 }
 
 export type Person_Following_Update = Person_Details & {
-  new_titles: number[];
+  new_titles: string[];
 };
 
 export type Movie_Following_Update = Title_Details & {

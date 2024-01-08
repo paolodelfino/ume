@@ -132,33 +132,46 @@ export class Ume_Person {
       return null;
     }
 
-    const movies: Person_Details["known_for_movies"] = [];
+    const movies: Person_Details["known_for_movies"] = {};
+    {
+      const movies_raw: {
+        name: string;
+        data: Person_Details["known_for_movies"][keyof Person_Details["known_for_movies"]];
+      }[] = [];
 
-    for (const movie of data.combined_credits.cast) {
-      if (!movie.poster_path || !movie.name) {
-        continue;
+      for (const movie of data.combined_credits.cast) {
+        if (!movie.poster_path || !movie.name) {
+          continue;
+        }
+
+        movies_raw.push({
+          name: movie.name,
+          data: {
+            poster_path: movie.poster_path,
+            popularity: movie.popularity,
+          },
+        });
       }
 
-      movies.push({
-        name: movie.name,
-        poster_path: movie.poster_path,
-        popularity: movie.popularity,
-      });
-    }
+      for (const movie of (data.combined_credits as any).crew) {
+        if (!movie.poster_path) {
+          continue;
+        }
 
-    for (const movie of (data.combined_credits as any).crew) {
-      if (!movie.poster_path) {
-        continue;
+        movies_raw.push({
+          name: movie.name,
+          data: {
+            poster_path: movie.poster_path,
+            popularity: movie.popularity,
+          },
+        });
       }
 
-      movies.push({
-        name: movie.name,
-        poster_path: movie.poster_path,
-        popularity: movie.popularity,
-      });
+      movies_raw.sort((a, b) => b.data.popularity - a.data.popularity);
+      for (const movie of movies_raw) {
+        movies[movie.name] = movie.data;
+      }
     }
-
-    movies.sort((a, b) => b.popularity - a.popularity);
 
     const person_details = {
       id,
@@ -166,6 +179,7 @@ export class Ume_Person {
       name: data.name,
       profile_path: data.profile_path,
       known_for_movies: movies,
+      known_for_movies_count: Object.keys(movies).length,
     } satisfies Person_Details;
 
     if (cache) {
