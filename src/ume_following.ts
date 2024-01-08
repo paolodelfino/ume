@@ -89,7 +89,7 @@ export class Ume_Following {
 
               if (
                 !newer ||
-                newer.known_for_movies_count <= older.known_for_movies_count
+                newer.known_for_movies_count < older.known_for_movies_count
               )
                 return;
 
@@ -99,13 +99,14 @@ export class Ume_Following {
               };
 
               for (const key in newer.known_for_movies) {
-                console.log(`${newer.name}: ${key} against ${older.known_for_movies[key]}`)
                 if (!older.known_for_movies[key]) {
                   update.new_titles.push(key);
                 }
               }
 
-              updates.push(update);
+              if (update.new_titles.length > 0) {
+                updates.push(update);
+              }
               await this._people.set(`${older.id}`, newer);
             })
           );
@@ -164,7 +165,7 @@ export class Ume_Following {
               });
               if (
                 !newer.collection ||
-                newer.collection.length <= (older.collection?.length ?? 0)
+                newer.collection_count < older.collection_count
               )
                 return;
 
@@ -173,23 +174,15 @@ export class Ume_Following {
                 new_titles: [],
               };
 
-              let diff =
-                newer.collection.length - (older.collection?.length ?? 0);
-              for (
-                let i = 0;
-                diff > 0 && i < newer.collection.length;
-                --diff, ++i
-              ) {
-                if (
-                  !older.collection?.find(
-                    (older) => older.name == newer.collection?.[i].name
-                  )
-                ) {
-                  update.new_titles.push(i);
+              for (const key in newer.collection) {
+                if (!older.collection?.[key]) {
+                  update.new_titles.push(key);
                 }
               }
 
-              updates.push(update);
+              if (update.new_titles.length > 0) {
+                updates.push(update);
+              }
               await this._movies.set(`${older.id}`, newer);
             })
           );
@@ -284,8 +277,8 @@ export class Ume_Following {
 
               if (update.new_episodes.length > 0) {
                 updates.push(update);
-                await this._tvs.set(`${older.id}`, newer);
               }
+              await this._tvs.set(`${older.id}`, newer);
             })
           );
 

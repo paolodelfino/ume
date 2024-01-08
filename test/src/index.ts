@@ -742,7 +742,10 @@ async function main() {
             id: 5777,
             slug: "enola-holmes-2",
           })),
-          collection: [],
+          collection: {
+            "Enola Holmes": { poster_path: "" },
+          },
+          collection_count: 1,
         });
 
         await ume.following.add_movie({
@@ -750,35 +753,51 @@ async function main() {
             id: 270,
             slug: "harry-potter-e-la-pietra-filosofale",
           })),
-          collection: [],
+          collection: {
+            "faf afefe": { poster_path: "" },
+          },
+          collection_count: 1,
         });
       },
       async callback() {
         assert.isUndefined(await ume.following.last_checked_movies());
 
-        const updates = await ume.following.something_new_movies();
+        let updates = await ume.following.something_new_movies();
         assert.isAbove((await ume.following.last_checked_movies())!, 0);
         assert.strictEqual(updates.length, 2);
 
-        assert.strictEqual(
-          updates.find((e) => e.id == 270)!.new_titles.length,
-          8
-        );
-        assert.strictEqual(updates.find((e) => e.id == 270)!.new_titles[0], 0);
-        assert.strictEqual(updates.find((e) => e.id == 270)!.new_titles[1], 1);
-        assert.strictEqual(updates.find((e) => e.id == 270)!.new_titles[2], 2);
-        assert.strictEqual(updates.find((e) => e.id == 270)!.new_titles[3], 3);
-        assert.strictEqual(updates.find((e) => e.id == 270)!.new_titles[4], 4);
-        assert.strictEqual(updates.find((e) => e.id == 270)!.new_titles[5], 5);
-        assert.strictEqual(updates.find((e) => e.id == 270)!.new_titles[6], 6);
-        assert.strictEqual(updates.find((e) => e.id == 270)!.new_titles[7], 7);
+        const enola_new_len = updates.find((e) => e.id == 5777)!.new_titles
+          .length;
+        const harry_new_len = updates.find((e) => e.id == 270)!.new_titles
+          .length;
+
+        await ume.following.add_movie({
+          ...(await ume.title.details({
+            id: 5777,
+            slug: "enola-holmes-2",
+          })),
+          collection: {},
+          collection_count: 0,
+        });
+        await ume.following.add_movie({
+          ...(await ume.title.details({
+            id: 270,
+            slug: "harry-potter-e-la-pietra-filosofale",
+          })),
+          collection: {},
+          collection_count: 0,
+        });
+
+        updates = await ume.following.something_new_movies();
 
         assert.strictEqual(
-          updates.find((e) => e.id == 5777)!.new_titles.length,
-          2
+          updates.find((e) => e.id == 5777)!.new_titles.length - enola_new_len,
+          1
         );
-        assert.strictEqual(updates.find((e) => e.id == 5777)!.new_titles[0], 0);
-        assert.strictEqual(updates.find((e) => e.id == 5777)!.new_titles[1], 1);
+        assert.strictEqual(
+          updates.find((e) => e.id == 270)!.new_titles.length,
+          harry_new_len
+        );
       },
       async after() {
         await tests.run("following selected (movie)", {
@@ -790,26 +809,36 @@ async function main() {
 
             await ume.following.add_movie({
               ...(await ume.title.details({
-                id: 5777,
-                slug: "enola-holmes-2",
+                id: 270,
+                slug: "harry-potter-e-la-pietra-filosofale",
               })),
-              collection: [],
+              collection: {
+                "Harry Potter e il prigioniero di Azkaban": { poster_path: "" },
+              },
+              collection_count: 1,
             });
           },
           async callback() {
-            const updates = await ume.following.something_new_movies([5777]);
+            let updates = await ume.following.something_new_movies([270]);
             assert.strictEqual(updates.length, 1);
 
+            const harry_new_len = updates.find((e) => e.id == 270)!.new_titles
+              .length;
+
+            await ume.following.add_movie({
+              ...(await ume.title.details({
+                id: 270,
+                slug: "harry-potter-e-la-pietra-filosofale",
+              })),
+              collection: {},
+              collection_count: 0,
+            });
+
+            updates = await ume.following.something_new_movies();
+
             assert.strictEqual(
-              updates.find((e) => e.id == 5777)!.new_titles.length,
-              2
-            );
-            assert.strictEqual(
-              updates.find((e) => e.id == 5777)!.new_titles[0],
-              0
-            );
-            assert.strictEqual(
-              updates.find((e) => e.id == 5777)!.new_titles[1],
+              updates.find((e) => e.id == 270)!.new_titles.length -
+                harry_new_len,
               1
             );
           },
@@ -934,7 +963,7 @@ async function main() {
         await ume.following.add_person({
           ...(await ume.person.details(1356210))!,
           known_for_movies: {
-            "Stranger Things": { popularity: 0, poster_path: "" },
+            "Stranger Things": { poster_path: "" },
           },
           known_for_movies_count: 1,
         });
@@ -942,7 +971,7 @@ async function main() {
         await ume.following.add_person({
           ...(await ume.person.details(20049))!,
           known_for_movies: {
-            "WDFffwFAEAEE GAEGEEAGAfeafef": { popularity: 0, poster_path: "" },
+            "WDFffwFAEAEE GAEGEEAGAfeafef": { poster_path: "" },
           },
           known_for_movies_count: 1,
         });
@@ -950,43 +979,77 @@ async function main() {
       async callback() {
         assert.isUndefined(await ume.following.last_checked_people());
 
-        const updates = await ume.following.something_new_people();
+        let updates = await ume.following.something_new_people();
         assert.isAbove((await ume.following.last_checked_people())!, 0);
         assert.strictEqual(updates.length, 2);
 
+        const millie_new_len = updates.find((e) => e.id == 1356210)!.new_titles
+          .length;
+        const tennant_new_len = updates.find((e) => e.id == 20049)!.new_titles
+          .length;
+
+        await ume.following.add_person({
+          ...(await ume.person.details(1356210))!,
+          known_for_movies: {},
+          known_for_movies_count: 0,
+        });
+        await ume.following.add_person({
+          ...(await ume.person.details(20049))!,
+          known_for_movies: {},
+          known_for_movies_count: 0,
+        });
+
+        updates = await ume.following.something_new_people();
+
         assert.strictEqual(
-          updates.find((e) => e.id == 1356210)!.new_titles.length,
-          21
+          updates.find((e) => e.id == 1356210)!.new_titles.length -
+            millie_new_len,
+          1
         );
-        console.log(updates.find((e) => e.id == 20049)!.new_titles);
         assert.strictEqual(
           updates.find((e) => e.id == 20049)!.new_titles.length,
-          111
+          tennant_new_len
         );
       },
-      // async after() {
-      //   await tests.run("following selected (person)", {
-      //     async before() {
-      //       assert.strictEqual(
-      //         (await ume.following.something_new_people([20049])).length,
-      //         0
-      //       );
+      async after() {
+        await tests.run("following selected (person)", {
+          async before() {
+            assert.strictEqual(
+              (await ume.following.something_new_people([20049])).length,
+              0
+            );
 
-      //       await ume.following.add_person({
-      //         ...(await ume.person.details(20049))!,
-      //         known_for_movies: [
-      //           { name: "Doctor Who", popularity: 0, poster_path: "" },
-      //         ],
-      //       });
-      //     },
-      //     async callback() {
-      //       const updates = await ume.following.something_new_people([20049]);
-      //       assert.strictEqual(updates.length, 1);
+            await ume.following.add_person({
+              ...(await ume.person.details(20049))!,
+              known_for_movies: {
+                "Doctor Who": { poster_path: "" },
+              },
+              known_for_movies_count: 1,
+            });
+          },
+          async callback() {
+            let updates = await ume.following.something_new_people([20049]);
+            assert.strictEqual(updates.length, 1);
 
-      //       assert.strictEqual(updates.find(e=>e.id==20049)!.new_titles.length, 105);
-      //     },
-      //   });
-      // },
+            const tennant_new_len = updates.find((e) => e.id == 20049)!
+              .new_titles.length;
+
+            await ume.following.add_person({
+              ...(await ume.person.details(20049))!,
+              known_for_movies: {},
+              known_for_movies_count: 0,
+            });
+
+            updates = await ume.following.something_new_people();
+
+            assert.strictEqual(
+              updates.find((e) => e.id == 20049)!.new_titles.length -
+                tennant_new_len,
+              1
+            );
+          },
+        });
+      },
     },
   });
 

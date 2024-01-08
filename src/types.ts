@@ -102,11 +102,6 @@ export interface Episode {
   scws_id: number | null;
 }
 
-export type Movie_Collection = {
-  name: string;
-  poster_path: string;
-}[];
-
 export type Title_Details = Omit<
   Title_Data_Page["title"],
   "trailers" | "seasons_count"
@@ -116,7 +111,13 @@ export type Title_Details = Omit<
   cast?: (MoviesGetCreditsCast | TVGetCreditsCast)[];
   related?: Title_Search[];
   id: number;
-  collection?: Movie_Collection;
+  collection?: Record<
+    string,
+    {
+      poster_path: string;
+    }
+  >;
+  collection_count: number;
   scws_id: number | null;
 };
 
@@ -170,7 +171,6 @@ export interface Person_Details {
     string,
     {
       poster_path: string;
-      popularity: number;
     }
   >;
   known_for_movies_count: number;
@@ -182,7 +182,7 @@ export type Person_Following_Update = Person_Details & {
 };
 
 export type Movie_Following_Update = Title_Details & {
-  new_titles: number[];
+  new_titles: string[];
 };
 
 export type Tv_Following_Update = Title_Details & {

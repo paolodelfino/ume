@@ -136,38 +136,45 @@ export class Ume_Person {
     {
       const movies_raw: {
         name: string;
+        popularity: number;
         data: Person_Details["known_for_movies"][keyof Person_Details["known_for_movies"]];
       }[] = [];
 
       for (const movie of data.combined_credits.cast) {
-        if (!movie.poster_path || !movie.name) {
+        // @ts-ignore
+        const title = movie.name ?? movie.title;
+
+        if (!movie.poster_path || !title) {
           continue;
         }
 
         movies_raw.push({
-          name: movie.name,
+          name: title,
+          popularity: movie.popularity,
           data: {
             poster_path: movie.poster_path,
-            popularity: movie.popularity,
           },
         });
       }
 
       for (const movie of (data.combined_credits as any).crew) {
-        if (!movie.poster_path) {
+        // @ts-ignore
+        const title = movie.name ?? movie.title;
+
+        if (!movie.poster_path || !title) {
           continue;
         }
 
         movies_raw.push({
-          name: movie.name,
+          name: title,
+          popularity: movie.popularity,
           data: {
             poster_path: movie.poster_path,
-            popularity: movie.popularity,
           },
         });
       }
 
-      movies_raw.sort((a, b) => b.data.popularity - a.data.popularity);
+      movies_raw.sort((a, b) => b.popularity - a.popularity);
       for (const movie of movies_raw) {
         movies[movie.name] = movie.data;
       }

@@ -5,7 +5,6 @@ import { Cache_Store } from "./cache_store";
 import {
   Dl_Res,
   Episode,
-  Movie_Collection,
   Title_Data_Page,
   Title_Details,
   Title_Preview,
@@ -244,28 +243,51 @@ export class Ume_Title {
     }
 
     let collection = undefined;
-    if (type == "movie") {
-      const tmdb_details = await (fromTmdb as Promise<
-        MoviesGetDetailsResponse<[]>
-      >);
-      if (tmdb_details.belongs_to_collection) {
-        const tmdb_collection = await this._ume.tmdb.v3.collections.getDetails(
-          tmdb_details.belongs_to_collection.id,
-          { language: "it-IT" }
-        );
+    let collection_count: number = 0;
+    {
+      if (type == "movie") {
+        const tmdb_details = await (fromTmdb as Promise<
+          MoviesGetDetailsResponse<[]>
+        >);
+        if (tmdb_details.belongs_to_collection) {
+          const tmdb_collection =
+            await this._ume.tmdb.v3.collections.getDetails(
+              tmdb_details.belongs_to_collection.id,
+              { language: "it-IT" }
+            );
 
-        const filtered_parts: Movie_Collection = [];
-        for (const part of tmdb_collection.parts) {
-          if (part.poster_path) {
-            filtered_parts.push({
-              name: part.title,
-              poster_path: part.poster_path,
-            });
+          const filtered_parts: Title_Details["collection"] = {};
+          {
+            const parts_raw: {
+              name: string;
+              release_date: number;
+              data: NonNullable<
+                Title_Details["collection"]
+              >[keyof Title_Details["collection"]];
+            }[] = [];
+
+            for (const part of tmdb_collection.parts) {
+              if (part.poster_path && part.title && part.release_date) {
+                parts_raw.push({
+                  name: part.title,
+                  release_date: new Date(part.release_date).getTime(),
+                  data: {
+                    poster_path: part.poster_path,
+                  },
+                });
+              }
+            }
+
+            parts_raw.sort((a, b) => a.release_date - b.release_date);
+            for (const part of parts_raw) {
+              filtered_parts[part.name] = part.data;
+            }
           }
-        }
 
-        if (filtered_parts.length > 1) {
-          collection = filtered_parts;
+          collection_count = Object.keys(filtered_parts).length;
+          if (collection_count > 1) {
+            collection = filtered_parts;
+          }
         }
       }
     }
@@ -289,6 +311,7 @@ export class Ume_Title {
       genres,
       related,
       collection,
+      collection_count,
       scws_id,
     } satisfies Title_Details;
 
