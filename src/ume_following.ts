@@ -13,6 +13,9 @@ import { time } from "./utils";
 export class Ume_Following {
   private _ume!: Ume;
 
+  private _updates!: ustore.Async<
+    (Person_Following_Update | Movie_Following_Update | Tv_Following_Update)[]
+  >;
   private _people!: ustore.Async<
     Person_Details & {
       last_checked: number;
@@ -45,6 +48,15 @@ export class Ume_Following {
 
     this._check_frequency = check_frequency;
 
+    this._updates = new ustore.Async();
+    await this._updates.init("following_updates", {
+      consume_default: [],
+    });
+
+    await this._updates.set("people", []);
+    await this._updates.set("movies", []);
+    await this._updates.set("tvs", []);
+
     this._people = new ustore.Async();
     await this._people.init("following_people", {
       indexes: [
@@ -66,7 +78,7 @@ export class Ume_Following {
     });
 
     this._tvs = new ustore.Async();
-    await this._tvs.init("following_series", {
+    await this._tvs.init("following_tvs", {
       indexes: [
         {
           name: "byLastChecked",
@@ -118,11 +130,33 @@ export class Ume_Following {
     );
   }
 
+  async people_updates() {
+    return (
+      ((await this._updates.consume("people")) as
+        | Person_Following_Update[]
+        | undefined) ?? []
+    );
+  }
+
+  async movies_updates() {
+    return (
+      ((await this._updates.consume("movies")) as
+        | Movie_Following_Update[]
+        | undefined) ?? []
+    );
+  }
+
+  async tvs_updates() {
+    return (
+      ((await this._updates.consume("tvs")) as
+        | Tv_Following_Update[]
+        | undefined) ?? []
+    );
+  }
+
   async something_new_people(ids: number[]): Promise<Person_Following_Update[]>;
   async something_new_people(): Promise<Person_Following_Update[]>;
   async something_new_people(ids?: number[]) {
-    const updates: Person_Following_Update[] = [];
-
     let people: Person_Details[];
     if (Array.isArray(ids)) {
       people = await this._people.get_some(ids.map((id) => `${id}`));
@@ -174,7 +208,7 @@ export class Ume_Following {
               }
 
               if (update.new_titles.length > 0) {
-                updates.push(update);
+                await this._updates.update("people", [update]);
               }
               await this._people.set(`${older.id}`, {
                 ...newer,
@@ -194,24 +228,20 @@ export class Ume_Following {
       }
     }
 
-    return updates;
+    return this.people_updates();
   }
 
   async something_new_movies(ids: number[]): Promise<Movie_Following_Update[]>;
   async something_new_movies(): Promise<Movie_Following_Update[]>;
   async something_new_movies(ids?: number[]) {
-    const updates: Movie_Following_Update[] = [];
-
     let movies: Title_Details[];
     if (Array.isArray(ids)) {
       movies = await this._movies.get_some(ids.map((id) => `${id}`));
     } else {
       movies = await this._movies.index_below(
         "byLastChecked",
-        // Date.now() - this._check_frequency
-        0
+        Date.now() - this._check_frequency
       );
-      console.log(movies)
     }
     const pages = Math.ceil(movies.length / Ume_Following._batch_sz);
 
@@ -257,7 +287,7 @@ export class Ume_Following {
               }
 
               if (update.new_titles.length > 0) {
-                updates.push(update);
+                await this._updates.update("movies", [update]);
               }
               await this._movies.set(`${older.id}`, {
                 ...newer,
@@ -277,14 +307,12 @@ export class Ume_Following {
       }
     }
 
-    return updates;
+    return this.movies_updates();
   }
 
   async something_new_tvs(ids: number[]): Promise<Tv_Following_Update[]>;
   async something_new_tvs(): Promise<Tv_Following_Update[]>;
   async something_new_tvs(ids?: number[]) {
-    const updates: Tv_Following_Update[] = [];
-
     let tvs: Title_Details[];
     if (Array.isArray(ids)) {
       tvs = await this._tvs.get_some(ids.map((id) => `${id}`));
@@ -356,7 +384,7 @@ export class Ume_Following {
               }
 
               if (update.new_episodes.length > 0) {
-                updates.push(update);
+                await this._updates.update("tvs", [update]);
               }
               await this._tvs.set(`${older.id}`, {
                 ...newer,
@@ -376,7 +404,7 @@ export class Ume_Following {
       }
     }
 
-    return updates;
+    return this.tvs_updates();
   }
 
   rm_movie(id: number) {
@@ -466,6 +494,7 @@ export class Ume_Following {
       _people: await this._people.export(),
       _movies: await this._movies.export(),
       _tvs: await this._tvs.export(),
+      _updates: await this._updates.export(),
     };
   }
 }

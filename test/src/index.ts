@@ -760,10 +760,10 @@ async function main() {
         });
       },
       async callback() {
-        // assert.isFalse(await ume.following.need_check_movies());
+        assert.isFalse(await ume.following.need_check_movies());
 
         let updates = await ume.following.something_new_movies();
-        // assert.isTrue(await ume.following.need_check_movies());
+        assert.isTrue(await ume.following.need_check_movies());
         assert.strictEqual(updates.length, 2);
 
         const enola_new_len = updates.find((e) => e.id == 5777)!.new_titles
@@ -817,10 +817,40 @@ async function main() {
               },
               collection_count: 1,
             });
+            await ume.following.add_movie({
+              ...(await ume.title.details({
+                id: 5777,
+                slug: "enola-holmes-2",
+              })),
+              collection: {},
+              collection_count: 0,
+            });
           },
           async callback() {
+            const movies = new ustore.Async<any, "byLastChecked">();
+            await movies.init("following_movies");
+            assert.strictEqual(
+              (
+                await movies.index_below(
+                  "byLastChecked",
+                  Date.now() - 1 * 60 * 60 * 1000
+                )
+              ).length,
+              2
+            );
+
             let updates = await ume.following.something_new_movies([270]);
             assert.strictEqual(updates.length, 1);
+
+            assert.strictEqual(
+              (
+                await movies.index_below(
+                  "byLastChecked",
+                  Date.now() - 1 * 60 * 60 * 1000
+                )
+              ).length,
+              1
+            );
 
             const harry_new_len = updates.find((e) => e.id == 270)!.new_titles
               .length;
@@ -854,7 +884,6 @@ async function main() {
           })),
           seasons: { 1: { episodes_count: 4 } },
         });
-
         await ume.following.add_tv({
           ...(await ume.title.details({
             id: 2098,
@@ -864,10 +893,10 @@ async function main() {
         });
       },
       async callback() {
-        // assert.isFalse(await ume.following.need_check_tvs());
+        assert.isFalse(await ume.following.need_check_tvs());
 
         const updates = await ume.following.something_new_tvs();
-        // assert.isTrue(await ume.following.need_check_tvs());
+        assert.isTrue(await ume.following.need_check_tvs());
         assert.strictEqual(updates.length, 2);
 
         const rick = updates.find((e) => e.id == 115)!;
@@ -919,6 +948,13 @@ async function main() {
 
             await ume.following.add_tv({
               ...(await ume.title.details({
+                id: 115,
+                slug: "rick-and-morty",
+              })),
+              seasons: { 1: { episodes_count: 4 } },
+            });
+            await ume.following.add_tv({
+              ...(await ume.title.details({
                 id: 2098,
                 slug: "doctor-who",
               })),
@@ -926,8 +962,30 @@ async function main() {
             });
           },
           async callback() {
+            const tvs = new ustore.Async<any, "byLastChecked">();
+            await tvs.init("following_tvs");
+            assert.strictEqual(
+              (
+                await tvs.index_below(
+                  "byLastChecked",
+                  Date.now() - 1 * 60 * 60 * 1000
+                )
+              ).length,
+              2
+            );
+
             const updates = await ume.following.something_new_tvs([2098]);
             assert.strictEqual(updates.length, 1);
+
+            assert.strictEqual(
+              (
+                await tvs.index_below(
+                  "byLastChecked",
+                  Date.now() - 1 * 60 * 60 * 1000
+                )
+              ).length,
+              1
+            );
 
             const doctor = updates.find((e) => e.id == 2098)!;
             assert.strictEqual(doctor.new_episodes.length, 13);
@@ -974,10 +1032,10 @@ async function main() {
         });
       },
       async callback() {
-        // assert.isFalse(await ume.following.need_check_people());
+        assert.isFalse(await ume.following.need_check_people());
 
         let updates = await ume.following.something_new_people();
-        // assert.isTrue(await ume.following.need_check_people());
+        assert.isTrue(await ume.following.need_check_people());
         assert.strictEqual(updates.length, 2);
 
         const millie_new_len = updates.find((e) => e.id == 1356210)!.new_titles
@@ -1017,6 +1075,13 @@ async function main() {
             );
 
             await ume.following.add_person({
+              ...(await ume.person.details(1356210))!,
+              known_for_movies: {
+                "Stranger Things": { poster_path: "" },
+              },
+              known_for_movies_count: 1,
+            });
+            await ume.following.add_person({
               ...(await ume.person.details(20049))!,
               known_for_movies: {
                 "Doctor Who": { poster_path: "" },
@@ -1025,8 +1090,30 @@ async function main() {
             });
           },
           async callback() {
+            const people = new ustore.Async<any, "byLastChecked">();
+            await people.init("following_people");
+            assert.strictEqual(
+              (
+                await people.index_below(
+                  "byLastChecked",
+                  Date.now() - 1 * 60 * 60 * 1000
+                )
+              ).length,
+              2
+            );
+
             let updates = await ume.following.something_new_people([20049]);
             assert.strictEqual(updates.length, 1);
+
+            assert.strictEqual(
+              (
+                await people.index_below(
+                  "byLastChecked",
+                  Date.now() - 1 * 60 * 60 * 1000
+                )
+              ).length,
+              1
+            );
 
             const tennant_new_len = updates.find((e) => e.id == 20049)!
               .new_titles.length;

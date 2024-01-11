@@ -86,7 +86,10 @@ export class Ume {
     this.continue_watching = new Ume_Continue_Watching();
     await this.continue_watching.init({ ume: this });
     this.following = new Ume_Following();
-    await this.following.init({ ume: this });
+    await this.following.init({
+      ume: this,
+      check_frequency: 1 * 60 * 60 * 1000,
+    });
   }
 }
 
