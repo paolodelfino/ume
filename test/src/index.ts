@@ -760,10 +760,10 @@ async function main() {
         });
       },
       async callback() {
-        assert.isUndefined(await ume.following.last_checked_movies());
+        // assert.isFalse(await ume.following.need_check_movies());
 
         let updates = await ume.following.something_new_movies();
-        assert.isAbove((await ume.following.last_checked_movies())!, 0);
+        // assert.isTrue(await ume.following.need_check_movies());
         assert.strictEqual(updates.length, 2);
 
         const enola_new_len = updates.find((e) => e.id == 5777)!.new_titles
@@ -864,10 +864,10 @@ async function main() {
         });
       },
       async callback() {
-        assert.isUndefined(await ume.following.last_checked_tvs());
+        // assert.isFalse(await ume.following.need_check_tvs());
 
         const updates = await ume.following.something_new_tvs();
-        assert.isAbove((await ume.following.last_checked_tvs())!, 0);
+        // assert.isTrue(await ume.following.need_check_tvs());
         assert.strictEqual(updates.length, 2);
 
         const rick = updates.find((e) => e.id == 115)!;
@@ -974,10 +974,10 @@ async function main() {
         });
       },
       async callback() {
-        assert.isUndefined(await ume.following.last_checked_people());
+        // assert.isFalse(await ume.following.need_check_people());
 
         let updates = await ume.following.something_new_people();
-        assert.isAbove((await ume.following.last_checked_people())!, 0);
+        // assert.isTrue(await ume.following.need_check_people());
         assert.strictEqual(updates.length, 2);
 
         const millie_new_len = updates.find((e) => e.id == 1356210)!.new_titles

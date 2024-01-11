@@ -13,10 +13,24 @@ import { time } from "./utils";
 export class Ume_Following {
   private _ume!: Ume;
 
-  private _store!: ustore.Async<{ last_checked: number }>;
-  private _people!: ustore.Async<Person_Details>;
-  private _movies!: ustore.Async<Title_Details>;
-  private _tvs!: ustore.Async<Title_Details>;
+  private _people!: ustore.Async<
+    Person_Details & {
+      last_checked: number;
+    },
+    "byLastChecked"
+  >;
+  private _movies!: ustore.Async<
+    Title_Details & {
+      last_checked: number;
+    },
+    "byLastChecked"
+  >;
+  private _tvs!: ustore.Async<
+    Title_Details & {
+      last_checked: number;
+    },
+    "byLastChecked"
+  >;
 
   private static _sz2 = 6;
   private static _sz3 = 4;
@@ -24,32 +38,84 @@ export class Ume_Following {
   private static _batch2_sz = this._batch_sz / this._sz2;
   private static _batch3_sz = this._batch2_sz / this._sz3;
 
-  async init({ ume }: { ume: Ume }) {
+  private _check_frequency!: number;
+
+  async init({ ume, check_frequency }: { ume: Ume; check_frequency: number }) {
     this._ume = ume;
 
-    this._store = new ustore.Async();
-    await this._store.init("following_store");
+    this._check_frequency = check_frequency;
 
     this._people = new ustore.Async();
-    await this._people.init("following_people");
+    await this._people.init("following_people", {
+      indexes: [
+        {
+          name: "byLastChecked",
+          path: "last_checked",
+        },
+      ],
+    });
 
     this._movies = new ustore.Async();
-    await this._movies.init("following_movies");
+    await this._movies.init("following_movies", {
+      indexes: [
+        {
+          name: "byLastChecked",
+          path: "last_checked",
+        },
+      ],
+    });
 
     this._tvs = new ustore.Async();
-    await this._tvs.init("following_series");
+    await this._tvs.init("following_series", {
+      indexes: [
+        {
+          name: "byLastChecked",
+          path: "last_checked",
+        },
+      ],
+    });
   }
 
-  async last_checked_people() {
-    return (await this._store.get("people"))?.last_checked;
+  async need_check_people() {
+    return (
+      (
+        await this._people.index_below(
+          "byLastChecked",
+          Date.now() - this._check_frequency,
+          {
+            inclusive: true,
+          }
+        )
+      ).length == 0
+    );
   }
 
-  async last_checked_movies() {
-    return (await this._store.get("movies"))?.last_checked;
+  async need_check_movies() {
+    return (
+      (
+        await this._movies.index_below(
+          "byLastChecked",
+          Date.now() - this._check_frequency,
+          {
+            inclusive: true,
+          }
+        )
+      ).length == 0
+    );
   }
 
-  async last_checked_tvs() {
-    return (await this._store.get("tvs"))?.last_checked;
+  async need_check_tvs() {
+    return (
+      (
+        await this._tvs.index_below(
+          "byLastChecked",
+          Date.now() - this._check_frequency,
+          {
+            inclusive: true,
+          }
+        )
+      ).length == 0
+    );
   }
 
   async something_new_people(ids: number[]): Promise<Person_Following_Update[]>;
@@ -61,7 +127,10 @@ export class Ume_Following {
     if (Array.isArray(ids)) {
       people = await this._people.get_some(ids.map((id) => `${id}`));
     } else {
-      people = await this._people.values();
+      people = await this._people.index_below(
+        "byLastChecked",
+        Date.now() - this._check_frequency
+      );
     }
 
     const pages = Math.ceil(people.length / Ume_Following._batch_sz);
@@ -107,7 +176,10 @@ export class Ume_Following {
               if (update.new_titles.length > 0) {
                 updates.push(update);
               }
-              await this._people.set(`${older.id}`, newer);
+              await this._people.set(`${older.id}`, {
+                ...newer,
+                last_checked: Date.now(),
+              });
             })
           );
 
@@ -122,9 +194,6 @@ export class Ume_Following {
       }
     }
 
-    if (!Array.isArray(ids)) {
-      await this._store.set("people", { last_checked: Date.now() });
-    }
     return updates;
   }
 
@@ -137,7 +206,12 @@ export class Ume_Following {
     if (Array.isArray(ids)) {
       movies = await this._movies.get_some(ids.map((id) => `${id}`));
     } else {
-      movies = await this._movies.values();
+      movies = await this._movies.index_below(
+        "byLastChecked",
+        // Date.now() - this._check_frequency
+        0
+      );
+      console.log(movies)
     }
     const pages = Math.ceil(movies.length / Ume_Following._batch_sz);
 
@@ -185,7 +259,10 @@ export class Ume_Following {
               if (update.new_titles.length > 0) {
                 updates.push(update);
               }
-              await this._movies.set(`${older.id}`, newer);
+              await this._movies.set(`${older.id}`, {
+                ...newer,
+                last_checked: Date.now(),
+              });
             })
           );
 
@@ -200,9 +277,6 @@ export class Ume_Following {
       }
     }
 
-    if (!Array.isArray(ids)) {
-      await this._store.set("movies", { last_checked: Date.now() });
-    }
     return updates;
   }
 
@@ -215,7 +289,10 @@ export class Ume_Following {
     if (Array.isArray(ids)) {
       tvs = await this._tvs.get_some(ids.map((id) => `${id}`));
     } else {
-      tvs = await this._tvs.values();
+      tvs = await this._tvs.index_below(
+        "byLastChecked",
+        Date.now() - this._check_frequency
+      );
     }
 
     const pages = Math.ceil(tvs.length / Ume_Following._batch_sz);
@@ -281,7 +358,10 @@ export class Ume_Following {
               if (update.new_episodes.length > 0) {
                 updates.push(update);
               }
-              await this._tvs.set(`${older.id}`, newer);
+              await this._tvs.set(`${older.id}`, {
+                ...newer,
+                last_checked: Date.now(),
+              });
             })
           );
 
@@ -296,9 +376,6 @@ export class Ume_Following {
       }
     }
 
-    if (!Array.isArray(ids)) {
-      await this._store.set("tvs", { last_checked: Date.now() });
-    }
     return updates;
   }
 
@@ -344,7 +421,10 @@ export class Ume_Following {
   async add_movie(movie: Title_Details) {
     assert.isAtMost(await this._movies.length(), 500);
 
-    return this._movies.set(`${movie.id}`, movie);
+    return this._movies.set(`${movie.id}`, {
+      ...movie,
+      last_checked: 0,
+    });
   }
 
   /**
@@ -353,7 +433,10 @@ export class Ume_Following {
   async add_tv(tv: Title_Details) {
     assert.isAtMost(await this._tvs.length(), 500);
 
-    return this._tvs.set(`${tv.id}`, tv);
+    return this._tvs.set(`${tv.id}`, {
+      ...tv,
+      last_checked: 0,
+    });
   }
 
   /**
@@ -362,7 +445,10 @@ export class Ume_Following {
   async add_person(person: Person_Details) {
     assert.isAtMost(await this._people.length(), 500);
 
-    return this._people.set(`${person.id}`, person);
+    return this._people.set(`${person.id}`, {
+      ...person,
+      last_checked: 0,
+    });
   }
 
   async import(
@@ -380,7 +466,6 @@ export class Ume_Following {
       _people: await this._people.export(),
       _movies: await this._movies.export(),
       _tvs: await this._tvs.export(),
-      _store: await this._store.export(),
     };
   }
 }
