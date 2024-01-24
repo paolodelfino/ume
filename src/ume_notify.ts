@@ -1,67 +1,32 @@
 import { ustore } from "pustore";
 
 export class Ume_Notify<T extends string | object | any[]> {
-  private _unarchived!: ustore.Async<T>;
-  private _archived!: ustore.Async<T>;
-  private _store!: ustore.Async<{
-    opened: boolean;
-    data: T;
-  }, "byOpened">;
+  private _store!: ustore.Async<
+    {
+      checked: boolean;
+      data: T;
+    },
+    "byChecked"
+  >;
 
-  archived_updated = false;
-  unarchived_updated = false;
-
-  async init() {
-    this._unarchived = new ustore.Async();
-    await this._unarchived.init("notify_unarchived");
-
-    this._archived = new ustore.Async();
-    await this._archived.init("notify_archived");
-
-    this._store = new ustore.Async()
-    await this._store.init("notify", {
-      indexes: [{
-        name:"byOpened",path:"opened",
-      }]
-    })
+  async init(identifier: string) {
+    this._store = new ustore.Async();
+    await this._store.init(`notify-${identifier}`, {
+      indexes: [
+        {
+          name: "byChecked",
+          path: "checked",
+        },
+      ],
+    });
   }
 
-  archived() {
-    await this._store.index_only("byOpened", true)
-    
-    this.archived_updated = false;
-    return this._archived.values();
+  checked() {
+    return this._store.index_only("byChecked", true);
   }
 
-  unarchived() {
-    this.unarchived_updated = false;
-    return this._unarchived.values();
-  }
-
-  async notify(key: string, data: T) {
-    await this._unarchived.set(key, data);
-
-    this.unarchived_updated = true;
-  }
-
-  async unarchive(key: string) {
-    const data = await this._archived.consume(key);
-    this.archived_updated = true;
-
-    if (data) {
-      await this._unarchived.set(key, data);
-      this.unarchived_updated = true;
-    }
-  }
-
-  async archive(key: string) {
-    const data = await this._unarchived.consume(key);
-    this.unarchived_updated = true;
-
-    if (data) {
-      await this._archived.set(key, data);
-      this.archived_updated = true;
-    }
+  unchecked() {
+    return this._store.index_only("byChecked", false);
   }
 
   async import(
@@ -76,8 +41,7 @@ export class Ume_Notify<T extends string | object | any[]> {
 
   async export() {
     return {
-      _archived: await this._archived.export(),
-      _unarchived: await this._unarchived.export(),
+      _store: await this._store.export(),
     };
   }
 }
