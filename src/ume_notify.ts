@@ -1,15 +1,28 @@
 import { ustore } from "pustore";
 
-export class Ume_Notify<T extends string | object | any[]> {
-  private _store!: ustore.Async<
-    {
-      checked: boolean;
-      data: T;
-    },
-    "byChecked"
-  >;
+type Notify<T> = {
+  data: T;
+  checked: boolean;
+  pinned: boolean;
+};
 
-  async init(identifier: string) {
+export class Ume_Notify<T extends string | object | any[]> {
+  private _store!: ustore.Async<Notify<T>, "byChecked">;
+  private _extra_space: number = 0;
+
+  get last_modified() {
+    return this._store.last_modified;
+  }
+
+  /**
+   * @param page_sz Defaults to 20
+   */
+  async init(
+    identifier: string,
+    options?: {
+      page_sz?: number;
+    }
+  ) {
     this._store = new ustore.Async();
     await this._store.init(`notify-${identifier}`, {
       indexes: [
@@ -18,15 +31,76 @@ export class Ume_Notify<T extends string | object | any[]> {
           path: "checked",
         },
       ],
+      autoincrement: true,
+      page_sz: options?.page_sz ?? 20,
     });
   }
 
-  checked() {
-    return this._store.index_only("byChecked", true);
+  /**
+   * @param page Starts from 1
+   */
+  checked(page: number) {
+    return this._store.index("byChecked", {
+      mode: "only",
+      value: true,
+      page,
+      reverse: true,
+    });
   }
 
-  unchecked() {
-    return this._store.index_only("byChecked", false);
+  /**
+   * @param page Starts from 1
+   */
+  unchecked(page: number) {
+    return this._store.index("byChecked", {
+      mode: "only",
+      value: false,
+      page,
+      reverse: true,
+    });
+  }
+
+  add(data: T) {
+    return this._store.set({
+      data,
+      checked: false,
+      pinned: false,
+    });
+  }
+
+  rm(id: ustore.Key) {
+    return this._store.rm(id);
+  }
+
+  check(id: ustore.Key) {
+    return this._store.update(id, { value: { checked: true } });
+  }
+
+  uncheck(id: ustore.Key) {
+    return this._store.update(id, { value: { checked: false } });
+  }
+
+  pin(id: ustore.Key) {
+    return this._store.update(id, { value: { pinned: true } });
+  }
+
+  unpin(id: ustore.Key) {
+    return this._store.update(id, { value: { pinned: false } });
+  }
+
+  /**
+   * @param page Starts from 1
+   */
+  async page(page: number) {
+    const all = await this._store.values(true);
+    const checked = [];
+    const unchecked = [];
+    let count = this._store.pagejn;
+
+    return {
+      has_next: checked.has_next || unchecked.has_next,
+      results: [...checked.results, ...unchecked.results],
+    };
   }
 
   async import(
