@@ -1,3 +1,4 @@
+import { assert } from "chai";
 import { WebhookClient, WebhookMessageCreateOptions } from "discord.js";
 
 export class Ume_Report {
@@ -17,19 +18,23 @@ export class Ume_Report {
     title = title.trim();
     description = description.trim();
 
-    if (title.length > 100) {
-      throw new Error("Exceeded title max length of 100 chars");
-    }
-    if (description.length > 2000) {
-      throw new Error("Exceeded title max length of 2000 chars");
-    }
+    assert.isAtMost(
+      title.length,
+      100,
+      "Exceeded title max length of 100 chars"
+    );
+    assert.isAtMost(
+      description.length,
+      2000,
+      "Exceeded description max length of 2000 chars"
+    );
 
     const options: WebhookMessageCreateOptions = {
       username: "Ume",
       content: `## ${title}
 *${description}*
 
-*Sent on ${new Date(Date.now()).toLocaleString("en-US", {
+*Sent on ${new Date().toLocaleString("en-US", {
         year: "numeric",
         month: "short",
         day: "numeric",

@@ -5,6 +5,7 @@ import { Search_Suggestion } from "./search_suggestion";
 import { Ume_Continue_Watching } from "./ume_continue_watching";
 import { Ume_Following } from "./ume_following";
 import { Ume_Mylist } from "./ume_mylist";
+import { Ume_Notify } from "./ume_notify";
 import { Ume_Pastebin } from "./ume_pastebin";
 import { Ume_Person } from "./ume_person";
 import { Ume_Report } from "./ume_report";
@@ -33,6 +34,7 @@ export class Ume {
   mylist!: Ume_Mylist;
   continue_watching!: Ume_Continue_Watching;
   following!: Ume_Following;
+  notify!: typeof Ume_Notify;
 
   async init({
     tmdb_api_key,
@@ -90,6 +92,7 @@ export class Ume {
       ume: this,
       check_frequency: 1 * 60 * 60 * 1000,
     });
+    this.notify = Ume_Notify;
   }
 }
 

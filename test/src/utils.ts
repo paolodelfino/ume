@@ -35,3 +35,28 @@ globalThis.localStorage = new Memory_Storage();
 
 export const time = (ms: number) =>
   new Promise((resolve) => setTimeout(resolve, ms));
+
+export async function conn_exists(url: string) {
+  try {
+    const controller = new AbortController();
+
+    const timeout = setTimeout(() => {
+      controller.abort();
+    }, 2000);
+
+    try {
+      await fetch(url, {
+        method: "HEAD",
+        signal: controller.signal,
+      });
+    } catch {
+      return false;
+    } finally {
+      clearTimeout(timeout);
+    }
+
+    return true;
+  } catch (error) {
+    return false;
+  }
+}

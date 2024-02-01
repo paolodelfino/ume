@@ -25,7 +25,7 @@ export class Ume_Pastebin {
       await this._client.getPastesByUser({
         userKey: this._token,
       })
-    ).find((paste) => paste.paste_title == name)?.paste_key;
+    ).find((paste) => paste?.paste_title == name)?.paste_key;
 
     if (key) {
       return this._client.getRawPasteByKey({
@@ -40,7 +40,7 @@ export class Ume_Pastebin {
       await this._client.getPastesByUser({
         userKey: this._token,
       })
-    ).find((paste) => paste.paste_title == name)?.paste_key;
+    ).find((paste) => paste?.paste_title == name)?.paste_key;
 
     if (key) {
       return this._client.deletePasteByKey({

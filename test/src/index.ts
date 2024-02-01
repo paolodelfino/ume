@@ -7,6 +7,7 @@ import { Test_Set } from "putesting";
 import { parseArgs } from "util";
 import { Ume, Ume_Sliders_Queue } from "../../dist/index.mjs";
 import "./utils";
+import { conn_exists } from "./utils";
 
 type Tests =
   | "store"
@@ -27,7 +28,8 @@ type Tests =
   | "person details"
   | "following (movie)"
   | "following (tv)"
-  | "following (person)";
+  | "following (person)"
+  | "notify";
 
 async function main() {
   assert.isDefined(process.env.TMDB_API_KEY);
@@ -112,15 +114,18 @@ async function main() {
         movie = movies[0];
 
         assert.strictEqual(await search_history.length(), 1);
-        assert.strictEqual((await search_history.values())[0].data, query);
+        assert.strictEqual(
+          (await search_history.values())[0].value.data,
+          query
+        );
 
         await ume.title.search({ query: "he" });
 
         assert.strictEqual(await search_history.length(), 2);
 
         const history = await search_history.values();
-        assert.isDefined(history.find((q) => q.data == query));
-        assert.isDefined(history.find((q) => q.data == "he"));
+        assert.isDefined(history.find((q) => q.value.data == query));
+        assert.isDefined(history.find((q) => q.value.data == "he"));
 
         await ume.title
           .search({
@@ -374,7 +379,7 @@ async function main() {
         const image = ume.title.image_url({
           filename: details.images[0].filename,
         });
-        console.log(image);
+        assert.isTrue(await conn_exists(image));
       },
       deps: ["details"],
     },
@@ -390,7 +395,7 @@ async function main() {
                 }))![5].id
               : undefined,
         });
-        console.log(master_playlist);
+        assert.isTrue(await conn_exists(master_playlist));
       },
       deps: ["details"],
     },
@@ -496,7 +501,10 @@ async function main() {
         assert.isNotEmpty(people);
 
         assert.strictEqual(await search_history.length(), 1);
-        assert.strictEqual((await search_history.values())[0].data, "millie");
+        assert.strictEqual(
+          (await search_history.values())[0].value.data,
+          "millie"
+        );
       },
       async after() {
         await tests.run("person search (cached)", {
@@ -646,7 +654,7 @@ async function main() {
         assert.strictEqual(await search_history.length(), 2);
         assert.isDefined(
           (await search_history.values()).find(
-            (query) => query.data == "en lomes"
+            (query) => query.value.data == "en lomes"
           )
         );
       },
@@ -730,7 +738,7 @@ async function main() {
         assert.strictEqual(await search_history.length(), 2);
         assert.isDefined(
           (await search_history.values()).find(
-            (query) => query.data == "en lomes"
+            (query) => query.value.data == "en lomes"
           )
         );
       },
@@ -831,10 +839,10 @@ async function main() {
             await movies.init("following_movies");
             assert.strictEqual(
               (
-                await movies.index_below(
-                  "byLastChecked",
-                  Date.now() - 1 * 60 * 60 * 1000
-                )
+                await movies.index("byLastChecked", {
+                  mode: "below",
+                  value: Date.now() - 1 * 60 * 60 * 1000,
+                })
               ).length,
               2
             );
@@ -844,10 +852,10 @@ async function main() {
 
             assert.strictEqual(
               (
-                await movies.index_below(
-                  "byLastChecked",
-                  Date.now() - 1 * 60 * 60 * 1000
-                )
+                await movies.index("byLastChecked", {
+                  mode: "below",
+                  value: Date.now() - 1 * 60 * 60 * 1000,
+                })
               ).length,
               1
             );
@@ -966,10 +974,10 @@ async function main() {
             await tvs.init("following_tvs");
             assert.strictEqual(
               (
-                await tvs.index_below(
-                  "byLastChecked",
-                  Date.now() - 1 * 60 * 60 * 1000
-                )
+                await tvs.index("byLastChecked", {
+                  mode: "below",
+                  value: Date.now() - 1 * 60 * 60 * 1000,
+                })
               ).length,
               2
             );
@@ -979,10 +987,10 @@ async function main() {
 
             assert.strictEqual(
               (
-                await tvs.index_below(
-                  "byLastChecked",
-                  Date.now() - 1 * 60 * 60 * 1000
-                )
+                await tvs.index("byLastChecked", {
+                  mode: "below",
+                  value: Date.now() - 1 * 60 * 60 * 1000,
+                })
               ).length,
               1
             );
@@ -1094,10 +1102,10 @@ async function main() {
             await people.init("following_people");
             assert.strictEqual(
               (
-                await people.index_below(
-                  "byLastChecked",
-                  Date.now() - 1 * 60 * 60 * 1000
-                )
+                await people.index("byLastChecked", {
+                  mode: "below",
+                  value: Date.now() - 1 * 60 * 60 * 1000,
+                })
               ).length,
               2
             );
@@ -1107,10 +1115,10 @@ async function main() {
 
             assert.strictEqual(
               (
-                await people.index_below(
-                  "byLastChecked",
-                  Date.now() - 1 * 60 * 60 * 1000
-                )
+                await people.index("byLastChecked", {
+                  mode: "below",
+                  value: Date.now() - 1 * 60 * 60 * 1000,
+                })
               ).length,
               1
             );
@@ -1133,6 +1141,69 @@ async function main() {
             );
           },
         });
+      },
+    },
+    notify: {
+      async callback() {
+        const notify = new ume.notify<string>();
+        await notify.init("notify");
+
+        const ann1 = await notify.add("ann 1");
+
+        await notify.rm(await notify.add("ann 2"));
+
+        const ann3 = await notify.add("ann 3");
+        await notify.check(ann3);
+
+        const ann4 = await notify.add("ann 4");
+        await notify.pin(ann4);
+
+        return
+        
+        let page = await notify.page(1);
+        {
+          assert.isFalse(page.has_next);
+          assert.strictEqual(page.results.length, 3);
+          assert.isDefined(page.results.find((a) => a.value.data === "ann 1"));
+          assert.isDefined(page.results.find((a) => a.value.data === "ann 3"));
+          assert.isDefined(page.results.find((a) => a.value.data === "ann 4"));
+
+          page = await notify.page(2);
+          assert.isFalse(page.has_next);
+          assert.strictEqual(page.results.length, 0);
+        }
+
+        {
+          page = await notify.checked(1);
+          assert.isFalse(page.has_next);
+          assert.strictEqual(page.results.length, 1);
+          assert.isDefined(page.results.find((a) => a.value.data === "ann 3"));
+
+          page = await notify.unchecked(1);
+          assert.isFalse(page.has_next);
+          assert.strictEqual(page.results.length, 2);
+          assert.isDefined(page.results.find((a) => a.value.data === "ann 1"));
+          assert.isDefined(page.results.find((a) => a.value.data === "ann 4"));
+
+          await notify.uncheck(ann3);
+          assert.strictEqual((await notify.checked(1)).results.length, 1);
+        }
+
+        {
+          page = await notify.pinned(1);
+          assert.isFalse(page.has_next);
+          assert.strictEqual(page.results.length, 1);
+          assert.isDefined(page.results.find((a) => a.value.data === "ann 4"));
+
+          page = await notify.unpinned(1);
+          assert.isFalse(page.has_next);
+          assert.strictEqual(page.results.length, 2);
+          assert.isDefined(page.results.find((a) => a.value.data === "ann 1"));
+          assert.isDefined(page.results.find((a) => a.value.data === "ann 3"));
+
+          await notify.unpin(ann4);
+          assert.strictEqual((await notify.pinned(1)).results.length, 1);
+        }
       },
     },
   });

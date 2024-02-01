@@ -66,7 +66,7 @@ export class Cache_Store<T> {
     const store_len = await this._store.length();
     if (store_len >= this._max_entries) {
       const byLess = (await this._store.values()).sort(
-        (a, b) => a.interacts - b.interacts
+        (a, b) => a.value.interacts - b.value.interacts
       );
 
       for (let i = 0; i < store_len - this._max_entries + 1; ++i) {
@@ -74,35 +74,28 @@ export class Cache_Store<T> {
       }
     }
 
-    return this._store.set(
-      key,
-      { key, data: value, interacts: 0 },
-      {
-        expiry: Date.now() + this._expiry_offset,
-      }
-    );
+    return this._store.set({ key, data: value, interacts: 0 }, key, {
+      expiry: Date.now() + this._expiry_offset,
+    });
   }
 
   async values() {
-    return (await this._store.values()).map((e) => e.data);
+    return (await this._store.values()).map((e) => e.value.data);
   }
 
-  async renew(key: string, data: boolean = true) {
+  async renew(key: ustore.Key, data: boolean = true) {
     const entry = await this._store.get(key);
     if (entry) {
-      await this._store.update(
-        key,
-        {
-          interacts: ++entry.interacts,
-        },
-        {
+      await this._store.update(key, {
+        value: { interacts: ++entry.interacts },
+        options: {
           expiry: Date.now() + this._expiry_offset,
-        }
-      );
+        },
+      });
 
       if (data && this._refresh) {
         await this._store.update(key, {
-          data: await this._refresh(entry.data),
+          value: { data: await this._refresh(entry.data) },
         });
       }
     }

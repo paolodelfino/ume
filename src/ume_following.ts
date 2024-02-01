@@ -53,9 +53,9 @@ export class Ume_Following {
       consume_default: [],
     });
 
-    await this._updates.set("people", []);
-    await this._updates.set("movies", []);
-    await this._updates.set("tvs", []);
+    await this._updates.set([], "people");
+    await this._updates.set([], "movies");
+    await this._updates.set([], "tvs");
 
     this._people = new ustore.Async();
     await this._people.init("following_people", {
@@ -91,13 +91,11 @@ export class Ume_Following {
   async need_check_people() {
     return (
       (
-        await this._people.index_below(
-          "byLastChecked",
-          Date.now() - this._check_frequency,
-          {
-            inclusive: true,
-          }
-        )
+        await this._people.index("byLastChecked", {
+          mode: "below",
+          value: Date.now() - this._check_frequency,
+          inclusive: true,
+        })
       ).length == 0
     );
   }
@@ -105,13 +103,11 @@ export class Ume_Following {
   async need_check_movies() {
     return (
       (
-        await this._movies.index_below(
-          "byLastChecked",
-          Date.now() - this._check_frequency,
-          {
-            inclusive: true,
-          }
-        )
+        await this._movies.index("byLastChecked", {
+          mode: "below",
+          value: Date.now() - this._check_frequency,
+          inclusive: true,
+        })
       ).length == 0
     );
   }
@@ -119,13 +115,11 @@ export class Ume_Following {
   async need_check_tvs() {
     return (
       (
-        await this._tvs.index_below(
-          "byLastChecked",
-          Date.now() - this._check_frequency,
-          {
-            inclusive: true,
-          }
-        )
+        await this._tvs.index("byLastChecked", {
+          mode: "below",
+          value: Date.now() - this._check_frequency,
+          inclusive: true,
+        })
       ).length == 0
     );
   }
@@ -161,10 +155,12 @@ export class Ume_Following {
     if (Array.isArray(ids)) {
       people = await this._people.get_some(ids.map((id) => `${id}`));
     } else {
-      people = await this._people.index_below(
-        "byLastChecked",
-        Date.now() - this._check_frequency
-      );
+      people = (
+        await this._people.index("byLastChecked", {
+          mode: "below",
+          value: Date.now() - this._check_frequency,
+        })
+      ).map((i) => i.value);
     }
 
     const pages = Math.ceil(people.length / Ume_Following._batch_sz);
@@ -208,12 +204,15 @@ export class Ume_Following {
               }
 
               if (update.new_titles.length > 0) {
-                await this._updates.update("people", [update]);
+                await this._updates.update("people", { value: [update] });
               }
-              await this._people.set(`${older.id}`, {
-                ...newer,
-                last_checked: Date.now(),
-              });
+              await this._people.set(
+                {
+                  ...newer,
+                  last_checked: Date.now(),
+                },
+                `${older.id}`
+              );
             })
           );
 
@@ -238,10 +237,12 @@ export class Ume_Following {
     if (Array.isArray(ids)) {
       movies = await this._movies.get_some(ids.map((id) => `${id}`));
     } else {
-      movies = await this._movies.index_below(
-        "byLastChecked",
-        Date.now() - this._check_frequency
-      );
+      movies = (
+        await this._movies.index("byLastChecked", {
+          mode: "below",
+          value: Date.now() - this._check_frequency,
+        })
+      ).map((i) => i.value);
     }
     const pages = Math.ceil(movies.length / Ume_Following._batch_sz);
 
@@ -287,12 +288,17 @@ export class Ume_Following {
               }
 
               if (update.new_titles.length > 0) {
-                await this._updates.update("movies", [update]);
+                await this._updates.update("movies", {
+                  value: [update],
+                });
               }
-              await this._movies.set(`${older.id}`, {
-                ...newer,
-                last_checked: Date.now(),
-              });
+              await this._movies.set(
+                {
+                  ...newer,
+                  last_checked: Date.now(),
+                },
+                `${older.id}`
+              );
             })
           );
 
@@ -317,10 +323,12 @@ export class Ume_Following {
     if (Array.isArray(ids)) {
       tvs = await this._tvs.get_some(ids.map((id) => `${id}`));
     } else {
-      tvs = await this._tvs.index_below(
-        "byLastChecked",
-        Date.now() - this._check_frequency
-      );
+      tvs = (
+        await this._tvs.index("byLastChecked", {
+          value: Date.now() - this._check_frequency,
+          mode: "below",
+        })
+      ).map((i) => i.value);
     }
 
     const pages = Math.ceil(tvs.length / Ume_Following._batch_sz);
@@ -384,12 +392,17 @@ export class Ume_Following {
               }
 
               if (update.new_episodes.length > 0) {
-                await this._updates.update("tvs", [update]);
+                await this._updates.update("tvs", {
+                  value: [update],
+                });
               }
-              await this._tvs.set(`${older.id}`, {
-                ...newer,
-                last_checked: Date.now(),
-              });
+              await this._tvs.set(
+                {
+                  ...newer,
+                  last_checked: Date.now(),
+                },
+                `${older.id}`
+              );
             })
           );
 
@@ -449,10 +462,13 @@ export class Ume_Following {
   async add_movie(movie: Title_Details) {
     assert.isAtMost(await this._movies.length(), 500);
 
-    return this._movies.set(`${movie.id}`, {
-      ...movie,
-      last_checked: 0,
-    });
+    return this._movies.set(
+      {
+        ...movie,
+        last_checked: 0,
+      },
+      `${movie.id}`
+    );
   }
 
   /**
@@ -461,10 +477,13 @@ export class Ume_Following {
   async add_tv(tv: Title_Details) {
     assert.isAtMost(await this._tvs.length(), 500);
 
-    return this._tvs.set(`${tv.id}`, {
-      ...tv,
-      last_checked: 0,
-    });
+    return this._tvs.set(
+      {
+        ...tv,
+        last_checked: 0,
+      },
+      `${tv.id}`
+    );
   }
 
   /**
@@ -473,10 +492,13 @@ export class Ume_Following {
   async add_person(person: Person_Details) {
     assert.isAtMost(await this._people.length(), 500);
 
-    return this._people.set(`${person.id}`, {
-      ...person,
-      last_checked: 0,
-    });
+    return this._people.set(
+      {
+        ...person,
+        last_checked: 0,
+      },
+      `${person.id}`
+    );
   }
 
   async import(

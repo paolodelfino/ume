@@ -41,7 +41,7 @@ export class Ume_Continue_Watching {
   private async _cached_values() {
     if (this._need_recache) {
       this._need_recache = false;
-      this.__cache_all = await this._store.values();
+      this.__cache_all = (await this._store.values()).map((i) => i.value);
     }
     return this.__cache_all;
   }
@@ -72,7 +72,7 @@ export class Ume_Continue_Watching {
   }
 
   async update(entry: Title_Continue_Watching) {
-    await this._store.set(`${entry.id}`, entry);
+    await this._store.set(entry, `${entry.id}`);
     this._need_recache = true;
   }
 

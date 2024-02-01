@@ -1,14 +1,14 @@
 import { ustore } from "pustore";
 
-type Notify<T> = {
-  data: T;
-  checked: boolean;
-  pinned: boolean;
-};
-
 export class Ume_Notify<T extends string | object | any[]> {
-  private _store!: ustore.Async<Notify<T>, "byChecked">;
-  private _extra_space: number = 0;
+  private _store!: ustore.Async<
+    {
+      data: T;
+      checked: boolean;
+      pinned: boolean;
+    },
+    "byChecked" | "byPinned"
+  >;
 
   get last_modified() {
     return this._store.last_modified;
@@ -29,6 +29,10 @@ export class Ume_Notify<T extends string | object | any[]> {
         {
           name: "byChecked",
           path: "checked",
+        },
+        {
+          name: "byPinned",
+          path: "pinned",
         },
       ],
       autoincrement: true,
@@ -60,12 +64,51 @@ export class Ume_Notify<T extends string | object | any[]> {
     });
   }
 
-  add(data: T) {
-    return this._store.set({
+  /**
+   * @param number Starts from 1
+   */
+  pinned(page: number) {
+    return this._store.index("byPinned", {
+      mode: "only",
+      value: true,
+      page,
+      reverse: true,
+    });
+  }
+
+  /**
+   * @param number Starts from 1
+   */
+  unpinned(page: number) {
+    return this._store.index("byPinned", {
+      mode: "only",
+      value: false,
+      page,
+      reverse: true,
+    });
+  }
+
+  /**
+   * @param number Starts from 1
+   */
+  page(number: number) {
+    return this._store.page(number, { reverse: true });
+  }
+
+  async add(data: T) {
+    const c1 = await this._store.length();
+
+    const k = await this._store.set({
       data,
       checked: false,
       pinned: false,
     });
+
+    const c2 = await this._store.length();
+
+    console.log(c1, c2, data, await this._store.values());
+
+    return k;
   }
 
   rm(id: ustore.Key) {
@@ -86,21 +129,6 @@ export class Ume_Notify<T extends string | object | any[]> {
 
   unpin(id: ustore.Key) {
     return this._store.update(id, { value: { pinned: false } });
-  }
-
-  /**
-   * @param page Starts from 1
-   */
-  async page(page: number) {
-    const all = await this._store.values(true);
-    const checked = [];
-    const unchecked = [];
-    let count = this._store.pagejn;
-
-    return {
-      has_next: checked.has_next || unchecked.has_next,
-      results: [...checked.results, ...unchecked.results],
-    };
   }
 
   async import(
